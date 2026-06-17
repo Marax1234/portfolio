@@ -1,17 +1,22 @@
 import type { CollectionConfig } from "payload";
 import { slugField } from "payload";
+import { journalBlocks } from "../blocks";
 import { revalidateJournal, revalidateJournalDelete } from "../hooks/revalidate";
 
 /**
- * JournalPosts — Datenmodell für „Journal“ + JournalTeaserSection
+ * JournalPosts — Datenmodell für „Journal" + JournalTeaserSection
  * (Sprint 3). `meta` (Kategorie · Monat Jahr) wird im Frontend aus
  * `category` + `publishedAt` zusammengesetzt (Sprint 5) — hier getrennt
  * gepflegt.
  *
  * Block-Layout (Konzept-Vorbild: Bild/Galerie/Quote/Video-Bausteine) ist
- * bewusst **out of scope** für Sprint 4 — `body` ist vorerst einfacher
- * Lexical-Richtext. Sprint 6 ersetzt/ergänzt dies durch ein Blocks-Feld,
- * ohne dass Titel/Slug/Cover/Kategorie-Felder angetastet werden.
+ * Sprint 6: das frühere einfache `body`-Richtext-Feld ist durch das
+ * `layout`-Blocks-Feld ersetzt — frei stapel- und sortierbar pro Beitrag,
+ * ohne Code. Titel/Slug/Cover/Kategorie-Felder bleiben unverändert.
+ *
+ * Live Preview (Sprint 6, save-triggered): `admin.livePreview`/`preview`
+ * zeigen auf die echte Detailseite; `RefreshRouteOnSave`
+ * (src/components/RefreshRouteOnSave.tsx) löst dort `router.refresh()` aus.
  */
 export const JournalPosts: CollectionConfig = {
   slug: "journal",
@@ -23,6 +28,10 @@ export const JournalPosts: CollectionConfig = {
     useAsTitle: "title",
     defaultColumns: ["title", "category", "publishedAt"],
     group: "Inhalte",
+    livePreview: {
+      url: ({ data }) => `${process.env.NEXT_PUBLIC_SERVER_URL}/journal/${data?.slug ?? ""}`,
+    },
+    preview: (data) => `${process.env.NEXT_PUBLIC_SERVER_URL}/journal/${data?.slug ?? ""}`,
   },
   hooks: {
     afterChange: [revalidateJournal],
@@ -53,8 +62,22 @@ export const JournalPosts: CollectionConfig = {
       required: true,
     },
     {
-      name: "body",
-      type: "richText",
+      name: "excerpt",
+      type: "textarea",
+      label: "Teaser",
+      admin: {
+        description: "2-Zeilen-Teaser für den Journal-Feed (Konzept §4.4).",
+      },
+    },
+    {
+      name: "layout",
+      type: "blocks",
+      label: "Beitrags-Layout",
+      blocks: journalBlocks,
+      admin: {
+        description:
+          "Frei stapel- und sortierbare Layout-Bausteine (Text/Bild/Galerie/Zwei-Spalten/Zitat/Video) — ohne Code.",
+      },
     },
     {
       name: "order",

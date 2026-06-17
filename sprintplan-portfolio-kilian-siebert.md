@@ -74,41 +74,29 @@ Am Ende jedes Sprints ein kurzer Abschnitt mit:
 
 ---
 
-### Sprint 5 — Datengetriebene Seiten + ISR
+### Sprint 6 — Journal mit Blocks & Live Preview
 
-**Ziel:** Die statischen Seiten ziehen echte Inhalte aus Payload und aktualisieren sich automatisch.
+**Ziel:** Journal-Beiträge sind frei aus Bausteinen baubar; Befüllen mit Echtzeit-Vorschau.
 
 **Anforderungen**
-- Startseite (aus Sprint 3) auf Payload-Daten umstellen (Featured-Projekt, Journal-Teaser, Fakten, Texte aus Seiten-Konfiguration).
-- **Arbeiten**-Übersicht (Konzept 4.2): Grid/Masonry, Filter-Tabs (Alle/Hochzeiten/Reisen/Sport/Commercial), Cover pro Projekt, Hover-Info.
-- **Projekt-Detailseite:** Hero, knapper Kontext (Titel/Ort/für wen/2–3 Sätze), Bild-/Video-Strecke (Platzhalter-Medien), „vorheriges/nächstes Projekt“ (keine Sackgasse).
-- **Über mich** (Konzept 4.3): Portrait, Story-Text, Meilenstein-Timeline, „Was mich ausmacht“, Backstage-Grid.
-- **ISR / Auto-Regeneration:** Seiten sind statisch schnell, regenerieren bei Inhaltsänderung im Admin.
+- **Block-System** für Journal-Beiträge: Bibliothek vordefinierter Layout-Blöcke (Vollbild-Bild, Galerie, Zwei-Spalten, Video, Zitat, Text). Frei stapel- und sortierbar pro Beitrag — Layout-Freiheit ohne Code.
+- Jeder Block rendert design-konform über die zentralen Tokens und nutzt vorhandene Bausteine.
+- **Journal-Übersicht** (Konzept 4.4): Feed mit großem Cover, Titel, Datum/Kategorie, Teaser.
+- **Beitrags-Detailseite:** schmale Lesespalte, Bilder/Video-Loops in voller Breite eingestreut, verwandte Beiträge + dezenter Social-Hinweis.
+- **Live Preview** aktiviert: beim Befüllen Echtzeit-Vorschau des Beitrags auf der echten Seite.
 
 **Akzeptanzkriterien**
-- Inhalt im Admin ändern → Frontend zeigt die Änderung (nach Regeneration) ohne manuellen Rebuild.
-- Filter-Tabs in „Arbeiten“ funktionieren; max. eine Klicktiefe zur Detailseite.
-- Keine Detailseite endet in einer Sackgasse.
-- Alle Seiten mobil-first konform und design-konsistent.
+- Im Admin lässt sich ein Beitrag aus mehreren Blöcken **ohne Code** zusammenstellen, umsortieren, speichern.
+- Live Preview zeigt Änderungen sichtbar nahezu in Echtzeit.
+- Block-Rendering ist 100% token-basiert; ein Token-Wechsel schlägt in allen Blöcken durch.
+- Übersicht + Detailseite responsive und design-konform.
 
 **Out of Scope**
-- Journal-Block-Editor (Sprint 6), echter Storage/Video (7/8), Kontaktverarbeitung (9).
+- Echter Storage (Sprint 7), echtes HLS-Video (Sprint 8). Video-Block nutzt vorerst Platzhalter/Standbild.
 
-**Context7-Pflicht:** ISR/Draft-Mechanik in Next.js 16 + Payload-Datenabruf verifizieren.
+**Context7-Pflicht:** Payload Blocks + Live Preview (Server Components / RefreshRouteOnSave) aktuell ziehen.
 
-**Übergabe-Hinweis:** Medien weiterhin Fallback → Sprint 7. Video-Strecken-Slots Platzhalter → Sprint 8.
-
-
----
-
-## 3. Querschnittliche Akzeptanz (gilt für die gesamte Entwicklung)
-
-- **Design-Zentralität:** In jeder Abnahme wird der Token-Wechsel-Test gemacht. Hardcodes sind ein Abnahme-Blocker.
-- **Mobile-First:** Jede Seite zuerst mobil, dann Desktop.
-- **Keine Sackgassen:** Jede Detailseite verlinkt sinnvoll weiter.
-- **Modularität:** Datenquellen sind hinter Schnittstellen austauschbar (belegt durch Sprint 7).
-- **Context7 zuerst:** Bei jeder Unsicherheit/neuen Integration aktuelle Doku ziehen, bevor gebaut wird.
-- **Übergabe-Notiz:** Pflichtartefakt am Ende jedes Sprints.
+**Übergabe-Hinweis:** Video-Block hat definierten Slot → echte HLS-Wiedergabe in Sprint 8.
 
 ---
 

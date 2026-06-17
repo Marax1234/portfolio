@@ -157,6 +157,105 @@ export const getJournalBySlug = unstable_cache(
   { tags: ["journal"] },
 );
 
+/** Übersichts-Feed (`/journal`, Konzept §4.4) — neueste zuerst. */
+export const getJournalPosts = unstable_cache(
+  async (): Promise<Journal[]> => {
+    const p = await payload();
+    const { docs } = await p.find({
+      collection: "journal",
+      sort: "-publishedAt",
+      limit: 200,
+      depth: 1,
+    });
+    return docs;
+  },
+  ["journal", "list"],
+  { tags: ["journal"] },
+);
+
+/** Für `generateStaticParams` auf `/journal/[slug]`. */
+export const getAllJournalSlugs = unstable_cache(
+  async (): Promise<string[]> => {
+    const p = await payload();
+    const { docs } = await p.find({
+      collection: "journal",
+      limit: 200,
+      depth: 0,
+    });
+    return docs.map((doc) => doc.slug);
+  },
+  ["journal", "slugs"],
+  { tags: ["journal"] },
+);
+
+/**
+ * Prev/Next für die Detailseite (Konzept §4.4: „keine Sackgasse", analog
+ * `getProjectNeighbors`). Reihung folgt `publishedAt` (neueste zuerst, wie
+ * der Feed).
+ */
+export const getJournalNeighbors = unstable_cache(
+  async (slug: string): Promise<{ prev: Journal | null; next: Journal | null }> => {
+    const p = await payload();
+    const { docs } = await p.find({
+      collection: "journal",
+      sort: "-publishedAt",
+      limit: 200,
+      depth: 0,
+    });
+    const index = docs.findIndex((doc) => doc.slug === slug);
+    if (index === -1) return { prev: null, next: null };
+
+    const prevDoc = docs[(index - 1 + docs.length) % docs.length];
+    const nextDoc = docs[(index + 1) % docs.length];
+
+    const p2 = await payload();
+    const [prev, next] = await Promise.all([
+      prevDoc.slug === slug ? null : p2.findByID({ collection: "journal", id: prevDoc.id, depth: 1 }),
+      nextDoc.slug === slug ? null : p2.findByID({ collection: "journal", id: nextDoc.id, depth: 1 }),
+    ]);
+
+    return { prev, next };
+  },
+  ["journal", "neighbors"],
+  { tags: ["journal"] },
+);
+
+/** „Verwandte Beiträge" (Konzept §4.4) — bevorzugt gleiche Kategorie, sonst die nächstälteren. */
+export const getRelatedJournal = unstable_cache(
+  async (slug: string, limit = 3): Promise<Journal[]> => {
+    const p = await payload();
+    const current = await p.find({
+      collection: "journal",
+      where: { slug: { equals: slug } },
+      limit: 1,
+      depth: 0,
+    });
+    const currentDoc = current.docs[0];
+    if (!currentDoc) return [];
+
+    const { docs: sameCategory } = await p.find({
+      collection: "journal",
+      where: { category: { equals: currentDoc.category }, slug: { not_equals: slug } },
+      sort: "-publishedAt",
+      limit,
+      depth: 1,
+    });
+    if (sameCategory.length >= limit) return sameCategory;
+
+    const { docs: rest } = await p.find({
+      collection: "journal",
+      where: { slug: { not_equals: slug } },
+      sort: "-publishedAt",
+      limit,
+      depth: 1,
+    });
+    const seen = new Set(sameCategory.map((doc) => doc.id));
+    return [...sameCategory, ...rest.filter((doc) => !seen.has(doc.id))].slice(0, limit);
+  },
+  ["journal", "related"],
+  { tags: ["journal"] },
+);
+
 const PROJECT_CATEGORY_LABELS: Record<Project["category"], string> = {
   hochzeiten: "Hochzeiten",
   menschen: "Menschen",

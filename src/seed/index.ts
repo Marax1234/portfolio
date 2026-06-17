@@ -236,25 +236,68 @@ async function seed() {
   }
 
   // 3. Beispiel-Journalbeiträge (Sprint 5: 3 statt 1, damit der
-  // Journal-Teaser auf der Startseite gefüllt vorführbar ist).
+  // Journal-Teaser auf der Startseite gefüllt vorführbar ist; Sprint 6:
+  // `excerpt` + `layout` ergänzt, damit Feed und Detailseite vorführbar sind).
   const journalPosts = [
     {
       title: "Durch Marokko — 14 Tage, 2.400 km",
       slug: "marokko-2024",
       category: "reise" as const,
       publishedAt: "2024-03-01",
+      excerpt: "Von der Küste bis in die Dünen — zwei Wochen, ein Auto, viel zu wenig Schlaf.",
+      layout: [
+        {
+          blockType: "text" as const,
+          content: lexicalParagraphs([
+            "14 Tage, 2.400 Kilometer, drei Klimazonen. Geplant war wenig — genau das war der Plan.",
+            "Die besten Bilder entstehen nicht am geplanten Aussichtspunkt, sondern fünf Minuten davor oder danach.",
+          ]),
+        },
+        { blockType: "image" as const, image: placeholderMedia.id, caption: "Erg Chebbi, kurz vor Sonnenaufgang" },
+        {
+          blockType: "quote" as const,
+          quote: "Man plant die Route. Die Geschichte schreibt die Straße.",
+          attribution: "Notiz, Tag 6",
+        },
+      ],
     },
     {
       title: "Mitteldistanz #3 — was beim dritten Mal anders war",
       slug: "mitteldistanz-3",
       category: "sport" as const,
       publishedAt: "2024-05-01",
+      excerpt: "Drittes Rennen, erstmals ohne Krise auf der Laufstrecke — was sich verändert hat.",
+      layout: [
+        {
+          blockType: "text" as const,
+          content: lexicalParagraphs([
+            "Beim dritten Mal kennt man die Strecke nicht — aber man kennt sich selbst etwas besser.",
+          ]),
+        },
+        { blockType: "image" as const, image: placeholderMedia.id, caption: "Wechselzone, kurz vor dem Lauf" },
+      ],
     },
     {
       title: "Hinter der Kamera bei Lisa & Max",
       slug: "bts-lisa-max",
       category: "behind-the-scenes" as const,
       publishedAt: "2024-07-13",
+      excerpt: "Ein Blick auf die Momente zwischen den Momenten — Behind-the-Scenes einer Hochzeit.",
+      layout: [
+        {
+          blockType: "text" as const,
+          content: lexicalParagraphs([
+            "Die schönsten Momente passieren oft, während alle noch auf das nächste Foto warten.",
+          ]),
+        },
+        {
+          blockType: "gallery" as const,
+          images: [
+            { image: placeholderMedia.id, caption: "Vorbereitung" },
+            { image: placeholderMedia.id, caption: "Zwischen den Aufnahmen" },
+          ],
+        },
+      ],
     },
   ];
 
@@ -273,6 +316,8 @@ async function seed() {
           slug: post.slug,
           category: post.category,
           cover: placeholderMedia.id,
+          excerpt: post.excerpt,
+          layout: post.layout,
           order: 0,
           publishedAt: new Date(post.publishedAt).toISOString(),
         },
@@ -280,7 +325,23 @@ async function seed() {
       });
       payload.logger.info(`Seed: Journalbeitrag „${post.title}“ angelegt.`);
     } else {
-      payload.logger.info(`Seed: Journalbeitrag „${post.title}“ existiert bereits — übersprungen.`);
+      const existingDoc = existing.docs[0];
+      // Sprint-5-Seed kannte `excerpt`/`layout` noch nicht (Sprint-6-Felder) —
+      // bei bereits angelegtem Beitrag hier nachpflegen.
+      if (!existingDoc.layout || existingDoc.layout.length === 0) {
+        await payload.update({
+          collection: "journal",
+          id: existingDoc.id,
+          data: {
+            excerpt: post.excerpt,
+            layout: post.layout,
+          },
+          context: { disableRevalidate: true },
+        });
+        payload.logger.info(`Seed: Journalbeitrag „${post.title}“ um Sprint-6-Felder ergänzt.`);
+      } else {
+        payload.logger.info(`Seed: Journalbeitrag „${post.title}“ existiert bereits — übersprungen.`);
+      }
     }
   }
 
