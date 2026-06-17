@@ -74,29 +74,34 @@ Am Ende jedes Sprints ein kurzer Abschnitt mit:
 
 ---
 
-### Sprint 1 — Fundament & Design-System-Kern
+### Sprint 2 — Globale Bausteine & Navigation
 
-**Ziel:** Lauffähiges App-Gerüst, in dem das Design zentral verankert ist und Medien bereits über eine austauschbare Abstraktion laufen.
+**Ziel:** Die wiederkehrenden Bausteine aus dem Konzept (Abschnitt 5) existieren als zentrale, design-konforme Komponenten.
 
 **Anforderungen**
-- App-Grundgerüst (Next.js 16, App Router, TypeScript) lokal startbar.
-- Zentrale **Design-Token-Quelle** aus `design.md` aufbauen: alle Farben, Typo-Skala (Newsreader für Display/Body, Inter für Labels/Tags), Radien, Spacing-Skala (8px-Einheit, Container-Max, Gutter, Margins, Section-Gap), Elevation-Regeln (Glassmorphism, ambient shadow).
-- Globale Schrift-Einbindung (Newsreader, Inter) genau gemäß Typografie-Abschnitt.
-- **Token-Demoseite** („Styleguide“-Route, nur intern): zeigt alle Farben, alle Typo-Stufen, Radien, Beispiel-Elevation. Dient als visueller Beweis und als Referenz für Folge-Sprints.
-- **Medien-Abstraktion v1:** eine einheitliche Schnittstelle, über die Bilder geladen/angezeigt werden. Implementierung dahinter = **lokaler Datei-Fallback-Speicher** (z.B. Bilder aus dem Repo/öffentlichem Ordner). Aufrufer kennen nur die Schnittstelle, nicht die Quelle.
+- **Layout-Grid** gemäß Design: 12-Spalten-Logik, Margins (mobil 20px / Desktop 64px), Gutter 24px, Section-Gap 120px, „Breathable Spacing“.
+- **Sticky-Nav:** Name links, vier Links rechts; schrumpft beim Scrollen; mobil Hamburger oder Bottom-Bar. Reduziert, ruhig.
+- **Footer:** Kontakt, Social-Links, Sitemap-Kurzversion, **Impressum & Datenschutz** (DE-Pflicht, gehört in Footer, nicht in Hauptnav).
+- **Kernkomponenten** (alle token-basiert):
+  - Buttons: Primary (Sage, Cream-Text), Secondary (Ghost, Mist-Blue-Border).
+  - Story-/Projekt-Karte (gemeinsames Bauteil für Journal & Arbeiten): Cover + Titel + Mini-Info, Hover-Verhalten.
+  - Fakten-Strip (3–4 Zahlen, wiederverwendbar).
+  - Geteilter CTA-Block („Anfragen“ vs. „Zusammenarbeiten“).
+  - Glassmorphism-Card (frosted, 16px Blur, 1px-Border statt Schatten).
+- **Komponenten-Galerie** (interne Route): zeigt alle Bausteine in mobil/Desktop.
 
 **Akzeptanzkriterien**
-- `design.md`-Werte sind 1:1 in den Tokens abgebildet (Stichprobe: Sage `#516051`/`#849483`, Cream `#FAF9F6`, Charcoal-Text, Petal Pink, Mist Blue, Section-Gap 120px, Container-Max 1280px).
-- Token-Demoseite rendert korrekt auf Mobil und Desktop.
-- **Zentralitäts-Test:** Primärfarbe in der Token-Quelle ändern → Demoseite zieht überall nach → zurücksetzen.
-- Ein Beispielbild wird über die Medien-Abstraktion (lokaler Fallback) angezeigt.
+- Jede Komponente bezieht 100% ihres Stylings aus den Tokens (kein Hardcode).
+- Nav-Schrumpfverhalten und mobile Variante funktionieren.
+- Footer enthält Impressum/Datenschutz-Platzhalterlinks.
+- **Zentralitäts-Test** erneut bestanden (Radius- oder Farbänderung schlägt galerieweit durch).
 
 **Out of Scope**
-- Echte Seiteninhalte, Navigation, CMS, Object Storage, Video.
+- Reale Inhalte, CMS-Anbindung, echte Seiten.
 
-**Context7-Pflicht:** Next.js 16 App Router/RSC-Doku ziehen, Versionsstand notieren.
+**Context7-Pflicht:** nur falls neue UI-Bibliothek eingeführt wird.
 
-**Übergabe-Hinweis:** Lokaler Bild-Fallback ist Platzhalter → wird in **Sprint 7** durch Object Storage ersetzt; die Schnittstelle bleibt stabil. Token-Quelle ist ab jetzt die einzige erlaubte Design-Quelle.
+**Übergabe-Hinweis:** Karte und CTA-Block sind die wiederverwendeten Bauteile für Start/Arbeiten/Journal — Folge-Sprints bauen darauf auf, nicht neu.
 
 ---
 

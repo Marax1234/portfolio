@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Newsreader, Inter } from "next/font/google";
 import "./globals.css";
+import SiteHeader from "@/components/layout/SiteHeader";
+import SiteFooter from "@/components/layout/SiteFooter";
+import MobileBottomBar from "@/components/layout/MobileBottomBar";
 
 /**
  * Fonts — via next/font/google (kein externes CSS-Request, DSGVO-freundlich).
@@ -41,7 +44,19 @@ export default function RootLayout({
        * Kein Hardcode.
        */}
       <body className="min-h-full flex flex-col bg-surface text-on-surface">
-        {children}
+        {/*
+         * Globale Chrome (Sprint 2):
+         * SiteHeader  — Sticky-Top-Nav (Desktop)
+         * main        — pt-header = Abstand unter Header, pb-bottombar = Abstand über Bottom-Bar (Mobil)
+         * SiteFooter  — wird durch flex-1 auf main nach unten gedrückt
+         * MobileBottomBar — fix, nur Mobil (md:hidden)
+         */}
+        <SiteHeader />
+        <main className="flex-1 pt-header pb-bottombar md:pb-0">
+          {children}
+        </main>
+        <SiteFooter />
+        <MobileBottomBar />
       </body>
     </html>
   );

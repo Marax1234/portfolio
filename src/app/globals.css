@@ -104,6 +104,12 @@
   --border-tonal: 1px solid var(--color-outline-variant);
   /* Ambient shadow: ultra-diffused, 10% Sage-Tint */
   --shadow-ambient: 0 8px 40px -8px rgb(81 96 81 / 0.10);
+
+  /* ── Navigation / Chrome (Sprint 2) ─────────────────────────── */
+  --header-height:          64px;    /* Desktop-Header (entspannt) */
+  --header-height-sm:       48px;    /* Desktop-Header gescrollt (geschrumpft) */
+  --bottombar-height:       64px;    /* Mobile Bottom-Bar */
+  --bottombar-label-size:   0.625rem; /* 10px — Nano-Label unter Icons */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -288,4 +294,23 @@
 @utility section-gap-y {
   margin-top: var(--section-gap);
   margin-bottom: var(--section-gap);
+}
+
+/* ── Sprint 2: Layout & Navigation Utilities ───────────────────────── */
+
+/* 12-Spalten-Grid (design.md §Layout: 12-Spalten, Gutter 24px) */
+@utility grid-page {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+
+/* Padding-bottom = Bottom-Bar-Höhe; verhindert Inhalt hinter mobiler Leiste */
+@utility pb-bottombar {
+  padding-bottom: var(--bottombar-height);
+}
+
+/* Padding-top = Header-Höhe; verhindert Inhalt hinter Sticky-Header */
+@utility pt-header {
+  padding-top: var(--header-height);
 }
