@@ -1,45 +1,53 @@
 /**
- * Startseite — Sprint 1 (Platzhalter)
+ * Startseite — Sprint 3 (statisch, Platzhalterinhalte)
  *
- * Minimale Landing-Page. Echte Startseite mit allen Modulen wird in Sprint 3
- * gebaut (§Sprint-Überblick).
+ * Konzept §4.1: „Der Pitch in einem Scroll" — Person → Können → Pfade.
+ * Modulreihenfolge (Sprintplan Sprint 3):
+ *   Hero → Intro → Was ich mache → Featured → Fakten-Strip →
+ *   Aus dem Journal → geteilter CTA → Footer (global aus layout.tsx).
  *
- * Verwendet ausschließlich Token-Utilities — kein Hardcode.
+ * Alle Module bestehen aus Sprint-2-Bausteinen (Button, FactsStrip,
+ * ProjectCard, SplitCTA) bzw. neuen Sprint-3-Sections in
+ * src/components/home/ — keine Duplikate.
+ *
+ * Inhalte sind Platzhalter im Tone of Voice (§7) — Sprint 5 ersetzt sie
+ * durch echte Payload-Daten, die Modulstruktur bleibt unverändert.
+ *
+ * Kein Hardcode (§0.2).
  */
 
-import Link from "next/link";
+import HeroSection from "@/components/home/HeroSection";
+import IntroSection from "@/components/home/IntroSection";
+import WhatIDoSection from "@/components/home/WhatIDoSection";
+import FeaturedSection from "@/components/home/FeaturedSection";
+import JournalTeaserSection from "@/components/home/JournalTeaserSection";
+import FactsStrip, { type Fact } from "@/components/ui/FactsStrip";
+import SplitCTA from "@/components/ui/SplitCTA";
+
+const FACTS: Fact[] = [
+  { value: "3×", label: "Mitteldistanz Triathlon" },
+  { value: "14", label: "Länder bereist" },
+  { value: "seit 2021", label: "Mit der Kamera unterwegs" },
+  { value: "∞", label: "Geschichten zu erzählen" },
+];
 
 export default function Home() {
   return (
-    <main className="flex-1 flex flex-col items-center justify-center min-h-screen bg-surface">
-      <div className="container-page text-center py-24">
+    <>
+      {/* Full-Bleed — bewusst außerhalb von container-page */}
+      <HeroSection />
 
-        <p className="type-label-caps text-primary mb-6">
-          Portfolio · Sprint 1
-        </p>
+      <div className="container-page">
+        <IntroSection className="section-gap" />
+        <WhatIDoSection className="section-gap" />
+        <FeaturedSection className="section-gap" />
+        <FactsStrip facts={FACTS} className="section-gap" />
+        <JournalTeaserSection className="section-gap" />
+        <SplitCTA className="section-gap" />
 
-        <h1 className="type-display-lg text-on-surface mb-8">
-          Kilian Siebert
-        </h1>
-
-        <p className="type-body-lg text-on-surface-variant max-w-lg mx-auto mb-12">
-          Fundament steht. Das Design-System ist geladen.{" "}
-          Vollständige Startseite folgt in Sprint 3.
-        </p>
-
-        {/* Interner Link zur Styleguide-Seite */}
-        <Link
-          href="/styleguide"
-          className="inline-flex items-center gap-2 type-label-caps text-on-primary bg-primary px-6 py-3 rounded-md hover:bg-primary-container transition-colors"
-        >
-          Design-System ansehen →
-        </Link>
-
-        <p className="type-label-caps text-outline-variant mt-16">
-          Sprint 2: Navigation & globale Bausteine
-        </p>
-
+        {/* Abstand vor globalem Footer */}
+        <div className="section-gap" />
       </div>
-    </main>
+    </>
   );
 }

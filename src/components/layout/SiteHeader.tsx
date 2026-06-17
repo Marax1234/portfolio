@@ -36,6 +36,11 @@ export default function SiteHeader() {
 
   return (
     <header
+      // Scroll-Position ist beim SSR unbekannt (Browser kann die Seite
+      // bereits gescrollt wiederherstellen, bevor React hydratisiert) —
+      // dieser Style ist bewusst eine Client-only-Progressive-Enhancement,
+      // kein Hydration-Bug. Daher hier gezielt suppressHydrationWarning.
+      suppressHydrationWarning
       className={[
         "fixed top-0 inset-x-0 z-50",
         "transition-all motion-reduce:transition-none",

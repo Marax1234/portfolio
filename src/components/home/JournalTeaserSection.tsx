@@ -1,0 +1,60 @@
+/**
+ * JournalTeaserSection — „Aus dem Journal" (Sprint 3)
+ *
+ * Konzept §4.1: „Journal-Teaser ist das Lebendige. Es zeigt: hier ist ein
+ * Mensch mit laufendem Output, kein totes Schaufenster." Nutzt die
+ * geteilte ProjectCard (Sprint 2) — gleiches Bauteil wie auf /arbeiten.
+ *
+ * Kein Hardcode (§0.2).
+ */
+
+import ProjectCard from "@/components/ui/ProjectCard";
+
+interface JournalEntry {
+  id: string;
+  title: string;
+  meta: string;
+  href: string;
+}
+
+const ENTRIES: JournalEntry[] = [
+  {
+    id: "journal-1",
+    title: "Durch Marokko — 14 Tage, 2.400 km",
+    meta: "Reise · März 2024",
+    href: "/journal/marokko-2024",
+  },
+  {
+    id: "journal-2",
+    title: "Mitteldistanz #3 — was beim dritten Mal anders war",
+    meta: "Sport · Mai 2024",
+    href: "/journal/mitteldistanz-3",
+  },
+  {
+    id: "journal-3",
+    title: "Hinter der Kamera bei Lisa & Max",
+    meta: "Behind-the-Scenes · Juni 2024",
+    href: "/journal/bts-lisa-max",
+  },
+];
+
+interface JournalTeaserSectionProps {
+  className?: string;
+}
+
+export default function JournalTeaserSection({ className = "" }: JournalTeaserSectionProps) {
+  return (
+    <section className={className}>
+      <p className="type-label-caps text-primary mb-3">Aus dem Journal</p>
+      <h2 className="type-headline-md text-on-surface mb-8">
+        Laufende Geschichten.
+      </h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {ENTRIES.map(({ id, title, meta, href }) => (
+          <ProjectCard key={id} id={id} title={title} meta={meta} href={href} />
+        ))}
+      </div>
+    </section>
+  );
+}

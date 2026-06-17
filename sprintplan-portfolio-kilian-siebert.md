@@ -74,34 +74,26 @@ Am Ende jedes Sprints ein kurzer Abschnitt mit:
 
 ---
 
-### Sprint 2 — Globale Bausteine & Navigation
+### Sprint 3 — Statische Startseite
 
-**Ziel:** Die wiederkehrenden Bausteine aus dem Konzept (Abschnitt 5) existieren als zentrale, design-konforme Komponenten.
+**Ziel:** Die wichtigste Seite (Konzept 4.1) steht komplett mit Platzhalterinhalten — der „Pitch in einem Scroll“ ist erlebbar.
 
 **Anforderungen**
-- **Layout-Grid** gemäß Design: 12-Spalten-Logik, Margins (mobil 20px / Desktop 64px), Gutter 24px, Section-Gap 120px, „Breathable Spacing“.
-- **Sticky-Nav:** Name links, vier Links rechts; schrumpft beim Scrollen; mobil Hamburger oder Bottom-Bar. Reduziert, ruhig.
-- **Footer:** Kontakt, Social-Links, Sitemap-Kurzversion, **Impressum & Datenschutz** (DE-Pflicht, gehört in Footer, nicht in Hauptnav).
-- **Kernkomponenten** (alle token-basiert):
-  - Buttons: Primary (Sage, Cream-Text), Secondary (Ghost, Mist-Blue-Border).
-  - Story-/Projekt-Karte (gemeinsames Bauteil für Journal & Arbeiten): Cover + Titel + Mini-Info, Hover-Verhalten.
-  - Fakten-Strip (3–4 Zahlen, wiederverwendbar).
-  - Geteilter CTA-Block („Anfragen“ vs. „Zusammenarbeiten“).
-  - Glassmorphism-Card (frosted, 16px Blur, 1px-Border statt Schatten).
-- **Komponenten-Galerie** (interne Route): zeigt alle Bausteine in mobil/Desktop.
+- Startseite mit allen Modulen in dieser Reihenfolge: Hero (Platzhalter-Standbild/Loop-Slot) → Intro „Ich in einem Absatz“ (Portrait + Text) → „Was ich mache“ (3 Kacheln) → Featured-Projekt → Fakten-Strip → „Aus dem Journal“ (2–3 Karten) → geteilter CTA → Footer.
+- Alle Texte als Platzhalter im richtigen **Tone of Voice** (trocken, konkret, erste Person) — als Stilbeweis.
+- Bilder über die Medien-Abstraktion (lokaler Fallback).
+- Hero hat einen klar definierten **Slot für den Video-Loop** (in Sprint 8 befüllt), aktuell mit Poster-/Standbild.
+- Vollständig responsive, asymmetrische/Split-Layouts gemäß Design.
 
 **Akzeptanzkriterien**
-- Jede Komponente bezieht 100% ihres Stylings aus den Tokens (kein Hardcode).
-- Nav-Schrumpfverhalten und mobile Variante funktionieren.
-- Footer enthält Impressum/Datenschutz-Platzhalterlinks.
-- **Zentralitäts-Test** erneut bestanden (Radius- oder Farbänderung schlägt galerieweit durch).
+- Komplette Startseite scrollbar auf Mobil und Desktop, visuell konform zu `design.md`.
+- Module nutzen die Bausteine aus Sprint 2 (keine Duplikate).
+- Hero-Video-Slot ist als austauschbarer Platzhalter erkennbar dokumentiert.
 
 **Out of Scope**
-- Reale Inhalte, CMS-Anbindung, echte Seiten.
+- Echte CMS-Daten, echtes Video, andere Seiten.
 
-**Context7-Pflicht:** nur falls neue UI-Bibliothek eingeführt wird.
-
-**Übergabe-Hinweis:** Karte und CTA-Block sind die wiederverwendeten Bauteile für Start/Arbeiten/Journal — Folge-Sprints bauen darauf auf, nicht neu.
+**Übergabe-Hinweis:** Hero-Loop = Platzhalter → **Sprint 8**. Inhalte = Platzhalter → werden in **Sprint 5** durch Payload-Daten ersetzt; Modulstruktur bleibt.
 
 ---
 
