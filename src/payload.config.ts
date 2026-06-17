@@ -11,6 +11,7 @@ import { JournalPosts } from "./collections/JournalPosts";
 import { Media } from "./collections/Media";
 import { Projects } from "./collections/Projects";
 import { Users } from "./collections/Users";
+import { AboutPage } from "./globals/AboutPage";
 import { SiteConfig } from "./globals/SiteConfig";
 
 const filename = fileURLToPath(import.meta.url);
@@ -33,7 +34,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Projects, JournalPosts, ContactSubmissions],
-  globals: [SiteConfig],
+  globals: [SiteConfig, AboutPage],
   editor: lexicalEditor(),
   db: postgresAdapter({
     pool: {

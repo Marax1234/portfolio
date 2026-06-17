@@ -74,31 +74,29 @@ Am Ende jedes Sprints ein kurzer Abschnitt mit:
 
 ---
 
+### Sprint 5 — Datengetriebene Seiten + ISR
 
-### Sprint 4 — Payload-Datenmodell & Admin
-
-**Ziel:** Das No-Code-Admin läuft im selben Codebase; das Datenmodell steht; Inhalte sind pflegbar.
+**Ziel:** Die statischen Seiten ziehen echte Inhalte aus Payload und aktualisieren sich automatisch.
 
 **Anforderungen**
-- Payload 3 im selben Codebase wie Next.js integrieren (kein zweiter Server).
-- **Collections** anlegen: Projekte, Journal-Beiträge, Medien, Seiten/Seiten-Konfiguration, Kontaktanfragen.
-- Felder pro Collection so modellieren, dass sie die Startseiten-Module und die Konzept-Seiten abdecken (Titel, Kategorie, Cover, Kontextfelder, Reihenfolge etc.).
-- Rich-Text via Lexical-Editor für Fließtextfelder.
-- Admin-Login/Account; Rollen vorbereitet (falls später mehr Personen).
-- PostgreSQL als Datenbank angebunden (lokal für Entwicklung).
-- Medien-Collection nutzt **vorerst weiterhin den lokalen Fallback** (Storage-Plugin-Anbindung erst Sprint 7), aber so vorbereitet, dass der Wechsel sauber ist.
+- Startseite (aus Sprint 3) auf Payload-Daten umstellen (Featured-Projekt, Journal-Teaser, Fakten, Texte aus Seiten-Konfiguration).
+- **Arbeiten**-Übersicht (Konzept 4.2): Grid/Masonry, Filter-Tabs (Alle/Hochzeiten/Reisen/Sport/Commercial), Cover pro Projekt, Hover-Info.
+- **Projekt-Detailseite:** Hero, knapper Kontext (Titel/Ort/für wen/2–3 Sätze), Bild-/Video-Strecke (Platzhalter-Medien), „vorheriges/nächstes Projekt“ (keine Sackgasse).
+- **Über mich** (Konzept 4.3): Portrait, Story-Text, Meilenstein-Timeline, „Was mich ausmacht“, Backstage-Grid.
+- **ISR / Auto-Regeneration:** Seiten sind statisch schnell, regenerieren bei Inhaltsänderung im Admin.
 
 **Akzeptanzkriterien**
-- Admin-Panel im Browser erreichbar; Login funktioniert.
-- Alle Collections sichtbar; ein Beispielprojekt + ein Beispiel-Journalbeitrag lassen sich **ohne Code** anlegen, speichern, bearbeiten.
-- Datenmodell deckt die im Konzept genannten Inhalte ab.
+- Inhalt im Admin ändern → Frontend zeigt die Änderung (nach Regeneration) ohne manuellen Rebuild.
+- Filter-Tabs in „Arbeiten“ funktionieren; max. eine Klicktiefe zur Detailseite.
+- Keine Detailseite endet in einer Sackgasse.
+- Alle Seiten mobil-first konform und design-konsistent.
 
 **Out of Scope**
-- Frontend-Anbindung der Daten (Sprint 5), Blocks-Layout (Sprint 6), echter Storage (Sprint 7), Formular-Verarbeitung (Sprint 9).
+- Journal-Block-Editor (Sprint 6), echter Storage/Video (7/8), Kontaktverarbeitung (9).
 
-**Context7-Pflicht:** Payload-3-Doku ziehen (Collections, Lexical, lokale API, Konfiguration). Versionsstand notieren.
+**Context7-Pflicht:** ISR/Draft-Mechanik in Next.js 16 + Payload-Datenabruf verifizieren.
 
-**Übergabe-Hinweis:** Schnittstellen-Vertrag „Frontend liest aus Payload-Collections“ ist ab jetzt definiert → Sprint 5 dockt an. Medien noch lokaler Fallback → Sprint 7.
+**Übergabe-Hinweis:** Medien weiterhin Fallback → Sprint 7. Video-Strecken-Slots Platzhalter → Sprint 8.
 
 
 ---

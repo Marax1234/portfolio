@@ -1,10 +1,12 @@
 /**
- * Seed-Skript (Sprint 4) — idempotent über die Local API.
+ * Seed-Skript (Sprint 4, erweitert in Sprint 5) — idempotent über die Local API.
  *
- * Legt einen Admin-User, ein Beispiel-Projekt, einen Beispiel-Journalbeitrag
- * und sinnvolle SiteConfig-Defaults an (Hero/Intro/Facts/CTAs aus den
- * Sprint-3-Platzhaltertexten). Mehrfaches Ausführen (`pnpm seed`) dupliziert
- * nichts — vor jedem `create` wird per `find`/Existenzprüfung gegengeprüft.
+ * Legt einen Admin-User, mehrere Beispiel-Projekte (je 1–2 pro Kategorie —
+ * Grid/Filter/Prev-Next auf /arbeiten vorführbar), Beispiel-Journalbeiträge,
+ * AboutPage-Defaults und sinnvolle SiteConfig-Defaults an (Hero/Intro/Facts/
+ * CTAs aus den Sprint-3-Platzhaltertexten). Mehrfaches Ausführen (`pnpm seed`)
+ * dupliziert nichts — vor jedem `create` wird per `find`/Existenzprüfung
+ * gegengeprüft.
  *
  * Ergänzt, ersetzt aber nicht die manuelle No-Code-Pflege im Admin-Panel
  * (Akzeptanzkriterium Sprint 4: Inhalte lassen sich ohne Code anlegen).
@@ -19,6 +21,29 @@ const PLACEHOLDER_IMAGE_PATH = path.resolve(
   dirname,
   "../../public/media/placeholder.svg",
 );
+
+/** Minimale, gültige Lexical-Editor-State-JSON für `richText`-Felder im Seed. */
+function lexicalParagraphs(paragraphs: string[]) {
+  return {
+    root: {
+      type: "root",
+      direction: "ltr" as const,
+      format: "" as const,
+      indent: 0,
+      version: 1,
+      children: paragraphs.map((text) => ({
+        type: "paragraph",
+        direction: "ltr" as const,
+        format: "" as const,
+        indent: 0,
+        version: 1,
+        children: [
+          { type: "text", detail: 0, format: 0, mode: "normal", style: "", text, version: 1 },
+        ],
+      })),
+    },
+  };
+}
 
 async function seed() {
   const payload = await getPayload({ config });
@@ -81,43 +106,222 @@ async function seed() {
         category: "sport",
         cover: placeholderMedia.id,
         excerpt: "Drei Disziplinen, ein Tag, ein Team vor Ort.",
+        location: "Hamburg",
+        client: "Triathlon Hamburg e.V.",
+        gallery: [
+          { image: placeholderMedia.id, caption: "Start — Alster" },
+          { image: placeholderMedia.id, caption: "Zieleinlauf" },
+        ],
         featured: true,
         ctaLabel: "Projekt ansehen",
         ctaHref: "/arbeiten/triathlon-em-2024-hamburg",
         order: 0,
-        publishedAt: new Date().toISOString(),
+        publishedAt: new Date("2024-06-01").toISOString(),
       },
+      // Standalone-Skript läuft außerhalb eines Next.js-Request-Kontexts —
+      // revalidatePath/revalidateTag (src/hooks/revalidate.ts) hätten hier
+      // keinen Static-Generation-Store. Im Admin/Frontend bleiben die Hooks aktiv.
+      context: { disableRevalidate: true },
     });
     payload.logger.info("Seed: Beispiel-Projekt angelegt.");
   } else {
-    payload.logger.info("Seed: Beispiel-Projekt existiert bereits — übersprungen.");
+    const existing = existingProject.docs[0];
+    // Sprint-4-Seed kannte `location`/`client`/`gallery` noch nicht (Sprint-5-
+    // Felder) — bei bereits angelegtem Projekt hier nachpflegen, statt nur
+    // die Existenzprüfung zu loggen.
+    if (!existing.location) {
+      await payload.update({
+        collection: "projects",
+        id: existing.id,
+        data: {
+          location: "Hamburg",
+          client: "Triathlon Hamburg e.V.",
+          gallery: [
+            { image: placeholderMedia.id, caption: "Start — Alster" },
+            { image: placeholderMedia.id, caption: "Zieleinlauf" },
+          ],
+        },
+        context: { disableRevalidate: true },
+      });
+      payload.logger.info("Seed: Beispiel-Projekt um Sprint-5-Felder ergänzt.");
+    } else {
+      payload.logger.info("Seed: Beispiel-Projekt existiert bereits — übersprungen.");
+    }
   }
 
-  // 3. Beispiel-Journalbeitrag
-  const existingJournalPost = await payload.find({
-    collection: "journal",
-    where: { slug: { equals: "marokko-2024" } },
-    limit: 1,
-  });
+  // 2b. Weitere Demo-Projekte — je 1 pro übriger Kategorie + ein zweites
+  // Sport-Projekt, damit Filter-Tabs und Prev/Next auf /arbeiten vorführbar
+  // sind (Sprint 5).
+  const additionalProjects = [
+    {
+      title: "Hochzeit Lisa & Max — Toskana",
+      slug: "hochzeit-lisa-max-toskana",
+      category: "hochzeiten" as const,
+      excerpt: "Ein Tag, zwei Familien, ein langer Sommerabend.",
+      location: "Toskana, Italien",
+      client: "Lisa & Max",
+      order: 1,
+      publishedAt: "2024-07-12",
+    },
+    {
+      title: "Porträt-Serie — Lokale Macher",
+      slug: "portraet-serie-lokale-macher",
+      category: "menschen" as const,
+      excerpt: "Fünf Porträts, fünf Werkstätten, eine Stadt.",
+      location: "Hamburg",
+      client: "Eigenprojekt",
+      order: 2,
+      publishedAt: "2024-04-20",
+    },
+    {
+      title: "Marokko Roadtrip — 14 Tage",
+      slug: "marokko-roadtrip-14-tage",
+      category: "reisen" as const,
+      excerpt: "2.400 km zwischen Atlas und Atlantik.",
+      location: "Marokko",
+      client: "Eigenprojekt",
+      order: 3,
+      publishedAt: "2024-03-01",
+    },
+    {
+      title: "Mitteldistanz #3 — Roth",
+      slug: "mitteldistanz-3-roth",
+      category: "sport" as const,
+      excerpt: "Drittes Rennen, dritte Lektion.",
+      location: "Roth",
+      client: "Eigenprojekt",
+      order: 4,
+      publishedAt: "2024-05-15",
+    },
+    {
+      title: "Sponsoring-Recap — Outdoor-Marke",
+      slug: "sponsoring-recap-outdoor-marke",
+      category: "commercial" as const,
+      excerpt: "Content-Paket für eine Saison Outdoor-Sponsoring.",
+      location: "Allgäu",
+      client: "Outdoor-Marke (NDA)",
+      order: 5,
+      publishedAt: "2024-09-02",
+    },
+  ];
 
-  if (existingJournalPost.totalDocs === 0) {
-    await payload.create({
-      collection: "journal",
-      data: {
-        title: "Durch Marokko — 14 Tage, 2.400 km",
-        slug: "marokko-2024",
-        category: "reise",
-        cover: placeholderMedia.id,
-        order: 0,
-        publishedAt: new Date("2024-03-01").toISOString(),
-      },
+  for (const demo of additionalProjects) {
+    const existing = await payload.find({
+      collection: "projects",
+      where: { slug: { equals: demo.slug } },
+      limit: 1,
     });
-    payload.logger.info("Seed: Beispiel-Journalbeitrag angelegt.");
-  } else {
-    payload.logger.info("Seed: Beispiel-Journalbeitrag existiert bereits — übersprungen.");
+
+    if (existing.totalDocs === 0) {
+      await payload.create({
+        collection: "projects",
+        data: {
+          title: demo.title,
+          slug: demo.slug,
+          category: demo.category,
+          cover: placeholderMedia.id,
+          excerpt: demo.excerpt,
+          location: demo.location,
+          client: demo.client,
+          gallery: [{ image: placeholderMedia.id }],
+          order: demo.order,
+          publishedAt: new Date(demo.publishedAt).toISOString(),
+        },
+        context: { disableRevalidate: true },
+      });
+      payload.logger.info(`Seed: Demo-Projekt „${demo.title}“ angelegt.`);
+    } else {
+      payload.logger.info(`Seed: Demo-Projekt „${demo.title}“ existiert bereits — übersprungen.`);
+    }
   }
 
-  // 4. SiteConfig-Defaults (nur setzen, falls noch leer)
+  // 3. Beispiel-Journalbeiträge (Sprint 5: 3 statt 1, damit der
+  // Journal-Teaser auf der Startseite gefüllt vorführbar ist).
+  const journalPosts = [
+    {
+      title: "Durch Marokko — 14 Tage, 2.400 km",
+      slug: "marokko-2024",
+      category: "reise" as const,
+      publishedAt: "2024-03-01",
+    },
+    {
+      title: "Mitteldistanz #3 — was beim dritten Mal anders war",
+      slug: "mitteldistanz-3",
+      category: "sport" as const,
+      publishedAt: "2024-05-01",
+    },
+    {
+      title: "Hinter der Kamera bei Lisa & Max",
+      slug: "bts-lisa-max",
+      category: "behind-the-scenes" as const,
+      publishedAt: "2024-07-13",
+    },
+  ];
+
+  for (const post of journalPosts) {
+    const existing = await payload.find({
+      collection: "journal",
+      where: { slug: { equals: post.slug } },
+      limit: 1,
+    });
+
+    if (existing.totalDocs === 0) {
+      await payload.create({
+        collection: "journal",
+        data: {
+          title: post.title,
+          slug: post.slug,
+          category: post.category,
+          cover: placeholderMedia.id,
+          order: 0,
+          publishedAt: new Date(post.publishedAt).toISOString(),
+        },
+        context: { disableRevalidate: true },
+      });
+      payload.logger.info(`Seed: Journalbeitrag „${post.title}“ angelegt.`);
+    } else {
+      payload.logger.info(`Seed: Journalbeitrag „${post.title}“ existiert bereits — übersprungen.`);
+    }
+  }
+
+  // 4. AboutPage-Defaults (nur setzen, falls noch leer)
+  const aboutPage = await payload.findGlobal({ slug: "about-page" });
+
+  if (!aboutPage.milestones || aboutPage.milestones.length === 0) {
+    await payload.updateGlobal({
+      slug: "about-page",
+      data: {
+        hero: {
+          eyebrow: "Über mich",
+          headline: "Kilian Siebert",
+          image: placeholderMedia.id,
+        },
+        story: lexicalParagraphs([
+          "Ich bin Kilian — seit 2021 mit der Kamera unterwegs, seit länger auf dem Rad.",
+          "Triathlon hat mir gezeigt, wie weit man kommt, wenn man dranbleibt. Genau das suche ich auch hinter der Kamera: keine gestellten Momente, sondern das, was wirklich passiert.",
+          "Hochzeit, Wettkampf oder 14 Länder unterwegs — am Ende geht es immer um dasselbe: festhalten, was sich zu erleben lohnt.",
+        ]),
+        milestones: [
+          { year: "2019", title: "Erster Triathlon", description: "Mitteldistanz, ohne Ahnung, mit Begeisterung." },
+          { year: "2021", title: "Erste Hochzeit hinter der Kamera" },
+          { year: "2022", title: "Erstes Auslandsprojekt — 14 Länder seither" },
+          { year: "2024", title: "Dritte Mitteldistanz, erstes Commercial-Projekt" },
+        ],
+        whatDefinesMe: [
+          { point: "Ausdauer", description: "Auf dem Rad wie hinter der Kamera." },
+          { point: "Direktheit", description: "Zeigen statt behaupten." },
+          { point: "Neugier", description: "14 Länder, noch lange nicht genug." },
+        ],
+        backstage: [{ image: placeholderMedia.id }, { image: placeholderMedia.id }, { image: placeholderMedia.id }],
+      },
+      context: { disableRevalidate: true },
+    });
+    payload.logger.info("Seed: AboutPage-Defaults gesetzt.");
+  } else {
+    payload.logger.info("Seed: AboutPage bereits befüllt — übersprungen.");
+  }
+
+  // 5. SiteConfig-Defaults (nur setzen, falls noch leer)
   //
   // Hinweis: `hero.name` ist über das Feld-`defaultValue` bereits beim
   // ersten Lesen des Globals befüllt (auch ohne diesen Seed) — als
@@ -150,6 +354,7 @@ async function seed() {
           { value: "3×", label: "Mitteldistanz" },
           { value: "14", label: "Länder" },
           { value: "seit 2021", label: "unterwegs" },
+          { value: "∞", label: "Geschichten zu erzählen" },
         ],
         ctaLeft: {
           headline: "Projekt anfragen.",
@@ -162,6 +367,7 @@ async function seed() {
           buttonHref: "/kooperationen",
         },
       },
+      context: { disableRevalidate: true },
     });
     payload.logger.info("Seed: SiteConfig-Defaults gesetzt.");
   } else {

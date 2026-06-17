@@ -9,11 +9,36 @@
  * OHNE dass aufrufende Komponenten geändert werden müssen (§0.5).
  */
 
-/** Referenz auf ein Medium — das, was Aufrufer übergeben. */
+/** Referenz auf ein Medium im lokalen Manifest — das, was Aufrufer übergeben. */
 export interface MediaRef {
   /** Eindeutiger Bezeichner des Mediums im aktuellen Provider. */
   id: string;
 }
+
+/**
+ * Schmale Teilmenge eines aufgelösten Payload-Upload-Dokuments — bewusst
+ * nicht der volle generierte `Media`-Typ, damit diese lib provider-/
+ * Payload-unabhängig bleibt (Sprint 5: §0.5 Modularität).
+ */
+export interface PayloadImageSource {
+  url: string;
+  width: number;
+  height: number;
+  alt?: string;
+}
+
+/** Referenz auf ein bereits aufgelöstes Payload-Medium (Sprint 5). */
+export interface PayloadMediaRef {
+  payload: PayloadImageSource;
+}
+
+/**
+ * Alles, was <Media> entgegennimmt: ein Manifest-Slot (Sprint 1, weiterhin
+ * für reine UI-Platzhalter) oder ein Payload-Upload-Dokument (Sprint 5).
+ * Sprint 7 tauscht nur, was hinter `id` steckt (LocalProvider →
+ * ObjectStorageProvider) — am Payload-Pfad ändert sich dabei nichts.
+ */
+export type AnyMediaRef = MediaRef | PayloadMediaRef;
 
 /** Aufgelöstes Medium — das, was Provider zurückgeben. */
 export interface ResolvedMedia {

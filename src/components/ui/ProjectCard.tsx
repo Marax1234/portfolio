@@ -5,10 +5,11 @@
  * Gleiches Bauteil für Journal und Arbeiten."
  *
  * Props:
- *   id       — MediaRef-ID für <Media> (Sprint 7: Object Storage)
- *   title    — Projekttitel
- *   meta     — kurze Info (Kategorie, Datum, Ort …)
- *   href     — Zielseite (Detailseite oder /journal/[slug])
+ *   id|payload — AnyMediaRef für <Media> (Manifest-Slot oder
+ *                Payload-Upload-Dokument, Sprint 5; Sprint 7: Object Storage)
+ *   title      — Projekttitel
+ *   meta       — kurze Info (Kategorie, Datum, Ort …)
+ *   href       — Zielseite (Detailseite oder /journal/[slug])
  *
  * Hover: dezente Skalierung des Cover-Bilds (reduced-motion-safe).
  * Gesamte Karte ist next/link (kein Wrapper-Link-Muster).
@@ -18,24 +19,24 @@
 
 import Link from "next/link";
 import Media from "@/components/Media";
+import type { AnyMediaRef } from "@/lib/media";
 
-interface ProjectCardProps {
-  id: string;
+type ProjectCardProps = AnyMediaRef & {
   title: string;
   meta?: string;
   href: string;
   /** Optionale alt-Text-Überschreibung (Standard: Titel) */
   alt?: string;
   sizes?: string;
-}
+};
 
 export default function ProjectCard({
-  id,
   title,
   meta,
   href,
   alt,
   sizes = "(max-width: 768px) 100vw, 50vw",
+  ...ref
 }: ProjectCardProps) {
   return (
     <Link
@@ -46,7 +47,7 @@ export default function ProjectCard({
       {/* Cover-Bild — 4:3 Seitenverhältnis */}
       <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4 / 3" }}>
         <Media
-          id={id}
+          {...ref}
           alt={alt ?? title}
           className="absolute inset-0 w-full h-full"
           imageClassName="object-cover w-full h-full transition-transform duration-500 motion-reduce:transition-none group-hover:scale-105"

@@ -3,9 +3,9 @@
  * Single Source of Truth für alle Link-Listen.
  * Header, MobileBottomBar und Footer lesen aus dieser Datei.
  *
- * Platzhalter-Routen (404 bis Sprint 3/5/9):
- *   /arbeiten → Sprint 5
- *   /ueber    → Sprint 5
+ * Platzhalter-Routen (404 bis zur jeweiligen Sprint-Umsetzung):
+ *   /arbeiten → Sprint 5 (datengetrieben, siehe src/app/(frontend)/arbeiten/)
+ *   /ueber    → Sprint 5 (siehe src/app/(frontend)/ueber/)
  *   /journal  → Sprint 6
  *   /kontakt  → Sprint 9
  */

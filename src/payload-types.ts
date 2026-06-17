@@ -95,9 +95,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'site-config': SiteConfig;
+    'about-page': AboutPage;
   };
   globalsSelect: {
     'site-config': SiteConfigSelect<false> | SiteConfigSelect<true>;
+    'about-page': AboutPageSelect<false> | AboutPageSelect<true>;
   };
   locale: null;
   widgets: {
@@ -231,6 +233,24 @@ export interface Project {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Für den Kontextblock der Detailseite (Konzept §4.2: „Ort · für wen“).
+   */
+  location?: string | null;
+  /**
+   * Auftraggeber/in oder Anlass, z.B. „Lisa & Max“ oder „Triathlon Hamburg e.V.“.
+   */
+  client?: string | null;
+  /**
+   * Detailseiten-Strecke (Konzept §4.2: „Bild ist Hauptsache, Text ist Beilage“). Video-Slots folgen Sprint 8 — vorerst Bilder.
+   */
+  gallery?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   featured?: boolean | null;
   ctaLabel?: string | null;
   /**
@@ -462,6 +482,15 @@ export interface ProjectsSelect<T extends boolean = true> {
   cover?: T;
   excerpt?: T;
   body?: T;
+  location?: T;
+  client?: T;
+  gallery?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
   featured?: T;
   ctaLabel?: T;
   ctaHref?: T;
@@ -570,6 +599,10 @@ export interface SiteConfig {
       [k: string]: unknown;
     } | null;
   };
+  whatIDo?: {
+    eyebrow?: string | null;
+    headline?: string | null;
+  };
   whatIDoTiles?:
     | {
         label: string;
@@ -578,6 +611,10 @@ export interface SiteConfig {
         id?: string | null;
       }[]
     | null;
+  journalTeaser?: {
+    eyebrow?: string | null;
+    headline?: string | null;
+  };
   facts?:
     | {
         value: string;
@@ -602,6 +639,68 @@ export interface SiteConfig {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "about-page".
+ */
+export interface AboutPage {
+  id: number;
+  hero?: {
+    eyebrow?: string | null;
+    headline?: string | null;
+    image?: (number | null) | Media;
+  };
+  /**
+   * 3–4 kurze Absätze, erste Person, zeigen statt behaupten (Konzept §7).
+   */
+  story?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Sportlich + kreativ gemischt, chronologisch, nüchtern (Konzept §4.3).
+   */
+  milestones?:
+    | {
+        year: string;
+        title: string;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * 3–5 Stichworte statt Floskeln (Konzept §4.3).
+   */
+  whatDefinesMe?:
+    | {
+        point: string;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Alltags-/Backstage-Bilder — lockerer Grid, „den Menschen greifen“.
+   */
+  backstage?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-config_select".
  */
 export interface SiteConfigSelect<T extends boolean = true> {
@@ -621,6 +720,12 @@ export interface SiteConfigSelect<T extends boolean = true> {
         portrait?: T;
         body?: T;
       };
+  whatIDo?:
+    | T
+    | {
+        eyebrow?: T;
+        headline?: T;
+      };
   whatIDoTiles?:
     | T
     | {
@@ -628,6 +733,12 @@ export interface SiteConfigSelect<T extends boolean = true> {
         href?: T;
         media?: T;
         id?: T;
+      };
+  journalTeaser?:
+    | T
+    | {
+        eyebrow?: T;
+        headline?: T;
       };
   facts?:
     | T
@@ -651,6 +762,44 @@ export interface SiteConfigSelect<T extends boolean = true> {
         subline?: T;
         buttonLabel?: T;
         buttonHref?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "about-page_select".
+ */
+export interface AboutPageSelect<T extends boolean = true> {
+  hero?:
+    | T
+    | {
+        eyebrow?: T;
+        headline?: T;
+        image?: T;
+      };
+  story?: T;
+  milestones?:
+    | T
+    | {
+        year?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  whatDefinesMe?:
+    | T
+    | {
+        point?: T;
+        description?: T;
+        id?: T;
+      };
+  backstage?:
+    | T
+    | {
+        image?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;

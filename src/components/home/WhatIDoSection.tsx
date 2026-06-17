@@ -6,45 +6,58 @@
  * (Filter-Tabs nach Kategorie folgen erst mit der echten Arbeiten-Seite,
  * Sprint 5). Hover-Video-Snippets (Konzept §4.1) sind Sprint 8.
  *
+ * Sprint 5: Kacheln + Überschrift kommen aus `SiteConfig.whatIDoTiles`/
+ * `SiteConfig.whatIDo` (Payload). Ohne Inhalte greifen die
+ * Sprint-3-Platzhalter-Kacheln als Fallback.
+ *
  * Kein Hardcode (§0.2).
  */
 
 import Link from "next/link";
 import Media from "@/components/Media";
+import type { AnyMediaRef } from "@/lib/media";
 
 interface Tile {
-  id: string;
+  key: string;
   label: string;
+  href: string;
+  ref: AnyMediaRef;
 }
 
-const TILES: Tile[] = [
-  { id: "tile-menschen", label: "Menschen" },
-  { id: "tile-reisen", label: "Reisen" },
-  { id: "tile-sport", label: "Sport" },
+const FALLBACK_TILES: Tile[] = [
+  { key: "tile-menschen", label: "Menschen", href: "/arbeiten", ref: { id: "tile-menschen" } },
+  { key: "tile-reisen", label: "Reisen", href: "/arbeiten", ref: { id: "tile-reisen" } },
+  { key: "tile-sport", label: "Sport", href: "/arbeiten", ref: { id: "tile-sport" } },
 ];
 
 interface WhatIDoSectionProps {
+  eyebrow?: string;
+  headline?: string;
+  tiles?: Tile[];
   className?: string;
 }
 
-export default function WhatIDoSection({ className = "" }: WhatIDoSectionProps) {
+export default function WhatIDoSection({
+  eyebrow = "Was ich mache",
+  headline = "Menschen, Reisen, Sport.",
+  tiles = FALLBACK_TILES,
+  className = "",
+}: WhatIDoSectionProps) {
   return (
     <section className={className}>
-      <p className="type-label-caps text-primary mb-3">Was ich mache</p>
-      <h2 className="type-headline-md text-on-surface mb-8">
-        Menschen, Reisen, Sport.
-      </h2>
+      <p className="type-label-caps text-primary mb-3">{eyebrow}</p>
+      <h2 className="type-headline-md text-on-surface mb-8">{headline}</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {TILES.map(({ id, label }) => (
+        {tiles.map(({ key, label, href, ref }) => (
           <Link
-            key={id}
-            href="/arbeiten"
+            key={key}
+            href={href}
             className="group relative block w-full overflow-hidden rounded-xl"
             style={{ aspectRatio: "1 / 1" }}
           >
             <Media
-              id={id}
+              {...ref}
               alt={label}
               className="absolute inset-0 w-full h-full"
               imageClassName="object-cover w-full h-full transition-transform duration-500 motion-reduce:transition-none group-hover:scale-105"

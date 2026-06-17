@@ -1,4 +1,5 @@
 import type { GlobalConfig } from "payload";
+import { revalidateSiteConfig } from "../hooks/revalidate";
 
 /**
  * SiteConfig — Singleton-Inhalte der Startseite, die in Sprint 3 inline
@@ -11,6 +12,9 @@ export const SiteConfig: GlobalConfig = {
   label: "Seiten-Konfiguration",
   admin: {
     group: "Inhalte",
+  },
+  hooks: {
+    afterChange: [revalidateSiteConfig],
   },
   fields: [
     {
@@ -46,6 +50,15 @@ export const SiteConfig: GlobalConfig = {
       ],
     },
     {
+      name: "whatIDo",
+      type: "group",
+      label: "„Was ich mache“ — Überschrift",
+      fields: [
+        { name: "eyebrow", type: "text", defaultValue: "Was ich mache" },
+        { name: "headline", type: "text", defaultValue: "Menschen, Reisen, Sport." },
+      ],
+    },
+    {
       name: "whatIDoTiles",
       label: "„Was ich mache“ — Kacheln",
       type: "array",
@@ -55,6 +68,15 @@ export const SiteConfig: GlobalConfig = {
         { name: "label", type: "text", required: true },
         { name: "href", type: "text", required: true, defaultValue: "/arbeiten" },
         { name: "media", type: "upload", relationTo: "media", required: true },
+      ],
+    },
+    {
+      name: "journalTeaser",
+      type: "group",
+      label: "„Aus dem Journal“ — Überschrift",
+      fields: [
+        { name: "eyebrow", type: "text", defaultValue: "Aus dem Journal" },
+        { name: "headline", type: "text", defaultValue: "Laufende Geschichten." },
       ],
     },
     {

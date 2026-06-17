@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { slugField } from "payload";
+import { revalidateJournal, revalidateJournalDelete } from "../hooks/revalidate";
 
 /**
  * JournalPosts — Datenmodell für „Journal“ + JournalTeaserSection
@@ -22,6 +23,10 @@ export const JournalPosts: CollectionConfig = {
     useAsTitle: "title",
     defaultColumns: ["title", "category", "publishedAt"],
     group: "Inhalte",
+  },
+  hooks: {
+    afterChange: [revalidateJournal],
+    afterDelete: [revalidateJournalDelete],
   },
   fields: [
     {

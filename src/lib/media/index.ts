@@ -7,7 +7,15 @@
  * Sprint 7: `localProvider` durch `objectStorageProvider` ersetzen.
  */
 
-export type { MediaRef, ResolvedMedia, MediaProvider } from "./types";
+export type {
+  MediaRef,
+  PayloadImageSource,
+  PayloadMediaRef,
+  AnyMediaRef,
+  ResolvedMedia,
+  MediaProvider,
+} from "./types";
+export { payloadMediaRef, resolvePayloadMedia } from "./payload";
 
 import localProvider from "./local-provider";
 

@@ -2,8 +2,10 @@
  * <Media> — universelle Bild-Komponente (RSC-kompatibel)
  *
  * Einziger erlaubter Weg, Bilder im Portfolio darzustellen.
- * Aufrufer übergeben eine MediaRef (id) — nie Pfade, URLs oder
- * Implementierungsdetails des Providers.
+ * Aufrufer übergeben eine AnyMediaRef — entweder einen Manifest-Slot
+ * (`id`, Sprint 1) oder ein bereits aufgelöstes Payload-Upload-Dokument
+ * (`payload`, Sprint 5) — nie Pfade, URLs oder Implementierungsdetails
+ * des Providers direkt.
  *
  * Datenfluss:
  *   <Media id="placeholder" alt="…" />
@@ -11,15 +13,20 @@
  *   → ResolvedMedia { src, width, height, … }
  *   → <Image … />
  *
+ *   <Media payload={payloadMediaRef(project.cover)!} />
+ *   → resolvePayloadMedia(source)
+ *   → ResolvedMedia { … }
+ *   → <Image … />
+ *
  * Sprint 7: mediaProvider wird auf Object Storage umgestellt —
- * diese Komponente bleibt unverändert.
+ * diese Komponente bleibt unverändert (nur der `id`-Zweig wechselt intern).
  */
 
 import Image from "next/image";
-import { mediaProvider } from "@/lib/media";
-import type { MediaRef } from "@/lib/media";
+import { mediaProvider, resolvePayloadMedia } from "@/lib/media";
+import type { AnyMediaRef } from "@/lib/media";
 
-interface MediaProps extends MediaRef {
+interface MediaOwnProps {
   /** Alt-Text — überschreibt den Manifest-Default wenn angegeben. */
   alt?: string;
   /**
@@ -41,19 +48,24 @@ interface MediaProps extends MediaRef {
   sizes?: string;
 }
 
+type MediaProps = AnyMediaRef & MediaOwnProps;
+
 /**
  * RSC-Komponente — kein "use client" nötig, da keine Client-State-Logik.
  * Kann in Server Components direkt verwendet werden.
  */
 export default async function Media({
-  id,
   alt,
   className,
   imageClassName = "object-cover",
   priority = false,
   sizes = "100vw",
+  ...ref
 }: MediaProps) {
-  const media = await mediaProvider.resolve({ id });
+  const media =
+    "payload" in ref
+      ? resolvePayloadMedia(ref.payload)
+      : await mediaProvider.resolve({ id: ref.id });
 
   return (
     <div className={className ?? "relative w-full"}>
