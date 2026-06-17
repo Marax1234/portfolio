@@ -2,18 +2,32 @@
   "name": "portfolio",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "check": "pnpm typecheck && pnpm lint"
+    "check": "pnpm typecheck && pnpm lint",
+    "payload": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload",
+    "generate:types": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload generate:types",
+    "generate:importmap": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload generate:importmap",
+    "seed": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload run src/seed/index.ts",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d",
+    "db:down": "docker compose -f docker-compose.dev.yml down"
   },
   "dependencies": {
+    "@payloadcms/db-postgres": "3.85.1",
+    "@payloadcms/next": "3.85.1",
+    "@payloadcms/richtext-lexical": "3.85.1",
+    "@payloadcms/ui": "3.85.1",
+    "graphql": "^17.0.1",
     "next": "16.2.9",
+    "payload": "3.85.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "^0.35.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -23,7 +37,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["sharp", "unrs-resolver"]

@@ -29,4 +29,5 @@ yarn-debug.log*
 yarn-error.log*
 
 # Payload CMS (Sprint 4)
-# media/              ← Payload-Uploads; in Produktion Object Storage
+# Payload-Uploads (lokaler Fallback) — in Produktion Object Storage (Sprint 7)
+media/

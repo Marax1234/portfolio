@@ -1,0 +1,23 @@
+# Dev-only Postgres für Sprint 4 (Payload-Datenmodell & Admin).
+#
+# Bewusst getrennt vom produktiven Compose-Setup (siehe Sprintplan §4
+# „Ausblick: Post-Development“ — App/Postgres/MinIO/Umami/Caddy). Dieses
+# File startet ausschließlich eine lokale Entwicklungsdatenbank.
+#
+# Verwendung: pnpm db:up / pnpm db:down
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio
+      POSTGRES_DB: portfolio
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

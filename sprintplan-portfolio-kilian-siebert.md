@@ -74,26 +74,32 @@ Am Ende jedes Sprints ein kurzer Abschnitt mit:
 
 ---
 
-### Sprint 3 — Statische Startseite
 
-**Ziel:** Die wichtigste Seite (Konzept 4.1) steht komplett mit Platzhalterinhalten — der „Pitch in einem Scroll“ ist erlebbar.
+### Sprint 4 — Payload-Datenmodell & Admin
+
+**Ziel:** Das No-Code-Admin läuft im selben Codebase; das Datenmodell steht; Inhalte sind pflegbar.
 
 **Anforderungen**
-- Startseite mit allen Modulen in dieser Reihenfolge: Hero (Platzhalter-Standbild/Loop-Slot) → Intro „Ich in einem Absatz“ (Portrait + Text) → „Was ich mache“ (3 Kacheln) → Featured-Projekt → Fakten-Strip → „Aus dem Journal“ (2–3 Karten) → geteilter CTA → Footer.
-- Alle Texte als Platzhalter im richtigen **Tone of Voice** (trocken, konkret, erste Person) — als Stilbeweis.
-- Bilder über die Medien-Abstraktion (lokaler Fallback).
-- Hero hat einen klar definierten **Slot für den Video-Loop** (in Sprint 8 befüllt), aktuell mit Poster-/Standbild.
-- Vollständig responsive, asymmetrische/Split-Layouts gemäß Design.
+- Payload 3 im selben Codebase wie Next.js integrieren (kein zweiter Server).
+- **Collections** anlegen: Projekte, Journal-Beiträge, Medien, Seiten/Seiten-Konfiguration, Kontaktanfragen.
+- Felder pro Collection so modellieren, dass sie die Startseiten-Module und die Konzept-Seiten abdecken (Titel, Kategorie, Cover, Kontextfelder, Reihenfolge etc.).
+- Rich-Text via Lexical-Editor für Fließtextfelder.
+- Admin-Login/Account; Rollen vorbereitet (falls später mehr Personen).
+- PostgreSQL als Datenbank angebunden (lokal für Entwicklung).
+- Medien-Collection nutzt **vorerst weiterhin den lokalen Fallback** (Storage-Plugin-Anbindung erst Sprint 7), aber so vorbereitet, dass der Wechsel sauber ist.
 
 **Akzeptanzkriterien**
-- Komplette Startseite scrollbar auf Mobil und Desktop, visuell konform zu `design.md`.
-- Module nutzen die Bausteine aus Sprint 2 (keine Duplikate).
-- Hero-Video-Slot ist als austauschbarer Platzhalter erkennbar dokumentiert.
+- Admin-Panel im Browser erreichbar; Login funktioniert.
+- Alle Collections sichtbar; ein Beispielprojekt + ein Beispiel-Journalbeitrag lassen sich **ohne Code** anlegen, speichern, bearbeiten.
+- Datenmodell deckt die im Konzept genannten Inhalte ab.
 
 **Out of Scope**
-- Echte CMS-Daten, echtes Video, andere Seiten.
+- Frontend-Anbindung der Daten (Sprint 5), Blocks-Layout (Sprint 6), echter Storage (Sprint 7), Formular-Verarbeitung (Sprint 9).
 
-**Übergabe-Hinweis:** Hero-Loop = Platzhalter → **Sprint 8**. Inhalte = Platzhalter → werden in **Sprint 5** durch Payload-Daten ersetzt; Modulstruktur bleibt.
+**Context7-Pflicht:** Payload-3-Doku ziehen (Collections, Lexical, lokale API, Konfiguration). Versionsstand notieren.
+
+**Übergabe-Hinweis:** Schnittstellen-Vertrag „Frontend liest aus Payload-Collections“ ist ab jetzt definiert → Sprint 5 dockt an. Medien noch lokaler Fallback → Sprint 7.
+
 
 ---
 
