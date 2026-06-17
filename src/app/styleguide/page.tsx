@@ -501,7 +501,7 @@ export default function StyleguidePage() {
         {/* Footer */}
         <div className="text-center py-8">
           <p className="type-label-caps text-outline-variant">
-            Sprint 1 · Design-System „Tonal Serenity / Synesthetic Light"
+            Sprint 1 · Design-System &bdquo;Tonal Serenity / Synesthetic Light&ldquo;
           </p>
         </div>
 

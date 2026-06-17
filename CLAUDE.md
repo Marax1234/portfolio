@@ -1,5 +1,8 @@
 # Portfolio Kilian Siebert — Entwicklungsregeln
 
+## Skills
+- Nutze den `frontend-design` Skill für alle UI-Entscheidungen
+
 ## Pflichtlektüre vor jeder UI-Arbeit
 
 Vor jeder neuen UI-Arbeit folgende Dateien einlesen:
@@ -58,6 +61,16 @@ Komponenten / Seiten          ← nur Utilities oder var(--…)
 - Tailwind v4 (CSS-first, kein tailwind.config.js)
 - pnpm als Paketmanager
 - Design-System „Tonal Serenity / Synesthetic Light"
+
+## Qualitäts-Check nach jedem Sprint
+
+Am Ende jedes Sprints, vor der Übergabe, einmal ausführen:
+
+```bash
+pnpm check
+```
+
+Das läuft `tsc --noEmit` (Typsicherheit) und `eslint src/` (Code-Qualität) nacheinander durch. Erwartet: beide ohne Fehler. Sprint gilt erst als abgenommen, wenn `check` grün ist.
 
 ## Context7 (§0.3)
 
