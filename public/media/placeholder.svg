@@ -1,0 +1,41 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Platzhalter-Bild Sprint 1">
+  <!-- Background: Cream Base (#FAF9F6) -->
+  <rect width="800" height="600" fill="#FAF9F6"/>
+
+  <!-- Decorative elements using design system colors -->
+  <!-- Sage muted panel -->
+  <rect x="0" y="0" width="320" height="600" fill="#849483" opacity="0.12"/>
+  <!-- Mist Blue panel -->
+  <rect x="480" y="0" width="320" height="600" fill="#D1DBE2" opacity="0.18"/>
+
+  <!-- Center card: Glassmorphism style (white 80% opacity) -->
+  <rect x="160" y="160" width="480" height="280" rx="24" fill="white" fill-opacity="0.82"/>
+  <rect x="160" y="160" width="480" height="280" rx="24" fill="none" stroke="#C4C8C0" stroke-width="1"/>
+
+  <!-- Sage circle accent -->
+  <circle cx="280" cy="300" r="48" fill="#849483" opacity="0.22"/>
+  <circle cx="280" cy="300" r="32" fill="#516051" opacity="0.18"/>
+
+  <!-- Text labels -->
+  <text x="400" y="270" text-anchor="middle" font-family="Georgia, serif"
+        font-size="18" font-weight="300" fill="#333732" letter-spacing="-0.02em">
+    Platzhalter · Sprint 1
+  </text>
+  <text x="400" y="298" text-anchor="middle" font-family="Georgia, serif"
+        font-size="13" font-weight="400" fill="#849483">
+    Lokaler Fallback → Sprint 7: Object Storage
+  </text>
+  <text x="400" y="332" text-anchor="middle" font-family="Georgia, serif"
+        font-size="11" fill="#747872">
+    800 × 600 · via MediaProvider
+  </text>
+
+  <!-- Color chip row -->
+  <rect x="240" y="370" width="32" height="20" rx="4" fill="#516051"/>
+  <rect x="280" y="370" width="32" height="20" rx="4" fill="#849483"/>
+  <rect x="320" y="370" width="32" height="20" rx="4" fill="#E8D5D5"/>
+  <rect x="360" y="370" width="32" height="20" rx="4" fill="#D1DBE2"/>
+  <rect x="400" y="370" width="32" height="20" rx="4" fill="#333732"/>
+  <rect x="440" y="370" width="32" height="20" rx="4" fill="#FAF9F6" stroke="#C4C8C0" stroke-width="1"/>
+  <rect x="480" y="370" width="32" height="20" rx="4" fill="#695B5B"/>
+</svg>
