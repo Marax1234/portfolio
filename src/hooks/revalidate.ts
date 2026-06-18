@@ -70,3 +70,31 @@ export const revalidateAboutPage: GlobalAfterChangeHook = ({ doc, req: { context
   revalidate("about-page", ["/ueber"]);
   return doc;
 };
+
+/**
+ * Media-Dokumente werden von Projekten, Journalbeiträgen, SiteConfig und
+ * AboutPage referenziert (Relationship-Felder) — ohne Rückwärtssuche lässt
+ * sich nicht eingrenzen, welche dieser Entitäten ein bestimmtes Bild
+ * tatsächlich verwendet. Statt einer teuren Reverse-Lookup-Query daher
+ * bewusst grobkörnig: jede Änderung an `media` invalidiert alle vier Tags +
+ * die zugehörigen Pfade. Tausch eines Bildes im Admin (z.B. Intro-Portrait)
+ * zeigt sich damit sofort im Frontend, ohne dass zusätzlich das jeweilige
+ * Projekt/Global gespeichert werden muss.
+ */
+export const revalidateMedia: CollectionAfterChangeHook = ({ doc, req: { context } }) => {
+  if (context.disableRevalidate) return doc;
+  revalidate("projects", ["/", "/arbeiten"]);
+  revalidate("journal", ["/", "/journal"]);
+  revalidate("site-config", ["/"]);
+  revalidate("about-page", ["/ueber"]);
+  return doc;
+};
+
+export const revalidateMediaDelete: CollectionAfterDeleteHook = ({ doc, req: { context } }) => {
+  if (context.disableRevalidate) return doc;
+  revalidate("projects", ["/", "/arbeiten"]);
+  revalidate("journal", ["/", "/journal"]);
+  revalidate("site-config", ["/"]);
+  revalidate("about-page", ["/ueber"]);
+  return doc;
+};

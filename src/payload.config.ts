@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import path from "path";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import { s3Storage } from "@payloadcms/storage-s3";
 import type { Config } from "payload";
 import { buildConfig } from "payload";
 import sharp from "sharp";
@@ -41,6 +42,33 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI,
     },
   }),
+  // Sprint 7: Uploads der `media`-Collection landen im Object Storage
+  // (MinIO lokal, siehe docker-compose.dev.yml) statt im lokalen `staticDir`
+  // — Collection-Schema bleibt stabil (src/collections/Media.ts).
+  // `disablePayloadAccessControl` + `generateFileURL` liefern direkte
+  // Storage-URLs statt eines Payload-Proxys (Produktions-Pendant: CDN vor
+  // Object Storage, siehe Sprintplan §4 „Ausblick").
+  plugins: [
+    s3Storage({
+      collections: {
+        media: {
+          disablePayloadAccessControl: true,
+          generateFileURL: ({ filename, prefix }) =>
+            `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${prefix ? `${prefix}/` : ""}${filename}`,
+        },
+      },
+      bucket: process.env.S3_BUCKET ?? "",
+      config: {
+        endpoint: process.env.S3_ENDPOINT,
+        region: process.env.S3_REGION,
+        forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+        },
+      },
+    }),
+  ],
   // Bekannte Typdiskrepanz zwischen sharps Funktions-Overloads und Payloads
   // `SharpDependency`-Typ (siehe Payload-GitHub-Issues zu `sharp`-Typings) —
   // Laufzeitverhalten ist unverändert, daher expliziter, dokumentierter Cast.

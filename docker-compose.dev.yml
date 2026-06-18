@@ -1,8 +1,7 @@
-# Dev-only Postgres für Sprint 4 (Payload-Datenmodell & Admin).
-#
-# Bewusst getrennt vom produktiven Compose-Setup (siehe Sprintplan §4
-# „Ausblick: Post-Development“ — App/Postgres/MinIO/Umami/Caddy). Dieses
-# File startet ausschließlich eine lokale Entwicklungsdatenbank.
+# Dev-Infrastruktur: Postgres (Sprint 4) + MinIO (Sprint 7 — Bild-Pipeline &
+# Object Storage). Bewusst getrennt vom produktiven Compose-Setup (siehe
+# Sprintplan §4 „Ausblick: Post-Development" — App/Postgres/MinIO/Umami/
+# Caddy). Dieses File startet ausschließlich lokale Entwicklungsdienste.
 #
 # Verwendung: pnpm db:up / pnpm db:down
 
@@ -19,5 +18,43 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      # Host-Ports 9100/9101 statt der MinIO-Standardports 9000/9001 — auf
+      # dieser Maschine belegt ein anderer Container (Portainer) bereits
+      # 9000. Container-intern bleibt MinIO auf 9000/9001 (siehe
+      # `createbuckets`, das per Docker-Netzwerk auf `minio:9000` zugreift).
+      - "9100:9000" # S3-API
+      - "9101:9001" # Web-Console
+    volumes:
+      - minio-data:/data
+
+  # Einmaliger Bootstrap: legt den Bucket an, setzt eine Public-Read-Policy
+  # (Sprint 7 liefert Bilder direkt aus MinIO, siehe payload.config.ts) und
+  # lädt den statischen Platzhalter für den manifest-`id`-Zweig
+  # (src/lib/media/object-storage-provider.ts) hoch. Läuft bei jedem
+  # `pnpm db:up` erneut — alle Schritte sind idempotent.
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    volumes:
+      - ./public/media:/assets:ro
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 1; done;
+      mc mb --ignore-existing local/portfolio-media;
+      mc anonymous set download local/portfolio-media;
+      mc cp /assets/placeholder.svg local/portfolio-media/static/placeholder.svg;
+      exit 0;
+      "
+
 volumes:
   pgdata:
+  minio-data:

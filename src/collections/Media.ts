@@ -1,19 +1,28 @@
 import type { CollectionConfig } from "payload";
 
+import { revalidateMedia, revalidateMediaDelete } from "../hooks/revalidate";
+
 /**
  * Media — Datenmodell für die Medien-Abstraktion (Sprint 1: src/lib/media/).
  *
- * PLATZHALTER: Schreibt lokal nach `media/` (staticDir). Sprint 7 ersetzt
- * dies durch das S3-/Object-Storage-Plugin — Collection-Schema und
- * Feldnamen bleiben dabei stabil, nur der Storage-Adapter wechselt.
+ * Uploads landen seit Sprint 7 im Object Storage (MinIO lokal, siehe
+ * docker-compose.dev.yml) statt im lokalen `staticDir` — der S3-Storage-
+ * Adapter wird in `payload.config.ts` (`plugins: [s3Storage(...)]`)
+ * registriert und setzt `disableLocalStorage` automatisch. Collection-
+ * Schema und Feldnamen bleiben dabei stabil (`staticDir` ist nur noch der
+ * lokale Schema-Defaultwert, wird zur Laufzeit nicht mehr beschrieben).
  *
- * `imageSizes` ist bereits für responsive Bildvarianten vorbereitet
- * (siehe Sprint 7), wird in Sprint 4 aber noch nicht im Frontend genutzt.
+ * `imageSizes` erzeugt die responsiven Bildvarianten, die das S3-Plugin
+ * zusammen mit dem Original in den Bucket schreibt.
  */
 export const Media: CollectionConfig = {
   slug: "media",
   admin: {
     group: "Medien",
+  },
+  hooks: {
+    afterChange: [revalidateMedia],
+    afterDelete: [revalidateMediaDelete],
   },
   upload: {
     staticDir: "media",

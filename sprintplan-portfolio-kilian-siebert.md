@@ -74,30 +74,27 @@ Am Ende jedes Sprints ein kurzer Abschnitt mit:
 
 ---
 
-### Sprint 6 — Journal mit Blocks & Live Preview
-
-**Ziel:** Journal-Beiträge sind frei aus Bausteinen baubar; Befüllen mit Echtzeit-Vorschau.
-
+### Sprint 7 — Bild-Pipeline & Object Storage (Fallback-Ablösung)
+ 
+**Ziel:** Der lokale Bild-Fallback wird durch den echten Object-Storage ersetzt — **ohne UI-Umbau**, dank Sprint-1-Abstraktion.
+ 
 **Anforderungen**
-- **Block-System** für Journal-Beiträge: Bibliothek vordefinierter Layout-Blöcke (Vollbild-Bild, Galerie, Zwei-Spalten, Video, Zitat, Text). Frei stapel- und sortierbar pro Beitrag — Layout-Freiheit ohne Code.
-- Jeder Block rendert design-konform über die zentralen Tokens und nutzt vorhandene Bausteine.
-- **Journal-Übersicht** (Konzept 4.4): Feed mit großem Cover, Titel, Datum/Kategorie, Teaser.
-- **Beitrags-Detailseite:** schmale Lesespalte, Bilder/Video-Loops in voller Breite eingestreut, verwandte Beiträge + dezenter Social-Hinweis.
-- **Live Preview** aktiviert: beim Befüllen Echtzeit-Vorschau des Beitrags auf der echten Seite.
-
+- S3-kompatiblen Object Storage anbinden (MinIO lokal für Entwicklung; produktiver Anbieter erst im Deployment, hier out of scope).
+- Payload **Storage-Plugin** so konfigurieren, dass Uploads in den Object Storage geschrieben werden statt auf den App-Server.
+- **Responsive Bildvarianten** beim Upload generieren (moderne Formate, mehrere Größen) und über die eingebaute Bild-Komponente ausliefern.
+- Die **Medien-Abstraktion aus Sprint 1** auf die neue Quelle umstellen — aufrufende Komponenten bleiben unverändert.
+- Bestehende Beispielbilder migrieren/neu hochladen über das Admin.
 **Akzeptanzkriterien**
-- Im Admin lässt sich ein Beitrag aus mehreren Blöcken **ohne Code** zusammenstellen, umsortieren, speichern.
-- Live Preview zeigt Änderungen sichtbar nahezu in Echtzeit.
-- Block-Rendering ist 100% token-basiert; ein Token-Wechsel schlägt in allen Blöcken durch.
-- Übersicht + Detailseite responsive und design-konform.
-
+- Upload im Admin landet im Object Storage (nicht im App-Container).
+- Frontend zeigt Bilder aus dem Storage; aufrufende Komponenten wurden **nicht** geändert (Beleg für gelungene Abstraktion).
+- Responsive Varianten werden ausgeliefert; mobil kleinere Bilder.
+- Zentralitäts-/Design-Tests weiterhin grün.
 **Out of Scope**
-- Echter Storage (Sprint 7), echtes HLS-Video (Sprint 8). Video-Block nutzt vorerst Platzhalter/Standbild.
-
-**Context7-Pflicht:** Payload Blocks + Live Preview (Server Components / RefreshRouteOnSave) aktuell ziehen.
-
-**Übergabe-Hinweis:** Video-Block hat definierten Slot → echte HLS-Wiedergabe in Sprint 8.
-
+- CDN-Auslieferung (Deployment, Ausblick). Video-Pipeline (Sprint 8).
+**Context7-Pflicht:** Payload Storage-Plugin + S3/MinIO-Konfiguration aktuell ziehen.
+ 
+**Übergabe-Hinweis:** Damit ist der in Sprint 1 angekündigte Fallback abgelöst. CDN bleibt bewusst Deployment-Thema.
+ 
 ---
 
 ## 4. Ausblick: Post-Development (NICHT Teil dieses Plans)

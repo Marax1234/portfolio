@@ -29,5 +29,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Payload CMS (Sprint 4)
-# Payload-Uploads (lokaler Fallback) — in Produktion Object Storage (Sprint 7)
-media/
+# Payload-Uploads (lokaler Fallback, jetzt obsolet seit Sprint 7 — Uploads
+# landen im Object Storage). Auf Repo-Root verankert, damit das Pattern
+# nicht versehentlich src/lib/media/ (Medien-Abstraktion) mitverschluckt.
+/media/

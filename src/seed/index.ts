@@ -15,6 +15,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import config from "@payload-config";
 import { getPayload } from "payload";
+import sharp from "sharp";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLACEHOLDER_IMAGE_PATH = path.resolve(
@@ -48,10 +49,17 @@ function lexicalParagraphs(paragraphs: string[]) {
 async function seed() {
   const payload = await getPayload({ config });
 
-  // 0. Platzhalter-Medium (gleiches SVG wie der lokale Media-Fallback aus
-  // Sprint 1 — dient hier nur dazu, die `required`-Upload-Felder der
+  // 0. Platzhalter-Medium — dient dazu, die `required`-Upload-Felder der
   // Beispiel-Inhalte zu erfüllen; echte Bilder kommen über den Admin oder
-  // Sprint 5/7).
+  // Sprint 5.
+  //
+  // Sprint 7: Das CMS-Original muss ein Rasterbild sein, kein SVG — sonst
+  // erzeugt Sharp keine sinnvollen `imageSizes`-Varianten (thumbnail/card/
+  // hero) und next/image würde die Optimierung umgehen. Das Platzhalter-SVG
+  // (gleiche Quelle wie der manifest-`id`-Zweig, siehe
+  // src/lib/media/object-storage-provider.ts) wird daher mit dem ohnehin
+  // konfigurierten `sharp` zu PNG gerendert und als Buffer hochgeladen — das
+  // S3-Storage-Plugin schreibt Original und Varianten dann nach MinIO.
   let placeholderMedia = (
     await payload.find({
       collection: "media",
@@ -61,12 +69,51 @@ async function seed() {
   ).docs[0];
 
   if (!placeholderMedia) {
+    const placeholderBuffer = await sharp(PLACEHOLDER_IMAGE_PATH)
+      .resize(1600, 1200)
+      .png()
+      .toBuffer();
+
     placeholderMedia = await payload.create({
       collection: "media",
       data: { alt: "Seed-Platzhalter" },
-      filePath: PLACEHOLDER_IMAGE_PATH,
+      file: {
+        data: placeholderBuffer,
+        mimetype: "image/png",
+        name: "placeholder.png",
+        size: placeholderBuffer.length,
+      },
     });
     payload.logger.info("Seed: Platzhalter-Medium angelegt.");
+  } else if (!placeholderMedia.sizes?.thumbnail?.filename) {
+    // Migration (Sprint-7-Akzeptanzkriterium „Bestehende Beispielbilder
+    // migrieren"): Dieser Datensatz stammt noch aus Sprint 1–6 (lokaler
+    // SVG-Upload ohne `imageSizes`-Varianten). `url`/`sizes.*.url` werden vom
+    // S3-Plugin zur Lesezeit aus dem gespeicherten `filename` berechnet —
+    // unabhängig davon, ob die Bytes tatsächlich im Bucket liegen. Ohne
+    // Migration wäre dieser Eintrag im Storage nicht vorhanden (404). Re-
+    // Upload über dieselbe ID, damit alle bestehenden Referenzen
+    // (Projekte/Journal/AboutPage/SiteConfig) gültig bleiben.
+    const placeholderBuffer = await sharp(PLACEHOLDER_IMAGE_PATH)
+      .resize(1600, 1200)
+      .png()
+      .toBuffer();
+
+    placeholderMedia = await payload.update({
+      collection: "media",
+      id: placeholderMedia.id,
+      data: {},
+      file: {
+        data: placeholderBuffer,
+        mimetype: "image/png",
+        name: "placeholder.png",
+        size: placeholderBuffer.length,
+      },
+      context: { disableRevalidate: true },
+    });
+    payload.logger.info(
+      "Seed: Platzhalter-Medium aus Sprint 1–6 nach Object Storage migriert.",
+    );
   } else {
     payload.logger.info("Seed: Platzhalter-Medium existiert bereits — übersprungen.");
   }

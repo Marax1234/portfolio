@@ -1,10 +1,8 @@
 /**
  * Medien-Abstraktion — Single Export Point
  *
- * Dies ist die EINZIGE Stelle, die beim Wechsel des Providers (Sprint 7)
- * geändert werden muss. Alle anderen Aufrufer importieren von hier.
- *
- * Sprint 7: `localProvider` durch `objectStorageProvider` ersetzen.
+ * Dies ist die EINZIGE Stelle, die beim Wechsel des Providers geändert
+ * werden muss. Alle anderen Aufrufer importieren von hier.
  */
 
 export type {
@@ -17,11 +15,13 @@ export type {
 } from "./types";
 export { payloadMediaRef, resolvePayloadMedia } from "./payload";
 
-import localProvider from "./local-provider";
+import objectStorageProvider from "./object-storage-provider";
 
 /**
  * Der aktive Medien-Provider.
- * Aktuell: LocalProvider (lokaler Datei-Fallback, Sprint 1–6).
- * Sprint 7: Wird auf ObjectStorageProvider umgestellt.
+ * Sprint 1–6: LocalProvider (lokaler Datei-Fallback, `local-provider.ts`,
+ * weiterhin im Repo als Referenz).
+ * Sprint 7: ObjectStorageProvider — liefert Manifest-Slots aus dem Object
+ * Storage (MinIO lokal, siehe docker-compose.dev.yml).
  */
-export const mediaProvider = localProvider;
+export const mediaProvider = objectStorageProvider;
