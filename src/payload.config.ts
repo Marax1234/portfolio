@@ -12,6 +12,7 @@ import { JournalPosts } from "./collections/JournalPosts";
 import { Media } from "./collections/Media";
 import { Projects } from "./collections/Projects";
 import { Users } from "./collections/Users";
+import { Videos } from "./collections/Videos";
 import { AboutPage } from "./globals/AboutPage";
 import { SiteConfig } from "./globals/SiteConfig";
 
@@ -34,7 +35,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Projects, JournalPosts, ContactSubmissions],
+  collections: [Users, Media, Videos, Projects, JournalPosts, ContactSubmissions],
   globals: [SiteConfig, AboutPage],
   editor: lexicalEditor(),
   db: postgresAdapter({
@@ -48,10 +49,20 @@ export default buildConfig({
   // `disablePayloadAccessControl` + `generateFileURL` liefern direkte
   // Storage-URLs statt eines Payload-Proxys (Produktions-Pendant: CDN vor
   // Object Storage, siehe Sprintplan §4 „Ausblick").
+  // Sprint 8: Videos-Collection ebenfalls in den Object Storage routen.
+  // Originale landen unter `videos/<file>` im Bucket.
+  // Abgeleitete HLS-Ausgaben (Segmente + Playlist + Poster) werden separat
+  // via @aws-sdk/client-s3 unter `videos/hls/<id>/` hochgeladen
+  // (src/lib/video/transcode.ts).
   plugins: [
     s3Storage({
       collections: {
         media: {
+          disablePayloadAccessControl: true,
+          generateFileURL: ({ filename, prefix }) =>
+            `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${prefix ? `${prefix}/` : ""}${filename}`,
+        },
+        videos: {
           disablePayloadAccessControl: true,
           generateFileURL: ({ filename, prefix }) =>
             `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${prefix ? `${prefix}/` : ""}${filename}`,

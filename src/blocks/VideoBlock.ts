@@ -13,18 +13,29 @@ export const VideoBlock: Block = {
   },
   fields: [
     {
+      name: "video",
+      type: "upload",
+      relationTo: "videos",
+      label: "Video (HLS)",
+      admin: {
+        description:
+          "Video aus der Videos-Collection (status muss 'Bereit' sein). Wird als HLS-Loop abgespielt.",
+      },
+    },
+    {
       name: "poster",
       type: "upload",
       relationTo: "media",
-      required: true,
-      label: "Standbild",
+      label: "Standbild / Poster-Fallback",
       admin: {
-        description: "Platzhalter bis Sprint 8 (HLS-Wiedergabe) — bis dahin nur Standbild.",
+        description:
+          "Wird angezeigt, wenn kein Video gesetzt ist oder während das Video lädt.",
       },
     },
     {
       name: "caption",
       type: "text",
+      label: "Bildunterschrift",
     },
   ],
 };

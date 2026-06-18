@@ -12,10 +12,12 @@
  * (Akzeptanzkriterium Sprint 4: Inhalte lassen sich ohne Code anlegen).
  */
 import path from "path";
+import fs from "node:fs/promises";
 import { fileURLToPath } from "url";
 import config from "@payload-config";
 import { getPayload } from "payload";
 import sharp from "sharp";
+import { isFfmpegAvailable, transcodeVideo } from "../lib/video/transcode";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLACEHOLDER_IMAGE_PATH = path.resolve(
@@ -480,6 +482,122 @@ async function seed() {
     payload.logger.info("Seed: SiteConfig-Defaults gesetzt.");
   } else {
     payload.logger.info("Seed: SiteConfig bereits befüllt — übersprungen.");
+  }
+
+  // 6. Test-Video (Sprint 8) — info/Video.mp4 → HLS in Object Storage
+  //
+  // Guard: Schritt wird übersprungen, wenn Docker/das ffmpeg-Image nicht
+  // verfügbar ist, damit der Bild-Seed (Schritte 0–5) auch ohne Docker-
+  // Daemon vollständig bleibt.
+  const videoSourcePath = path.resolve(dirname, "../../info/Video.mp4");
+  const videoSourceExists = await fs.access(videoSourcePath).then(() => true).catch(() => false);
+
+  if (!videoSourceExists) {
+    payload.logger.info("Seed: Test-Video (info/Video.mp4) nicht gefunden — übersprungen.");
+  } else if (!(await isFfmpegAvailable())) {
+    payload.logger.info(
+      "Seed: Docker/ffmpeg-Image nicht verfügbar — Video-Seed übersprungen. " +
+      "(docker pull jrottenberg/ffmpeg:6.1-ubuntu2204 und erneut ausführen.)",
+    );
+  } else {
+    // Idempotenz: nur anlegen, wenn noch kein Video mit diesem Titel existiert
+    const existingVideo = (
+      await payload.find({
+        collection: "videos",
+        where: { title: { equals: "Sprint-8-Testvideo" } },
+        limit: 1,
+      })
+    ).docs[0];
+
+    let seedVideo = existingVideo;
+
+    if (!existingVideo) {
+      // Video-Doc anlegen — das S3-Plugin lädt das Original in den Bucket
+      const videoBuffer = await fs.readFile(videoSourcePath);
+      seedVideo = await payload.create({
+        collection: "videos",
+        data: {
+          title: "Sprint-8-Testvideo",
+          alt: "Demo-Reel — Bewegtbild-Beispiel für Hero und Journal",
+        },
+        file: {
+          data: videoBuffer,
+          mimetype: "video/mp4",
+          name: "testvideo.mp4",
+          size: videoBuffer.length,
+        },
+        // skipTranscode: true — der Seed ruft transcodeVideo explizit awaited
+        // auf (s. u.); ohne guard würde der afterChange-Hook fire-and-forget
+        // starten, bevor das S3-Upload abgeschlossen ist (Race → 404).
+        context: { disableRevalidate: true, skipTranscode: true },
+      });
+      payload.logger.info("Seed: Test-Video-Doc angelegt, starte Transkodierung …");
+    } else if (existingVideo.status !== "ready") {
+      payload.logger.info("Seed: Test-Video-Doc existiert (noch nicht ready) — transkodiere neu.");
+    } else {
+      payload.logger.info("Seed: Test-Video bereits bereit — übersprungen.");
+    }
+
+    // Transkodierung anstoßen (awaited im Seed — blockiert hier nicht das Admin)
+    if (seedVideo && seedVideo.status !== "ready") {
+      await transcodeVideo(payload, seedVideo.id);
+      // Nach Transkodierung Doc neu laden für aktuellen hlsUrl
+      seedVideo = (
+        await payload.find({
+          collection: "videos",
+          where: { title: { equals: "Sprint-8-Testvideo" } },
+          limit: 1,
+        })
+      ).docs[0] ?? seedVideo;
+      payload.logger.info("Seed: Transkodierung abgeschlossen.");
+    }
+
+    // Video an SiteConfig.hero.video hängen (falls noch nicht gesetzt)
+    if (seedVideo?.status === "ready") {
+      const currentSiteConfig = await payload.findGlobal({ slug: "site-config" });
+      if (!currentSiteConfig.hero?.video) {
+        await payload.updateGlobal({
+          slug: "site-config",
+          data: { hero: { video: seedVideo.id } },
+          context: { disableRevalidate: true },
+        });
+        payload.logger.info("Seed: Test-Video an SiteConfig.hero.video gehängt.");
+      }
+
+      // Video-Block an ersten Journal-Beitrag hängen (falls noch kein video-Block drin)
+      const firstPost = (
+        await payload.find({
+          collection: "journal",
+          where: { slug: { equals: "marokko-2024" } },
+          limit: 1,
+          depth: 0,
+        })
+      ).docs[0];
+
+      if (firstPost) {
+        const hasVideoBlock = (firstPost.layout ?? []).some(
+          (b: { blockType: string }) => b.blockType === "video",
+        );
+        if (!hasVideoBlock) {
+          await payload.update({
+            collection: "journal",
+            id: firstPost.id,
+            data: {
+              layout: [
+                ...(firstPost.layout ?? []),
+                {
+                  blockType: "video" as const,
+                  video: seedVideo.id,
+                  caption: "Demo-Loop — Sprint 8",
+                },
+              ],
+            },
+            context: { disableRevalidate: true },
+          });
+          payload.logger.info("Seed: Video-Block an Journal-Beitrag 'Marokko 2024' gehaengt.");
+        }
+      }
+    }
   }
 
   payload.logger.info("Seed abgeschlossen.");

@@ -21,7 +21,7 @@ import FeaturedSection from "@/components/home/FeaturedSection";
 import JournalTeaserSection from "@/components/home/JournalTeaserSection";
 import FactsStrip, { type Fact } from "@/components/ui/FactsStrip";
 import SplitCTA from "@/components/ui/SplitCTA";
-import { payloadMediaRef } from "@/lib/media";
+import { payloadMediaRef, payloadVideoRef } from "@/lib/media";
 import { formatMeta, getFeaturedProject, getJournalTeasers, getSiteConfig } from "@/lib/payload";
 
 export default async function Home() {
@@ -80,6 +80,7 @@ export default async function Home() {
         tagline={siteConfig.hero?.tagline ?? undefined}
         scrollHint={siteConfig.hero?.scrollHint ?? undefined}
         poster={payloadMediaRef(siteConfig.hero?.poster)}
+        video={payloadVideoRef(siteConfig.hero?.video)}
       />
 
       <div className="container-page">

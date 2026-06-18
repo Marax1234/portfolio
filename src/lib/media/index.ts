@@ -14,6 +14,8 @@ export type {
   MediaProvider,
 } from "./types";
 export { payloadMediaRef, resolvePayloadMedia } from "./payload";
+export { payloadVideoRef } from "./video";
+export type { ResolvedVideo } from "./video";
 
 import objectStorageProvider from "./object-storage-provider";
 

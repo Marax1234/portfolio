@@ -98,3 +98,21 @@ export const revalidateMediaDelete: CollectionAfterDeleteHook = ({ doc, req: { c
   revalidate("about-page", ["/ueber"]);
   return doc;
 };
+
+/**
+ * Videos werden im Hero (SiteConfig) und in Journal-Blöcken (VideoBlock)
+ * verwendet — grobkörnig wie `revalidateMedia`.
+ */
+export const revalidateVideos: CollectionAfterChangeHook = ({ doc, req: { context } }) => {
+  if (context.disableRevalidate) return doc;
+  revalidate("site-config", ["/"]);
+  revalidate("journal", ["/", "/journal"]);
+  return doc;
+};
+
+export const revalidateVideosDelete: CollectionAfterDeleteHook = ({ doc, req: { context } }) => {
+  if (context.disableRevalidate) return doc;
+  revalidate("site-config", ["/"]);
+  revalidate("journal", ["/", "/journal"]);
+  return doc;
+};

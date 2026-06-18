@@ -19,7 +19,8 @@
  */
 
 import Media from "@/components/Media";
-import type { AnyMediaRef } from "@/lib/media";
+import VideoLoop from "@/components/VideoLoop";
+import type { AnyMediaRef, ResolvedVideo } from "@/lib/media";
 
 interface HeroSectionProps {
   eyebrow?: string;
@@ -27,6 +28,8 @@ interface HeroSectionProps {
   tagline?: string;
   scrollHint?: string;
   poster?: AnyMediaRef;
+  /** Aufgelöstes Video (status=ready). Fehlt: nur Poster-Bild. */
+  video?: ResolvedVideo;
 }
 
 export default function HeroSection({
@@ -35,6 +38,7 @@ export default function HeroSection({
   tagline = "Ich filme das, was sich zu erleben lohnt — auf dem Rad genauso wie auf einer Hochzeit.",
   scrollHint = "↓ Scrollen",
   poster,
+  video,
 }: HeroSectionProps) {
   return (
     <section
@@ -50,18 +54,34 @@ export default function HeroSection({
       <div
         data-video-slot="hero"
         className="absolute inset-0 w-full h-full"
-        aria-label="Platzhalter für Hero-Video-Loop (Sprint 8)"
       >
-        <Media
-          {...(poster ?? { id: "hero-poster" })}
-          priority
-          sizes="100vw"
-          className="absolute inset-0 w-full h-full"
-          imageClassName="object-cover w-full h-full"
-        />
+        {video ? (
+          /*
+           * Sprint 8: HLS-Video-Loop (VideoLoop kümmert sich selbst um
+           * Mist-Blue-Tint und lazy-load).
+           */
+          <VideoLoop
+            video={video}
+            posterSrc={video.posterUrl}
+            posterAlt={video.alt}
+            variant="hero"
+          />
+        ) : (
+          /*
+           * Fallback: Poster-Standbild (wie Sprint 3–7).
+           * Tint und Scrim bleiben — auch wenn kein Video gesetzt ist.
+           */
+          <Media
+            {...(poster ?? { id: "hero-poster" })}
+            priority
+            sizes="100vw"
+            className="absolute inset-0 w-full h-full"
+            imageClassName="object-cover w-full h-full"
+          />
+        )}
 
-        {/* Mist-Blue-Tint (10–15%, design.md §Video-Loop Components) */}
-        <div className="absolute inset-0 bg-mist-blue/15" />
+        {/* Mist-Blue-Tint (10–15%, design.md §Video-Loop Components) — nur wenn kein Video */}
+        {!video && <div className="absolute inset-0 bg-mist-blue/15" />}
 
         {/* Lesbarkeits-Scrim für den Overlay-Text unten */}
         <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/60 via-transparent to-transparent" />

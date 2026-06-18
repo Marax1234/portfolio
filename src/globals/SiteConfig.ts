@@ -35,7 +35,20 @@ export const SiteConfig: GlobalConfig = {
           name: "poster",
           type: "upload",
           relationTo: "media",
-          label: "Hero-Standbild (Video-Loop folgt in Sprint 8)",
+          label: "Hero-Standbild (Poster-Fallback)",
+          admin: {
+            description: "Wird angezeigt, bis das Video geladen ist oder wenn kein Video gesetzt ist.",
+          },
+        },
+        {
+          name: "video",
+          type: "upload",
+          relationTo: "videos",
+          label: "Hero-Video-Loop (HLS)",
+          admin: {
+            description:
+              "Video aus der Videos-Collection (status muss 'Bereit' sein). Überblendet das Standbild nach dem Laden.",
+          },
         },
       ],
     },

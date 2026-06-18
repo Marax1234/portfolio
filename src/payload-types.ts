@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    videos: Video;
     projects: Project;
     journal: Journal;
     'contact-submissions': ContactSubmission;
@@ -81,6 +82,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    videos: VideosSelect<false> | VideosSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     journal: JournalSelect<false> | JournalSelect<true>;
     'contact-submissions': ContactSubmissionsSelect<false> | ContactSubmissionsSelect<true>;
@@ -202,6 +204,47 @@ export interface Media {
       filename?: string | null;
     };
   };
+}
+/**
+ * Videos werden nach dem Upload automatisch für HLS transkodiert (benötigt Docker). Status wechselt von 'Verarbeitung' → 'Bereit' nach Abschluss.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "videos".
+ */
+export interface Video {
+  id: number;
+  /**
+   * Interner Name (wird nicht im Frontend angezeigt).
+   */
+  title: string;
+  /**
+   * Barrierefreiheit — beschreibt den Videoinhalt.
+   */
+  alt: string;
+  /**
+   * Wird automatisch nach der FFmpeg-Transkodierung gesetzt.
+   */
+  status?: ('processing' | 'ready' | 'error') | null;
+  /**
+   * Automatisch gesetzt nach Transkodierung.
+   */
+  hlsUrl?: string | null;
+  /**
+   * Automatisch extrahierter Poster-Frame.
+   */
+  posterUrl?: string | null;
+  duration?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -368,9 +411,13 @@ export interface QuoteBlock {
  */
 export interface VideoBlock {
   /**
-   * Platzhalter bis Sprint 8 (HLS-Wiedergabe) — bis dahin nur Standbild.
+   * Video aus der Videos-Collection (status muss 'Bereit' sein). Wird als HLS-Loop abgespielt.
    */
-  poster: number | Media;
+  video?: (number | null) | Video;
+  /**
+   * Wird angezeigt, wenn kein Video gesetzt ist oder während das Video lädt.
+   */
+  poster?: (number | null) | Media;
   caption?: string | null;
   id?: string | null;
   blockName?: string | null;
@@ -420,6 +467,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'videos';
+        value: number | Video;
       } | null)
     | ({
         relationTo: 'projects';
@@ -552,6 +603,29 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "videos_select".
+ */
+export interface VideosSelect<T extends boolean = true> {
+  title?: T;
+  alt?: T;
+  status?: T;
+  hlsUrl?: T;
+  posterUrl?: T;
+  duration?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "projects_select".
  */
 export interface ProjectsSelect<T extends boolean = true> {
@@ -666,6 +740,7 @@ export interface QuoteBlockSelect<T extends boolean = true> {
  * via the `definition` "VideoBlock_select".
  */
 export interface VideoBlockSelect<T extends boolean = true> {
+  video?: T;
   poster?: T;
   caption?: T;
   id?: T;
@@ -734,7 +809,14 @@ export interface SiteConfig {
     name?: string | null;
     tagline?: string | null;
     scrollHint?: string | null;
+    /**
+     * Wird angezeigt, bis das Video geladen ist oder wenn kein Video gesetzt ist.
+     */
     poster?: (number | null) | Media;
+    /**
+     * Video aus der Videos-Collection (status muss 'Bereit' sein). Überblendet das Standbild nach dem Laden.
+     */
+    video?: (number | null) | Video;
   };
   intro?: {
     eyebrow?: string | null;
@@ -868,6 +950,7 @@ export interface SiteConfigSelect<T extends boolean = true> {
         tagline?: T;
         scrollHint?: T;
         poster?: T;
+        video?: T;
       };
   intro?:
     | T

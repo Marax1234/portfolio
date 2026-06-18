@@ -74,26 +74,26 @@ Am Ende jedes Sprints ein kurzer Abschnitt mit:
 
 ---
 
-### Sprint 7 — Bild-Pipeline & Object Storage (Fallback-Ablösung)
+### Sprint 8 — Video-Loops & HLS-Wiedergabe
  
-**Ziel:** Der lokale Bild-Fallback wird durch den echten Object-Storage ersetzt — **ohne UI-Umbau**, dank Sprint-1-Abstraktion.
+**Ziel:** Das Markenzeichen der Seite — lebendige Video-Loops — funktioniert; Hero und Video-Blöcke spielen adaptiv.
  
 **Anforderungen**
-- S3-kompatiblen Object Storage anbinden (MinIO lokal für Entwicklung; produktiver Anbieter erst im Deployment, hier out of scope).
-- Payload **Storage-Plugin** so konfigurieren, dass Uploads in den Object Storage geschrieben werden statt auf den App-Server.
-- **Responsive Bildvarianten** beim Upload generieren (moderne Formate, mehrere Größen) und über die eingebaute Bild-Komponente ausliefern.
-- Die **Medien-Abstraktion aus Sprint 1** auf die neue Quelle umstellen — aufrufende Komponenten bleiben unverändert.
-- Bestehende Beispielbilder migrieren/neu hochladen über das Admin.
+- **Video-Loop-Komponente** (Konzept 5 / Design „Video-Loop-Components“): kurze, stumme, autoplayende Loops, edge-to-edge, Controls versteckt (außer Hover), **Poster-Frame als Fallback**, dezenter Mist-Blue-Tint (10–15%).
+- **HLS-Wiedergabe** im Frontend: Player schaltet je nach Verbindung die Qualität um (adaptive Bitrate).
+- **FFmpeg-Vorab-Transkodierung** (Ablauf, keine Live-Übertragung): Upload → Transkodierung in mehrere Stufen (z.B. 1080/720/480p) → HLS-Segmente + Playlist im Object Storage. Für die Entwicklung genügt eine lokal lauffähige Pipeline.
+- Hero-Video-Slot (Sprint 3) und Video-Block (Sprint 6) werden mit echter Wiedergabe befüllt.
+- Performance: lazy-load, Poster zuerst, keine Layout-Sprünge.
 **Akzeptanzkriterien**
-- Upload im Admin landet im Object Storage (nicht im App-Container).
-- Frontend zeigt Bilder aus dem Storage; aufrufende Komponenten wurden **nicht** geändert (Beleg für gelungene Abstraktion).
-- Responsive Varianten werden ausgeliefert; mobil kleinere Bilder.
-- Zentralitäts-/Design-Tests weiterhin grün.
+- Ein im Admin hochgeladenes Video wird vorab transkodiert und als HLS abgespielt.
+- Hero zeigt einen stummen Autoplay-Loop mit Poster-Fallback; mobil performant.
+- Video-Block im Journal spielt korrekt.
+- Design-Vorgaben (Tint, Radius, edge-to-edge) erfüllt.
 **Out of Scope**
-- CDN-Auslieferung (Deployment, Ausblick). Video-Pipeline (Sprint 8).
-**Context7-Pflicht:** Payload Storage-Plugin + S3/MinIO-Konfiguration aktuell ziehen.
+- Managed-Video-Dienst (optionaler Sonderfall, nur Ausblick). CDN (Deployment).
+**Context7-Pflicht:** HLS-Player-Bibliothek + FFmpeg-Transkodierungs-Parameter aktuell ziehen.
  
-**Übergabe-Hinweis:** Damit ist der in Sprint 1 angekündigte Fallback abgelöst. CDN bleibt bewusst Deployment-Thema.
+**Übergabe-Hinweis:** Falls die FFmpeg-Pipeline später zu wartungsintensiv wird, ist Video die einzige sinnvolle Stelle für einen Managed-Dienst — Rest des Stacks bleibt unberührt (siehe Ausblick).
  
 ---
 
