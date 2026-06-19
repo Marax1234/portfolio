@@ -396,7 +396,9 @@ im Admin immer einen aussagekräftigen Alt-Text setzen.
 
 ## 14. Elevation und Tiefe
 
-Laut `design.md` — keine klassischen Drop-Shadows, kein Glas mehr (Redesign „härtere Kanten"):
+Laut `design.md` — keine klassischen Drop-Shadows auf Chrome/Karten, kein Glas mehr
+(Redesign „härtere Kanten"). Bild-Wrapper (Startseite) sind die Ausnahme: dort Schatten
+**und** spitze Kante zusammen.
 
 | Ebene | Token / Klasse | Verwendung |
 |---|---|---|
@@ -404,7 +406,19 @@ Laut `design.md` — keine klassischen Drop-Shadows, kein Glas mehr (Redesign �
 | Surface 1 (Chrome) | `bg-surface` bzw. `style={{ backgroundColor: 'var(--color-surface)' }}` — deckend, kein Blur | Header, BottomBar |
 | Surface 1 (Karten) | `bg-surface-container-lowest` — deckend | GlassCard, ProjectCard |
 | Border statt Shadow | `border border-outline` bzw. `var(--border-tonal)` (= 1px solid `outline`) | Karten-Umrandung, Chrome-Kanten, Trennlinien — definierte Linie |
-| Ambient Shadow (Token, ungenutzt) | `--shadow-ambient` | In globals.css definiert, im Redesign aber nicht mehr standardmäßig angewandt — definierte Kante bevorzugen |
+| Ambient Shadow | `shadow-ambient` (Utility, `globals.css` → `--shadow-ambient`) | Bild-Wrapper auf der Startseite (Portrait in `IntroSection`, Kacheln in `WhatIDoSection`) — kombiniert mit `rounded-none` + `border border-outline-variant` auf dem inneren Crop-Container |
+
+**Wichtig:** `shadow-ambient` immer auf einen *äußeren* Wrapper setzen, nicht auf das
+Element mit `overflow-hidden` — sonst clippt der Crop-Container den eigenen Schatten
+weg (CSS-Falle, kein Bug im Token). Muster:
+
+```tsx
+<div className="shadow-ambient">
+  <div className="relative overflow-hidden rounded-none border border-outline-variant">
+    <Media ... />
+  </div>
+</div>
+```
 
 ---
 
@@ -433,6 +447,7 @@ pnpm build
 | Radius setzen | `rounded-[12px]` | `rounded-xl` (= 12px, Redesign) |
 | Abstand setzen | `mt-[120px]` | `section-gap` |
 | Bild einbinden | `<img src="...">` | `<Media id={...} />` |
+| Schatten auf Bild-Crop | `shadow-ambient` direkt auf `overflow-hidden`-Element | `shadow-ambient` auf äußerem Wrapper, `overflow-hidden` auf innerem Crop-Container |
 | Neuer Nav-Link | direkt in `SiteHeader.tsx` | `src/lib/navigation.ts` |
 | Token-Wert nachschlagen | aus dem Kopf | `design.md` + `globals.css` lesen |
 | CMS-Daten laden | `fetch('/api/...')` im Client | `unstable_cache`-Fetcher in `src/lib/payload.ts` |

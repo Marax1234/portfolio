@@ -8,6 +8,11 @@
  * Mobil: gestapelt (1 Spalte). Desktop: nebeneinander (3–4 Spalten).
  * Zahlen type-headline-md, Labels type-label-caps.
  *
+ * Redesign „Anti-Slop" (Radius-Hierarchie statt einheitlich großem Radius):
+ * Foto-Cards auf der Startseite nutzen rounded-xl. Diese Daten-Rasterzeile
+ * ist bewusst eine Stufe kantiger — rounded-lg — damit sie sich von den
+ * weichen Bild-Kacheln abhebt statt denselben Radius überall zu wiederholen.
+ *
  * Kein Hardcode (§0.2).
  */
 
@@ -26,7 +31,7 @@ export default function FactsStrip({ facts, className = "" }: FactsStripProps) {
     <div
       className={[
         "grid grid-cols-2 md:grid-cols-4 gap-px",
-        "bg-outline-variant rounded-xl overflow-hidden",
+        "bg-outline-variant rounded-lg overflow-hidden",
         className,
       ].join(" ")}
     >

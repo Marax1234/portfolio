@@ -20,23 +20,26 @@
   --color-surface-container-high:    #e9e8e5;
   --color-surface-container-highest: #e3e2e0;
   --color-surface-variant:           #e3e2e0;
-  --color-surface-tint:              #536253;
+  --color-surface-tint:              #45593f;
   --color-on-surface:                #1a1c1a;
   --color-on-surface-variant:        #3a3f39;  /* Redesign: 1 Tick dunkler (#434842) — Sekundärtext präsenter */
 
   /* ── Inverse ──────────────────────────────────────────────────── */
   --color-inverse-surface:    #2f312f;
   --color-inverse-on-surface: #f2f1ee;
-  --color-inverse-primary:    #bacbb8;
+  --color-inverse-primary:    #a3c298;
 
   /* ── Outlines ─────────────────────────────────────────────────── */
   --color-outline:         #747872;
   --color-outline-variant: #c4c8c0;
 
   /* ── Primary ─────────────────────────────────────────────────── */
-  --color-primary:                  #516051;
+  /* Redesign „Farbaudit": Sage Green war zu blass/entsättigt (#516051
+     wirkte gegen den Cream-Hintergrund müde statt selbstbewusst).
+     Tiefer + minimal gesättigter — bleibt organisch, wirkt aber präsenter. */
+  --color-primary:                  #3f5440;
   --color-on-primary:               #ffffff;
-  --color-primary-container:        #697969;
+  --color-primary-container:        #56735a;
   --color-on-primary-container:     #f7fff3;
   --color-primary-fixed:            #d6e7d4;
   --color-primary-fixed-dim:        #bacbb8;
@@ -44,14 +47,18 @@
   --color-on-primary-fixed-variant: #3c4a3c;
 
   /* ── Secondary ───────────────────────────────────────────────── */
-  --color-secondary:                  #695b5b;
+  /* Redesign „Farbaudit": dusty-rose (#f1dede etc.) las sich neben
+     dem Sage-Primary wie eine Wellness-Spa-Palette statt Sport/Reise/
+     Hochzeit. Ersetzt durch eine warme, neutrale Stein-Familie ohne
+     Pink-Stich — gleiche Tonwert-Struktur, andere Temperatur. */
+  --color-secondary:                  #5c5550;
   --color-on-secondary:               #ffffff;
-  --color-secondary-container:        #eedbdb;
-  --color-on-secondary-container:     #6d5f5f;
-  --color-secondary-fixed:            #f1dede;
-  --color-secondary-fixed-dim:        #d5c2c2;
-  --color-on-secondary-fixed:         #231919;
-  --color-on-secondary-fixed-variant: #504444;
+  --color-secondary-container:        #e2dcd3;
+  --color-on-secondary-container:     #5c5550;
+  --color-secondary-fixed:            #ddd5cb;
+  --color-secondary-fixed-dim:        #b8ada0;
+  --color-on-secondary-fixed:         #211d19;
+  --color-on-secondary-fixed-variant: #4a443d;
 
   /* ── Tertiary ────────────────────────────────────────────────── */
   --color-tertiary:                  #545d63;
@@ -84,7 +91,7 @@
      Redesign „härtere Kanten": obere Skala bewusst reduziert. xl —
      auf praktisch allen Containern/Cards/Bildern genutzt — ist der
      zentrale Schalter (vorher 24px). sm/DEFAULT bleiben crisp. ── */
-  --radius-sm:   0.25rem;  /* 4px  — Fokus-Targets, Mini-Elemente */
+  --radius-sm:   0;        /* 0px  — Fokus-Targets, Mini-Elemente: bewusst scharfe Kante (Redesign „härtere Kanten" — kleinste Stufe der Skala ohne Rundung) */
   --radius:      0.5rem;   /* 8px  — Default */
   --radius-md:   0.5rem;   /* 8px  — Buttons, Tabs (vorher 12px) */
   --radius-lg:   0.625rem; /* 10px — (vorher 16px) */
@@ -334,9 +341,34 @@
   margin-top: var(--section-gap);
 }
 
+/* Ambient Shadow als Utility-Klasse (statt inline style) — global nutzbar,
+   z. B. auf Bild-Wrappern. Auf einem eigenen Wrapper ohne overflow-hidden
+   setzen, sonst clippt der Bild-Crop-Container den Schatten weg. */
+@utility shadow-ambient {
+  box-shadow: var(--shadow-ambient);
+}
+
 @utility section-gap-y {
   margin-top: var(--section-gap);
   margin-bottom: var(--section-gap);
+}
+
+/* Dichterer Sektionsabstand für kurzteiligen Inhalt (Timeline, Stichwort-
+   Cards, Kachel-Raster) — wiederverwendet --margin-desktop statt eines
+   neuen Rohwerts (Redesign /ueber, „härtere Kanten"). */
+@utility section-gap-tight {
+  margin-top: var(--margin-desktop);
+}
+
+/* Eckiger Timeline-Marker auf der --border-tonal-Linie (rounded-sm statt
+   Punkt) — Redesign /ueber: Stationen sollen als Ereignis sichtbar sein,
+   nicht nur als Fließtext auf einer blassen Linie. */
+@utility timeline-marker {
+  position: absolute;
+  left: calc(-1 * var(--spacing-unit) - 2px);
+  top: 0.4em;
+  width: var(--spacing-unit);
+  height: var(--spacing-unit);
 }
 
 /* ── Sprint 2: Layout & Navigation Utilities ───────────────────────── */

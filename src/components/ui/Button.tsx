@@ -3,7 +3,9 @@
  *
  * Varianten (design.md §Components „Buttons & Inputs"):
  *   primary  — solid bg-primary / text-on-primary / rounded-md
- *   secondary — Ghost, 1px border-mist-blue / text-on-surface / rounded-md
+ *   secondary — Ghost, 1px border-outline / text-on-surface / rounded-md
+ *   (Redesign „Farbaudit": Pastell-Mist-Blue-Rand wirkte weich/dekorativ
+ *   für ein Funktions-Element — outline ist die neutrale Kontur-Farbe.)
  *
  * Mit href → rendert next/link (RSC-kompatibel, kein extra Client-Wrapper).
  * Ohne href → rendert <button>.
@@ -41,7 +43,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-primary text-on-primary hover:bg-primary-container border border-primary hover:border-primary-container",
   secondary:
-    "bg-transparent text-on-surface border border-mist-blue hover:bg-surface-container",
+    "bg-transparent text-on-surface border border-outline hover:bg-surface-container",
 };
 
 const baseClasses =

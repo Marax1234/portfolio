@@ -31,9 +31,9 @@ const colorGroups = [
   {
     label: "Primary",
     tokens: [
-      { name: "primary",                  cssVar: "--color-primary",                  hex: "#516051" },
+      { name: "primary",                  cssVar: "--color-primary",                  hex: "#3F5440" },
       { name: "on-primary",               cssVar: "--color-on-primary",               hex: "#FFFFFF" },
-      { name: "primary-container",        cssVar: "--color-primary-container",        hex: "#697969" },
+      { name: "primary-container",        cssVar: "--color-primary-container",        hex: "#56735A" },
       { name: "on-primary-container",     cssVar: "--color-on-primary-container",     hex: "#F7FFF3" },
       { name: "primary-fixed",            cssVar: "--color-primary-fixed",            hex: "#D6E7D4" },
       { name: "primary-fixed-dim",        cssVar: "--color-primary-fixed-dim",        hex: "#BACBB8" },
@@ -44,14 +44,14 @@ const colorGroups = [
   {
     label: "Secondary",
     tokens: [
-      { name: "secondary",                  cssVar: "--color-secondary",                  hex: "#695B5B" },
+      { name: "secondary",                  cssVar: "--color-secondary",                  hex: "#5C5550" },
       { name: "on-secondary",               cssVar: "--color-on-secondary",               hex: "#FFFFFF" },
-      { name: "secondary-container",        cssVar: "--color-secondary-container",        hex: "#EEDBDB" },
-      { name: "on-secondary-container",     cssVar: "--color-on-secondary-container",     hex: "#6D5F5F" },
-      { name: "secondary-fixed",            cssVar: "--color-secondary-fixed",            hex: "#F1DEDE" },
-      { name: "secondary-fixed-dim",        cssVar: "--color-secondary-fixed-dim",        hex: "#D5C2C2" },
-      { name: "on-secondary-fixed",         cssVar: "--color-on-secondary-fixed",         hex: "#231919" },
-      { name: "on-secondary-fixed-variant", cssVar: "--color-on-secondary-fixed-variant", hex: "#504444" },
+      { name: "secondary-container",        cssVar: "--color-secondary-container",        hex: "#E2DCD3" },
+      { name: "on-secondary-container",     cssVar: "--color-on-secondary-container",     hex: "#5C5550" },
+      { name: "secondary-fixed",            cssVar: "--color-secondary-fixed",            hex: "#DDD5CB" },
+      { name: "secondary-fixed-dim",        cssVar: "--color-secondary-fixed-dim",        hex: "#B8ADA0" },
+      { name: "on-secondary-fixed",         cssVar: "--color-on-secondary-fixed",         hex: "#211D19" },
+      { name: "on-secondary-fixed-variant", cssVar: "--color-on-secondary-fixed-variant", hex: "#4A443D" },
     ],
   },
   {
@@ -79,7 +79,7 @@ const colorGroups = [
       { name: "surface-container-high",    cssVar: "--color-surface-container-high",    hex: "#E9E8E5" },
       { name: "surface-container-highest", cssVar: "--color-surface-container-highest", hex: "#E3E2E0" },
       { name: "surface-variant",           cssVar: "--color-surface-variant",           hex: "#E3E2E0" },
-      { name: "surface-tint",              cssVar: "--color-surface-tint",              hex: "#536253" },
+      { name: "surface-tint",              cssVar: "--color-surface-tint",              hex: "#45593F" },
       { name: "on-surface",                cssVar: "--color-on-surface",                hex: "#1A1C1A" },
       { name: "on-surface-variant",        cssVar: "--color-on-surface-variant",        hex: "#434842" },
     ],
@@ -91,7 +91,7 @@ const colorGroups = [
       { name: "outline-variant",    cssVar: "--color-outline-variant",    hex: "#C4C8C0" },
       { name: "inverse-surface",    cssVar: "--color-inverse-surface",    hex: "#2F312F" },
       { name: "inverse-on-surface", cssVar: "--color-inverse-on-surface", hex: "#F2F1EE" },
-      { name: "inverse-primary",    cssVar: "--color-inverse-primary",    hex: "#BACBB8" },
+      { name: "inverse-primary",    cssVar: "--color-inverse-primary",    hex: "#A3C298" },
     ],
   },
   {
@@ -475,7 +475,7 @@ export default function StyleguidePage() {
               <span className="type-label-caps text-inverse-primary shrink-0">01</span>
               <span>
                 In <code style={{ fontFamily: "monospace" }}>src/app/globals.css</code>, Zeile{" "}
-                <code style={{ fontFamily: "monospace" }}>--color-primary: #516051</code> auf{" "}
+                <code style={{ fontFamily: "monospace" }}>--color-primary: #3f5440</code> auf{" "}
                 <code style={{ fontFamily: "monospace" }}>--color-primary: #aa0000</code> ändern.
               </span>
             </li>

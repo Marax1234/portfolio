@@ -15,16 +15,16 @@ colors:
   inverse-on-surface: '#f2f1ee'
   outline: '#747872'
   outline-variant: '#c4c8c0'
-  surface-tint: '#536253'
-  primary: '#516051'
+  surface-tint: '#45593f'
+  primary: '#3f5440'
   on-primary: '#ffffff'
-  primary-container: '#697969'
+  primary-container: '#56735a'
   on-primary-container: '#f7fff3'
-  inverse-primary: '#bacbb8'
-  secondary: '#695b5b'
+  inverse-primary: '#a3c298'
+  secondary: '#5c5550'
   on-secondary: '#ffffff'
-  secondary-container: '#eedbdb'
-  on-secondary-container: '#6d5f5f'
+  secondary-container: '#e2dcd3'
+  on-secondary-container: '#5c5550'
   tertiary: '#545d63'
   on-tertiary: '#ffffff'
   tertiary-container: '#6c767c'
@@ -37,10 +37,10 @@ colors:
   primary-fixed-dim: '#bacbb8'
   on-primary-fixed: '#111f13'
   on-primary-fixed-variant: '#3c4a3c'
-  secondary-fixed: '#f1dede'
-  secondary-fixed-dim: '#d5c2c2'
-  on-secondary-fixed: '#231919'
-  on-secondary-fixed-variant: '#504444'
+  secondary-fixed: '#ddd5cb'
+  secondary-fixed-dim: '#b8ada0'
+  on-secondary-fixed: '#211d19'
+  on-secondary-fixed-variant: '#4a443d'
   tertiary-fixed: '#dae4eb'
   tertiary-fixed-dim: '#bec8cf'
   on-tertiary-fixed: '#131d22'
@@ -88,7 +88,7 @@ typography:
     lineHeight: 16px
     letterSpacing: 0.08em
 rounded:
-  sm: 0.25rem
+  sm: 0
   DEFAULT: 0.5rem
   md: 0.5rem
   lg: 0.625rem
@@ -111,9 +111,9 @@ The visual style is a refined **editorial Minimalism** with a deliberately harde
 
 ## Colors
 
-The palette is anchored by a base of **Sage Green (#849483)**, which provides an organic, grounded focal point. This is supported by a series of synesthetic pastels: **Petal Pink** and **Mist Blue**. 
+The palette is anchored by a deepened, more saturated **Sage Green (primary: #3F5440)**, which reads as confident and grounded rather than washed-out. Petal Pink and Mist Blue still exist as rare decorative accents (e.g. data-viz or styleguide swatches), but they no longer carry functional UI — the earlier dusty-rose secondary family read as a wellness-spa palette, which mismatched a sports/travel/wedding photography brand. Secondary is now a warm, neutral **Stone** tone with no pink or blue hue, used for the same structural roles (containers, fixed surfaces) the rose family occupied before.
 
-The background is never pure white, but rather a warm **Cream Base (#FAF9F6)** to reduce eye strain and enhance the "editorial" feel. Secondary and tertiary colors should be used sparingly for accentuation—primarily in decorative elements, subtle highlights, or to differentiate content categories. Text is rendered in **Charcoal Green**, a near-black derived from the primary sage, ensuring high legibility while maintaining the palette's soft temperature.
+The background is never pure white, but rather a warm **Cream Base (#FAF9F6)** to reduce eye strain and enhance the "editorial" feel. Secondary and tertiary colors should be used sparingly for accentuation—primarily in decorative elements, subtle highlights, or to differentiate content categories. Text is rendered in **Charcoal Green**, a near-black derived from the primary sage, ensuring high legibility while maintaining the palette's grounded temperature.
 
 ## Typography
 
@@ -132,7 +132,7 @@ A "Breathable Spacing" rule still applies, but tightened for the harder redesign
 Hierarchy is established through **Tonal Layering** and **defined borders** rather than traditional shadows or glass blur.
 - **Surface 0 (Base):** Cream Base.
 - **Surface 1 (Cards / Chrome / Overlays):** Solid, opaque surface tones (`surface` for chrome like header/bottom-bar, `surface-container-lowest` for cards). No transparency, no backdrop blur.
-- **Depth:** Use 1px solid borders (`--border-tonal`, drawn in the defined `outline` tone) to frame edges crisply. Drop shadows are avoided; the optional **Ambient Shadow** (ultra-diffused, 10% Sage tint) still exists as a token but is no longer applied by default — prefer a defined line.
+- **Depth:** Use 1px solid borders (`--border-tonal`, drawn in the defined `outline` tone) to frame edges crisply. Drop shadows are avoided on chrome and cards; the **Ambient Shadow** (ultra-diffused, 10% Sage tint) is used on homepage portrait/tile imagery via the `shadow-ambient` utility, paired with sharp (`rounded-none`) corners and a tonal border — shadow for lift, square edge for the "harder" redesign language. Apply `shadow-ambient` on a wrapper *outside* any `overflow-hidden` crop container, since `overflow-hidden` clips an element's own box-shadow.
 
 ## Shapes
 
@@ -148,7 +148,7 @@ Split CTAs divide the container 50/50. One side features a high-quality image or
 
 ### Buttons & Inputs
 - **Primary Button:** Solid `Sage Green` with `Cream` text. Rounded-md.
-- **Secondary Button:** Ghost style with a 1px `Mist Blue` border.
+- **Secondary Button:** Ghost style with a 1px `Outline` border (neutral, not a pastel accent).
 - **Input Fields:** Bottom-border only for an editorial look, or fully rounded containers with a 5% opacity `Sage` fill.
 
 ### Cards

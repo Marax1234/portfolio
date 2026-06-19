@@ -44,12 +44,16 @@ export default async function UeberPage() {
 
       {/* Meilenstein-Timeline */}
       {about.milestones && about.milestones.length > 0 && (
-        <section className="section-gap">
+        <section className="section-gap-tight">
           <h2 className="type-headline-md text-on-surface mb-8">Meilensteine</h2>
-          <ol className="flex flex-col gap-6 border-l border-outline-variant pl-6">
+          <ol className="flex flex-col gap-6 border-l-2 border-outline pl-6">
             {about.milestones.map((milestone) => (
-              <li key={milestone.id ?? `${milestone.year}-${milestone.title}`}>
-                <p className="type-label-caps text-primary mb-1">{milestone.year}</p>
+              <li
+                key={milestone.id ?? `${milestone.year}-${milestone.title}`}
+                className="relative"
+              >
+                <span className="timeline-marker rounded-sm bg-primary" aria-hidden="true" />
+                <p className="type-label-caps text-base text-primary mb-1">{milestone.year}</p>
                 <p className="type-body-md text-on-surface">{milestone.title}</p>
                 {milestone.description && (
                   <p className="type-body-md text-on-surface-variant mt-1">{milestone.description}</p>
@@ -62,11 +66,16 @@ export default async function UeberPage() {
 
       {/* Was mich ausmacht */}
       {about.whatDefinesMe && about.whatDefinesMe.length > 0 && (
-        <section className="section-gap">
+        <section className="section-gap-tight">
           <h2 className="type-headline-md text-on-surface mb-8">Was mich ausmacht</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {about.whatDefinesMe.map((point) => (
-              <div key={point.id ?? point.point} className="rounded-xl border border-outline-variant p-6">
+            {about.whatDefinesMe.map((point, index) => (
+              <div
+                key={point.id ?? point.point}
+                className={`rounded-md border border-outline bg-surface-container-lowest p-6 ${
+                  index === 0 ? "sm:col-span-2" : ""
+                }`}
+              >
                 <p className="type-body-lg text-on-surface">{point.point}</p>
                 {point.description && (
                   <p className="type-body-md text-on-surface-variant mt-2">{point.description}</p>
@@ -79,16 +88,16 @@ export default async function UeberPage() {
 
       {/* Backstage-Grid — lockerer Grid, „den Menschen greifen" */}
       {about.backstage && about.backstage.length > 0 && (
-        <section className="section-gap">
+        <section className="section-gap-tight">
           <h2 className="type-headline-md text-on-surface mb-8">Backstage</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {about.backstage.flatMap((entry) => {
               const ref = payloadMediaRef(entry.image, { alt: "Backstage" });
               if (!ref) return [];
               return [
                 <div
                   key={entry.id ?? JSON.stringify(entry)}
-                  className="relative w-full overflow-hidden rounded-xl"
+                  className="relative w-full overflow-hidden rounded-sm"
                   style={{ aspectRatio: "1 / 1" }}
                 >
                   <Media

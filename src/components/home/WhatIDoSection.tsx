@@ -45,28 +45,34 @@ export default function WhatIDoSection({
 }: WhatIDoSectionProps) {
   return (
     <section className={className}>
-      <p className="type-label-caps text-primary mb-3">{eyebrow}</p>
-      <h2 className="type-headline-md text-on-surface mb-8">{headline}</h2>
+      <h2 className="type-headline-md text-primary mb-3">{eyebrow}</h2>
+      <p className="type-body-md text-on-surface-variant mb-8">{headline}</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {tiles.map(({ key, label, href, ref }) => (
+      {/* Redesign „Anti-Slop": kein 3-gleiche-Kacheln-Grid mehr — erste
+          Kachel führt (2 Zeilen hoch), die übrigen stapeln sich daneben. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {tiles.map(({ key, label, href, ref }, index) => (
           <Link
             key={key}
             href={href}
-            className="group relative block w-full overflow-hidden rounded-xl"
-            style={{ aspectRatio: "1 / 1" }}
+            className={[
+              "group relative block w-full shadow-ambient",
+              index === 0 ? "aspect-[4/5] md:aspect-auto md:row-span-2 md:h-full" : "aspect-square",
+            ].join(" ")}
           >
-            <Media
-              {...ref}
-              alt={label}
-              className="absolute inset-0 w-full h-full"
-              imageClassName="object-cover w-full h-full transition-transform duration-500 motion-reduce:transition-none group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, 33vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/50 via-transparent to-transparent" />
-            <span className="absolute bottom-5 left-5 type-label-caps text-inverse-on-surface">
-              {label}
-            </span>
+            <div className="relative w-full h-full overflow-hidden rounded-none border border-outline-variant">
+              <Media
+                {...ref}
+                alt={label}
+                className="absolute inset-0 w-full h-full"
+                imageClassName="object-cover w-full h-full transition-transform duration-500 motion-reduce:transition-none group-hover:scale-105"
+                sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/50 via-transparent to-transparent" />
+              <span className="absolute bottom-5 left-5 type-label-caps text-inverse-on-surface">
+                {label}
+              </span>
+            </div>
           </Link>
         ))}
       </div>
