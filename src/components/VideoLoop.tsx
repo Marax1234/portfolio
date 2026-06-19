@@ -3,8 +3,8 @@
 /**
  * VideoLoop — HLS-Player-Komponente (Sprint 8)
  *
- * Rendert einen stummen, autoplayenden Video-Loop mit Poster-Fallback und
- * Mist-Blue-Tint (design.md §Video-Loop Components).
+ * Rendert einen stummen, autoplayenden Video-Loop mit Poster-Fallback.
+ * (Redesign: kein Mist-Blue-Pastell-Tint mehr — kontrastreicheres Bild.)
  *
  * - `variant="hero"`: edge-to-edge, kein Radius, kein Controls-Hover.
  * - `variant="block"`: rounded-xl, Controls bei Hover einblenden.
@@ -162,8 +162,8 @@ export default function VideoLoop({
         controls={!isHero && showControls}
       />
 
-      {/* Mist-Blue-Tint — design.md §Video-Loop Components (10–15 %) */}
-      <div className="absolute inset-0 bg-mist-blue/15 pointer-events-none" />
+      {/* Redesign „härtere Kanten": Mist-Blue-Pastell-Tint entfällt —
+          das Video bleibt unverwaschen/kontrastreich. */}
     </div>
   );
 }

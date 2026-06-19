@@ -16,7 +16,7 @@
 import type { Metadata } from "next";
 import type { Document, Media as MediaType } from "@/payload-types";
 import Media from "@/components/Media";
-import Button from "@/components/ui/Button";
+import Button, { buttonClasses } from "@/components/ui/Button";
 import FactsStrip from "@/components/ui/FactsStrip";
 import SplitCTA from "@/components/ui/SplitCTA";
 import { payloadMediaRef } from "@/lib/media";
@@ -143,11 +143,7 @@ export default async function KooperationenPage() {
       {/* 5. CTA-Zeile: Media-Kit + Anfrage */}
       <div className="section-gap flex flex-wrap gap-4">
         {mediaKitUrl ? (
-          <a
-            href={mediaKitUrl}
-            download
-            className="inline-flex items-center justify-center gap-2 type-label-caps rounded-md px-6 py-3 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary bg-transparent text-on-surface border border-mist-blue hover:bg-surface-container"
-          >
+          <a href={mediaKitUrl} download className={buttonClasses("secondary")}>
             {mediaKitLabel}
           </a>
         ) : (

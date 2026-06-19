@@ -41,8 +41,7 @@ export default function ProjectCard({
   return (
     <Link
       href={href}
-      className="group block rounded-xl overflow-hidden border border-outline-variant bg-surface-container-lowest hover:border-outline transition-colors"
-      style={{ boxShadow: "var(--shadow-ambient)" }}
+      className="group block rounded-xl overflow-hidden border border-outline bg-surface-container-lowest hover:border-primary transition-colors"
     >
       {/* Cover-Bild — 4:3 Seitenverhältnis */}
       <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4 / 3" }}>

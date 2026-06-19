@@ -4,7 +4,7 @@
  * SiteHeader — Sticky-Top-Navigation (Desktop)
  *
  * – Name links, NAV_LINKS rechts (type-label-caps)
- * – Schrumpft beim Scrollen: weniger vertikales Padding + Glass-Hintergrund
+ * – Schrumpft beim Scrollen: weniger vertikales Padding + solide Fläche, definierte Kante
  * – Aktiver Link via usePathname
  * – Auf Mobil: nur Name sichtbar (Links → MobileBottomBar)
  * – prefers-reduced-motion: nur transition-colors, kein Sliding
@@ -45,13 +45,12 @@ export default function SiteHeader() {
         "fixed top-0 inset-x-0 z-50",
         "transition-all motion-reduce:transition-none",
         scrolled
-          ? "border-b border-outline-variant"
+          ? "border-b border-outline"
           : "border-b border-transparent",
       ].join(" ")}
       style={{
-        backgroundColor: scrolled ? "var(--glass-bg)" : "transparent",
-        backdropFilter: scrolled ? `blur(var(--glass-blur))` : "none",
-        WebkitBackdropFilter: scrolled ? `blur(var(--glass-blur))` : "none",
+        // Redesign: solide Fläche + definierte Kante statt Glas-Blur.
+        backgroundColor: scrolled ? "var(--color-surface)" : "transparent",
       }}
     >
       <div

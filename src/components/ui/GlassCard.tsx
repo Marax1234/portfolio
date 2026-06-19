@@ -1,10 +1,11 @@
 /**
- * GlassCard — Glassmorphism-Container (Sprint 2)
+ * GlassCard — erhöhte Karte (Sprint 2; Redesign: solide statt Glas)
  *
- * design.md §Elevation: Surface 1 = semi-transparent white (80% opacity)
- * + 16px backdrop blur. Tiefe via 1px-Border (--border-tonal), kein Schatten.
+ * Redesign „härtere Kanten": deckende Fläche (surface-container-lowest) mit
+ * definierter 1px-Border (--border-tonal) statt 80%-Weiß + Blur. Tiefe über
+ * die Kante, optional zusätzlicher Ambient-Shadow.
  *
- * Kein Hardcode (§0.2): alle Werte über CSS-Variablen aus globals.css.
+ * Kein Hardcode (§0.2): alle Werte über Utilities/CSS-Variablen aus globals.css.
  */
 
 interface GlassCardProps {
@@ -21,11 +22,8 @@ export default function GlassCard({
 }: GlassCardProps) {
   return (
     <div
-      className={["rounded-xl overflow-hidden", className].filter(Boolean).join(" ")}
+      className={["rounded-xl overflow-hidden bg-surface-container-lowest", className].filter(Boolean).join(" ")}
       style={{
-        backgroundColor: "var(--glass-bg)",
-        backdropFilter: `blur(var(--glass-blur))`,
-        WebkitBackdropFilter: `blur(var(--glass-blur))`,
         border: "var(--border-tonal)",
         boxShadow: shadow ? "var(--shadow-ambient)" : undefined,
       }}

@@ -80,8 +80,8 @@ export default function HeroSection({
           />
         )}
 
-        {/* Mist-Blue-Tint (10–15%, design.md §Video-Loop Components) — nur wenn kein Video */}
-        {!video && <div className="absolute inset-0 bg-mist-blue/15" />}
+        {/* Redesign „härtere Kanten": Mist-Blue-Pastell-Tint entfällt —
+            das Bild bleibt unverwaschen/kontrastreich. Scrim bleibt (Lesbarkeit). */}
 
         {/* Lesbarkeits-Scrim für den Overlay-Text unten */}
         <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/60 via-transparent to-transparent" />

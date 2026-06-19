@@ -22,7 +22,7 @@
   --color-surface-variant:           #e3e2e0;
   --color-surface-tint:              #536253;
   --color-on-surface:                #1a1c1a;
-  --color-on-surface-variant:        #434842;
+  --color-on-surface-variant:        #3a3f39;  /* Redesign: 1 Tick dunkler (#434842) — Sekundärtext präsenter */
 
   /* ── Inverse ──────────────────────────────────────────────────── */
   --color-inverse-surface:    #2f312f;
@@ -80,12 +80,15 @@
   --color-mist-blue:     #d1dbe2;
   --color-charcoal-text: #333732;  /* Charcoal Green — near-black */
 
-  /* ── Radii (design.md §rounded) ─────────────────────────────── */
-  --radius-sm:   0.25rem;
-  --radius:      0.5rem;
-  --radius-md:   0.75rem;
-  --radius-lg:   1rem;
-  --radius-xl:   1.5rem;
+  /* ── Radii (design.md §rounded) ─────────────────────────────────
+     Redesign „härtere Kanten": obere Skala bewusst reduziert. xl —
+     auf praktisch allen Containern/Cards/Bildern genutzt — ist der
+     zentrale Schalter (vorher 24px). sm/DEFAULT bleiben crisp. ── */
+  --radius-sm:   0.25rem;  /* 4px  — Fokus-Targets, Mini-Elemente */
+  --radius:      0.5rem;   /* 8px  — Default */
+  --radius-md:   0.5rem;   /* 8px  — Buttons, Tabs (vorher 12px) */
+  --radius-lg:   0.625rem; /* 10px — (vorher 16px) */
+  --radius-xl:   0.75rem;  /* 12px — große Container/Cards/Bilder (vorher 24px) */
   --radius-full: 9999px;
 
   /* ── Spacing & Layout (design.md §spacing) ───────────────────── */
@@ -94,14 +97,15 @@
   --gutter:          24px;
   --margin-mobile:   20px;
   --margin-desktop:  64px;
-  --section-gap:     120px;
+  --section-gap:     96px;    /* Redesign: dichterer Rhythmus (vorher 120px) */
 
   /* ── Elevation / Depth (design.md §Elevation) ────────────────── */
   /* Surface 1: Glassmorphism */
   --glass-bg:   rgb(255 255 255 / 0.8);
   --glass-blur: 16px;
-  /* Tonal border (statt Drop-Shadow) */
-  --border-tonal: 1px solid var(--color-outline-variant);
+  /* Tonal border (statt Drop-Shadow) — Redesign: definierte Linie
+     über das kräftigere `outline` statt des blassen `outline-variant`. */
+  --border-tonal: 1px solid var(--color-outline);
   /* Ambient shadow: ultra-diffused, 10% Sage-Tint */
   --shadow-ambient: 0 8px 40px -8px rgb(81 96 81 / 0.10);
 
@@ -226,7 +230,7 @@
   .type-display-lg {
     font-family: var(--font-newsreader), Georgia, serif;
     font-size: 2.5rem;       /* 40px mobile */
-    font-weight: 300;
+    font-weight: 400;        /* Redesign: vorher 300 — Hero-/H1-Schrift weniger wispy */
     line-height: 3rem;       /* 48px mobile */
     letter-spacing: -0.02em;
   }
@@ -241,7 +245,7 @@
   .type-headline-md {
     font-family: var(--font-newsreader), Georgia, serif;
     font-size: 2rem;         /* 32px */
-    font-weight: 400;
+    font-weight: 500;        /* Redesign: vorher 400 — Abschnitts-Headlines mit mehr Struktur */
     line-height: 2.5rem;     /* 40px */
   }
 

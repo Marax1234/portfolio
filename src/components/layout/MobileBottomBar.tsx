@@ -5,7 +5,7 @@
  *
  * – 4 Einträge aus NAV_LINKS (Icon + kurzes Label)
  * – Aktiver Zustand via usePathname
- * – Glass-Hintergrund + Top-Border (border-tonal)
+ * – Solide Fläche + definierte Top-Border
  * – Höhe: var(--bottombar-height)
  *
  * Kein Hardcode (§0.2).
@@ -72,12 +72,11 @@ export default function MobileBottomBar() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-outline-variant"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-outline"
       style={{
+        // Redesign: solide Fläche + definierte Kante statt Glas-Blur.
         height: "var(--bottombar-height)",
-        backgroundColor: "var(--glass-bg)",
-        backdropFilter: "blur(var(--glass-blur))",
-        WebkitBackdropFilter: "blur(var(--glass-blur))",
+        backgroundColor: "var(--color-surface)",
       }}
       aria-label="Mobile Navigation"
     >

@@ -59,9 +59,10 @@ grep -rn 'className="[^"]*\[#[0-9a-fA-F]' src/ --include="*.tsx"
 | `--color-on-primary` | Text auf Primär-Hintergrund | `#ffffff` |
 | `--color-surface` | Seiten-Hintergrund | `#faf9f6` (Cream Base) |
 | `--color-on-surface` | Haupttext | `#1a1c1a` |
-| `--color-on-surface-variant` | Sekundärtext, Labels, Platzhalter | `#434842` |
-| `--color-outline-variant` | subtile Borders, Trennlinien | `#c4c8c0` |
-| `--color-mist-blue` | Video-Tint-Overlay (10–15 %) | `#d1dbe2` |
+| `--color-on-surface-variant` | Sekundärtext, Labels, Platzhalter | `#3a3f39` |
+| `--color-outline` | definierte Borders/Kanten (`--border-tonal`, Karten, Chrome) | `#747872` |
+| `--color-outline-variant` | blasse Divider/Flächenraster (FactsStrip, Info-Boxen) | `#c4c8c0` |
+| `--color-mist-blue` | Sekundär-Button-Rand (`border-mist-blue`) | `#d1dbe2` |
 | `--color-sage-muted` | Brand-Anker (wenig direkt genutzt) | `#849483` |
 | `--color-primary-container` | Hover-Zustand für Primär-Buttons | `#697969` |
 | `--color-error` | Formular-Fehlermeldungen | `#ba1a1a` |
@@ -83,8 +84,8 @@ grep -rn 'className="[^"]*\[#[0-9a-fA-F]' src/ --include="*.tsx"
 
 | Klasse | Verwendung | Font / Größe |
 |---|---|---|
-| `.type-display-lg` | H1, Hero-Headlines | Newsreader 300 · 40/48px mobil, 64/72px Desktop |
-| `.type-headline-md` | H2, Abschnitts-Headlines | Newsreader 400 · 32/40px |
+| `.type-display-lg` | H1, Hero-Headlines | Newsreader 400 · 40/48px mobil, 64/72px Desktop |
+| `.type-headline-md` | H2, Abschnitts-Headlines | Newsreader 500 · 32/40px |
 | `.type-body-lg` | Intro-Text, großer Fließtext | Newsreader 400 · 20/32px |
 | `.type-body-md` | Standard-Fließtext | Newsreader 400 · 16/24px |
 | `.type-label-caps` | Navigation, Tags, Eyebrow-Labels, Buttons | Inter 600 · 12/16px · uppercase |
@@ -106,15 +107,15 @@ kein externes CSS-Request (DSGVO-freundlich). Gewichte in `(frontend)/layout.tsx
 | Utility | Funktion |
 |---|---|
 | `container-page` | Zentrierter Container, max 1280px, mobil 20px / Desktop 64px Randabstand |
-| `section-gap` | `margin-top: 120px` — vertikaler Sektionsabstand (Konzept: „Breathable Spacing") |
-| `section-gap-y` | `margin-top + margin-bottom: 120px` |
+| `section-gap` | `margin-top: 96px` — vertikaler Sektionsabstand (Redesign: dichter, vorher 120px) |
+| `section-gap-y` | `margin-top + margin-bottom: 96px` |
 | `grid-page` | 12-Spalten-Grid mit 24px Gutter |
 | `pt-header` | `padding-top: 64px` — Abstand unter dem fixierten Header |
 | `pb-bottombar` | `padding-bottom: 64px` — Abstand über der mobilen Bottom-Bar |
 
 ### Den Sektionsabstand ändern
 
-`--section-gap: 120px;` in `:root` — wirkt auf alle `section-gap`/`section-gap-y`.
+`--section-gap: 96px;` in `:root` — wirkt auf alle `section-gap`/`section-gap-y`.
 
 ### Den Container verbreitern oder schmaler machen
 
@@ -128,8 +129,8 @@ kein externes CSS-Request (DSGVO-freundlich). Gewichte in `(frontend)/layout.tsx
 
 | Komponente | Datei | Verwendung |
 |---|---|---|
-| `Button` | `ui/Button.tsx` | Primär- und Sekundär-Button, Größen `sm`/`md`/`lg`, variant `primary`/`secondary`/`ghost` |
-| `GlassCard` | `ui/GlassCard.tsx` | Glassmorphismus-Karte (80 % Weiß + 16px Blur) |
+| `Button` | `ui/Button.tsx` | Primär-/Sekundär-Button (`variant="primary" \| "secondary"`). Export `buttonClasses(variant)` für echte `<a download>`/externe Links, die den Button-Look teilen müssen (kein Hardcode-Duplikat). |
+| `GlassCard` | `ui/GlassCard.tsx` | Erhöhte Karte — solide Fläche + definierte 1px-Border (Redesign: kein Glas/Blur mehr) |
 | `ProjectCard` | `ui/ProjectCard.tsx` | Projekt-Kachel für `/arbeiten` mit Cover-Bild, Titel, Kategorie |
 | `FactsStrip` | `ui/FactsStrip.tsx` | Zahlenleiste (3–4 Werte + Labels), wiederverwendbar auf mehreren Seiten |
 | `SplitCTA` | `ui/SplitCTA.tsx` | 50/50-Block: Media links, Headline + Button rechts (oder umgekehrt) |
@@ -138,7 +139,7 @@ kein externes CSS-Request (DSGVO-freundlich). Gewichte in `(frontend)/layout.tsx
 
 | Komponente | Datei | Beschreibung |
 |---|---|---|
-| `SiteHeader` | `layout/SiteHeader.tsx` | Sticky-Top-Nav, schrumpft bei Scroll, Glass-BG |
+| `SiteHeader` | `layout/SiteHeader.tsx` | Sticky-Top-Nav, schrumpft bei Scroll, solide Fläche + definierte Kante |
 | `MobileBottomBar` | `layout/MobileBottomBar.tsx` | Fixe Bottom-Bar (nur mobil, `md:hidden`) |
 | `SiteFooter` | `layout/SiteFooter.tsx` | Footer: 3 Spalten, Mail, Sitemap, Social, Legal |
 
@@ -395,14 +396,15 @@ im Admin immer einen aussagekräftigen Alt-Text setzen.
 
 ## 14. Elevation und Tiefe
 
-Laut `design.md` — keine klassischen Drop-Shadows:
+Laut `design.md` — keine klassischen Drop-Shadows, kein Glas mehr (Redesign „härtere Kanten"):
 
 | Ebene | Token / Klasse | Verwendung |
 |---|---|---|
 | Surface 0 (Base) | `bg-surface` | Seitenhintergrund |
-| Surface 1 (Glas) | `style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(var(--glass-blur))' }}` | Header, BottomBar, GlassCard |
-| Border statt Shadow | `border border-outline-variant` | Karten-Umrandung, Trennlinien |
-| Ambient Shadow (selten) | `shadow-ambient` (custom, in globals.css via `--shadow-ambient`) | Nur für interaktive Elemente, wenn wirklich nötig |
+| Surface 1 (Chrome) | `bg-surface` bzw. `style={{ backgroundColor: 'var(--color-surface)' }}` — deckend, kein Blur | Header, BottomBar |
+| Surface 1 (Karten) | `bg-surface-container-lowest` — deckend | GlassCard, ProjectCard |
+| Border statt Shadow | `border border-outline` bzw. `var(--border-tonal)` (= 1px solid `outline`) | Karten-Umrandung, Chrome-Kanten, Trennlinien — definierte Linie |
+| Ambient Shadow (Token, ungenutzt) | `--shadow-ambient` | In globals.css definiert, im Redesign aber nicht mehr standardmäßig angewandt — definierte Kante bevorzugen |
 
 ---
 
@@ -428,7 +430,7 @@ pnpm build
 |---|---|---|
 | Farbe setzen | `text-[#333732]` | `text-charcoal-text` |
 | Schriftgröße setzen | `text-2xl` oder `text-[20px]` | `type-body-lg` |
-| Radius setzen | `rounded-[24px]` | `rounded-xl` |
+| Radius setzen | `rounded-[12px]` | `rounded-xl` (= 12px, Redesign) |
 | Abstand setzen | `mt-[120px]` | `section-gap` |
 | Bild einbinden | `<img src="...">` | `<Media id={...} />` |
 | Neuer Nav-Link | direkt in `SiteHeader.tsx` | `src/lib/navigation.ts` |

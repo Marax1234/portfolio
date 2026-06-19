@@ -47,15 +47,22 @@ const variantClasses: Record<ButtonVariant, string> = {
 const baseClasses =
   "inline-flex items-center justify-center gap-2 type-label-caps rounded-md px-6 py-3 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
+/**
+ * Button-Klassen ohne die Komponente — für die wenigen Stellen, die einen
+ * echten `<a download>`/externen Link brauchen (next/link kann das nicht),
+ * den Button-Look aber teilen sollen. Verhindert Hardcode-Duplikate.
+ */
+export function buttonClasses(variant: ButtonVariant = "primary", className = ""): string {
+  return [baseClasses, variantClasses[variant], className].filter(Boolean).join(" ");
+}
+
 export default function Button({
   variant = "primary",
   className = "",
   children,
   ...props
 }: ButtonProps) {
-  const classes = [baseClasses, variantClasses[variant], className]
-    .filter(Boolean)
-    .join(" ");
+  const classes = buttonClasses(variant, className);
 
   if ("href" in props && props.href) {
     return (
