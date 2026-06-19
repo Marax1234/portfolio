@@ -1,11 +1,20 @@
 import type { CollectionConfig } from "payload";
+import { notifyContactSubmission } from "../hooks/notify";
 
 /**
- * ContactSubmissions — reines Datenmodell für Sprint 4.
+ * ContactSubmissions — Inbox für Kontaktanfragen (Sprint 9,
+ * Konzept §4.6 „Kontakt").
  *
- * Formular-Verarbeitung (Frontend-Form, Validierung, Mail-Benachrichtigung)
- * ist Sprint 9 (siehe Sprintplan Sprint 9 „Kontakt, Inbox & Kooperationen“).
- * Hier wird nur die Collection angelegt, in die Sprint 9 schreibt.
+ * Datenmodell in Sprint 4 angelegt; Sprint 9 ergänzt:
+ *   - `category`-Feld (Dropdown: Hochzeit / Reise / Marke / Sonstiges)
+ *   - `notifyContactSubmission`-Hook → E-Mail-Benachrichtigung bei neuer Anfrage
+ *
+ * Das Frontend-Formular (/kontakt) schreibt über die Local API in diese
+ * Collection (Server Action in src/app/(frontend)/kontakt/actions.ts).
+ * Honeypot + Timing-Schutz sind im Server Action implementiert — nicht hier.
+ *
+ * Kein Revalidate-Hook nötig: es gibt keine öffentliche Seite, die
+ * ContactSubmissions rendert.
  */
 export const ContactSubmissions: CollectionConfig = {
   slug: "contact-submissions",
@@ -15,29 +24,51 @@ export const ContactSubmissions: CollectionConfig = {
   },
   admin: {
     useAsTitle: "name",
-    defaultColumns: ["name", "email", "read", "createdAt"],
+    defaultColumns: ["name", "email", "category", "read", "createdAt"],
     group: "System",
+    description: "Eingehende Anfragen ueber das Kontaktformular.",
   },
   access: {
-    // Anfragen kommen in Sprint 9 ungeschützt (öffentlich) über das
-    // Kontaktformular herein; eingesehen werden sie nur im Admin.
+    // Anfragen kommen öffentlich über das Kontaktformular herein;
+    // eingesehen werden sie nur im Admin (Default: authentifiziert).
     create: () => true,
+  },
+  hooks: {
+    afterChange: [notifyContactSubmission],
   },
   fields: [
     {
       name: "name",
       type: "text",
       required: true,
+      label: "Name",
     },
     {
       name: "email",
       type: "email",
       required: true,
+      label: "E-Mail",
+    },
+    {
+      name: "category",
+      type: "select",
+      required: true,
+      label: "Kategorie",
+      admin: {
+        description: "Voraussortierung nach Anfrage-Art (Konzept §4.6).",
+      },
+      options: [
+        { label: "Hochzeit", value: "hochzeit" },
+        { label: "Reise", value: "reise" },
+        { label: "Marke", value: "marke" },
+        { label: "Sonstiges", value: "sonstiges" },
+      ],
     },
     {
       name: "message",
       type: "textarea",
       required: true,
+      label: "Nachricht",
     },
     {
       name: "read",

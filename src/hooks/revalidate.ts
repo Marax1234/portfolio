@@ -71,6 +71,12 @@ export const revalidateAboutPage: GlobalAfterChangeHook = ({ doc, req: { context
   return doc;
 };
 
+export const revalidateCooperationsPage: GlobalAfterChangeHook = ({ doc, req: { context } }) => {
+  if (context.disableRevalidate) return doc;
+  revalidate("cooperations-page", ["/kooperationen"]);
+  return doc;
+};
+
 /**
  * Media-Dokumente werden von Projekten, Journalbeiträgen, SiteConfig und
  * AboutPage referenziert (Relationship-Felder) — ohne Rückwärtssuche lässt

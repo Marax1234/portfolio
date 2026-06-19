@@ -73,27 +73,26 @@ Am Ende jedes Sprints ein kurzer Abschnitt mit:
 ## 2. Die Sprints im Detail
 
 ---
-
-### Sprint 8 — Video-Loops & HLS-Wiedergabe
  
-**Ziel:** Das Markenzeichen der Seite — lebendige Video-Loops — funktioniert; Hero und Video-Blöcke spielen adaptiv.
+### Sprint 10 — Politur, Statistik-Hook, Härtung
+ 
+**Ziel:** Konsistenz, Performance, Zugänglichkeit und der Admin-seitige Statistik-Hook — das Produkt ist abnahmereif für die Deployment-Phase.
  
 **Anforderungen**
-- **Video-Loop-Komponente** (Konzept 5 / Design „Video-Loop-Components“): kurze, stumme, autoplayende Loops, edge-to-edge, Controls versteckt (außer Hover), **Poster-Frame als Fallback**, dezenter Mist-Blue-Tint (10–15%).
-- **HLS-Wiedergabe** im Frontend: Player schaltet je nach Verbindung die Qualität um (adaptive Bitrate).
-- **FFmpeg-Vorab-Transkodierung** (Ablauf, keine Live-Übertragung): Upload → Transkodierung in mehrere Stufen (z.B. 1080/720/480p) → HLS-Segmente + Playlist im Object Storage. Für die Entwicklung genügt eine lokal lauffähige Pipeline.
-- Hero-Video-Slot (Sprint 3) und Video-Block (Sprint 6) werden mit echter Wiedergabe befüllt.
-- Performance: lazy-load, Poster zuerst, keine Layout-Sprünge.
+- **Statistik-Anbindung (UI-seitig):** cookieloses Tracking vorbereitet; wichtigste Kennzahlen (Aufrufe, Quellen, beliebte Inhalte) als Ansicht im Admin-Bereich vorgesehen. Der Statistik-Dienst selbst (Umami/Plausible) wird im Deployment betrieben; hier nur die App-seitige Integration/Schnittstelle.
+- **Performance-Pass:** Bild-/Video-Lazy-Loading, Poster-Frames, keine Layout-Sprünge, schneller erster Eindruck (Konzept: „Performance ist Pflicht“).
+- **Accessibility-Pass:** Tastaturbedienung der Nav/Formulare, Fokuszustände, ausreichende Kontraste (im Rahmen des Designs), Alt-Texte aus dem Medienmodell.
+- **Design-Konsistenz-Endabnahme:** vollständiger Durchgang aller Seiten gegen `design.md`; finaler **Zentralitäts-Test** (globaler Token-Wechsel schlägt appweit durch).
+- **Tone-of-Voice-Check** aller Platzhaltertexte gegen Konzept Abschnitt 7.
+- Saubere 404/Leerzustände (z.B. leeres Journal), keine Sackgassen.
 **Akzeptanzkriterien**
-- Ein im Admin hochgeladenes Video wird vorab transkodiert und als HLS abgespielt.
-- Hero zeigt einen stummen Autoplay-Loop mit Poster-Fallback; mobil performant.
-- Video-Block im Journal spielt korrekt.
-- Design-Vorgaben (Tint, Radius, edge-to-edge) erfüllt.
+- Statistik-Ansicht im Admin sichtbar (auch wenn Datenquelle erst im Deployment scharf geschaltet wird).
+- Performance- und A11y-Checkliste durchlaufen und dokumentiert.
+- Globaler Token-Wechsel verändert die gesamte App konsistent.
+- Alle Seiten aus dem Konzept vorhanden, verlinkt, ohne Sackgassen.
 **Out of Scope**
-- Managed-Video-Dienst (optionaler Sonderfall, nur Ausblick). CDN (Deployment).
-**Context7-Pflicht:** HLS-Player-Bibliothek + FFmpeg-Transkodierungs-Parameter aktuell ziehen.
- 
-**Übergabe-Hinweis:** Falls die FFmpeg-Pipeline später zu wartungsintensiv wird, ist Video die einzige sinnvolle Stelle für einen Managed-Dienst — Rest des Stacks bleibt unberührt (siehe Ausblick).
+- Produktiver Betrieb von Statistik-Dienst, CDN, Domain, Backups, Monitoring (alles Deployment).
+**Übergabe-Hinweis:** Übergang zur Deployment-Phase. Liste der Dev-Platzhalter, die produktiv ersetzt werden, ist vollständig dokumentiert.
  
 ---
 

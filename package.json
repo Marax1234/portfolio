@@ -20,6 +20,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1070.0",
     "@payloadcms/db-postgres": "3.85.1",
+    "@payloadcms/email-nodemailer": "3.85.1",
     "@payloadcms/live-preview-react": "3.85.1",
     "@payloadcms/next": "3.85.1",
     "@payloadcms/richtext-lexical": "3.85.1",
@@ -28,6 +29,7 @@
     "graphql": "^17.0.1",
     "hls.js": "^1.6.16",
     "next": "16.2.9",
+    "nodemailer": "^9.0.1",
     "payload": "3.85.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -36,6 +38,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

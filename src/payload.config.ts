@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import path from "path";
+import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
@@ -8,24 +9,64 @@ import { buildConfig } from "payload";
 import sharp from "sharp";
 
 import { ContactSubmissions } from "./collections/ContactSubmissions";
+import { Documents } from "./collections/Documents";
 import { JournalPosts } from "./collections/JournalPosts";
 import { Media } from "./collections/Media";
 import { Projects } from "./collections/Projects";
 import { Users } from "./collections/Users";
 import { Videos } from "./collections/Videos";
 import { AboutPage } from "./globals/AboutPage";
+import { CooperationsPage } from "./globals/CooperationsPage";
 import { SiteConfig } from "./globals/SiteConfig";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
 /**
- * Payload-3-Kernkonfiguration (Sprint 4 — Payload-Datenmodell & Admin).
+ * Payload-3-Kernkonfiguration.
+ *
+ * Sprint 4 — Payload-Datenmodell & Admin (Basis).
+ * Sprint 9 — E-Mail-Adapter (nodemailer), Documents-Collection,
+ *            CooperationsPage-Global (Konzept §4.5).
  *
  * Läuft im selben Codebase/Prozess wie Next.js (kein zweiter Server,
- * siehe tech-stack-konfiguration.md §2.2). Versionsstand: Payload 3.85.1
- * (Context7-Doku gezogen, §0.3 Sprintplan).
+ * siehe tech-stack-konfiguration.md §2.2). Versionsstand: Payload 3.85.1.
+ *
+ * E-Mail (Sprint 9):
+ *   - Ohne SMTP_HOST → nodemailerAdapter ohne transport → Ethereal-Testaccount
+ *     (Payload erzeugt automatisch einen) → Preview-URL im Log (dev-Nachweis).
+ *   - Mit SMTP_HOST → echter nodemailer-Transport (Prod-Konfiguration im
+ *     Deployment, siehe .env.example und Sprintplan §4 „Post-Development").
  */
+
+function buildEmailAdapter() {
+  const from = process.env.EMAIL_FROM ?? "noreply@kilian-siebert.de";
+  const fromName = process.env.EMAIL_FROM_NAME ?? "Kilian Siebert Portfolio";
+
+  if (process.env.SMTP_HOST) {
+    return nodemailerAdapter({
+      defaultFromAddress: from,
+      defaultFromName: fromName,
+      // `transportOptions` wird intern an nodemailer.createTransport übergeben.
+      // Kein direkter nodemailer-Import nötig (Adapter bundelt nodemailer).
+      transportOptions: {
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT ?? "587", 10),
+        auth: {
+          user: process.env.SMTP_USER ?? "",
+          pass: process.env.SMTP_PASS ?? "",
+        },
+      },
+    });
+  }
+
+  // Dev-Modus: Ethereal-Testaccount (kein echter Versand, Preview-URL im Log)
+  return nodemailerAdapter({
+    defaultFromAddress: from,
+    defaultFromName: fromName,
+  });
+}
+
 export default buildConfig({
   serverURL: process.env.NEXT_PUBLIC_SERVER_URL,
   secret: process.env.PAYLOAD_SECRET ?? "",
@@ -35,9 +76,10 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Videos, Projects, JournalPosts, ContactSubmissions],
-  globals: [SiteConfig, AboutPage],
+  collections: [Users, Media, Videos, Projects, JournalPosts, ContactSubmissions, Documents],
+  globals: [SiteConfig, AboutPage, CooperationsPage],
   editor: lexicalEditor(),
+  email: buildEmailAdapter(),
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI,
@@ -54,6 +96,8 @@ export default buildConfig({
   // Abgeleitete HLS-Ausgaben (Segmente + Playlist + Poster) werden separat
   // via @aws-sdk/client-s3 unter `videos/hls/<id>/` hochgeladen
   // (src/lib/video/transcode.ts).
+  // Sprint 9: Documents-Collection (PDFs, z.B. Media-Kit) in den Object
+  // Storage routen, unter Prefix `documents/<file>`.
   plugins: [
     s3Storage({
       collections: {
@@ -63,6 +107,11 @@ export default buildConfig({
             `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${prefix ? `${prefix}/` : ""}${filename}`,
         },
         videos: {
+          disablePayloadAccessControl: true,
+          generateFileURL: ({ filename, prefix }) =>
+            `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${prefix ? `${prefix}/` : ""}${filename}`,
+        },
+        documents: {
           disablePayloadAccessControl: true,
           generateFileURL: ({ filename, prefix }) =>
             `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${prefix ? `${prefix}/` : ""}${filename}`,

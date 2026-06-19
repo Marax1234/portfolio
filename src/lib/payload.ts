@@ -10,7 +10,7 @@
 import { unstable_cache } from "next/cache";
 import config from "@payload-config";
 import { getPayload } from "payload";
-import type { AboutPage, Journal, Project, SiteConfig } from "@/payload-types";
+import type { AboutPage, CooperationsPage, Journal, Project, SiteConfig } from "@/payload-types";
 
 async function payload() {
   return getPayload({ config });
@@ -32,6 +32,19 @@ export const getAboutPage = unstable_cache(
   },
   ["about-page"],
   { tags: ["about-page"] },
+);
+
+/**
+ * Kooperationen-Seite (Sprint 9, Konzept §4.5).
+ * Vollstaendig CMS-editierbar im Admin unter "Inhalte → Kooperationen-Seite".
+ */
+export const getCooperationsPage = unstable_cache(
+  async (): Promise<CooperationsPage> => {
+    const p = await payload();
+    return p.findGlobal({ slug: "cooperations-page", depth: 1 });
+  },
+  ["cooperations-page"],
+  { tags: ["cooperations-page"] },
 );
 
 export const getFeaturedProject = unstable_cache(

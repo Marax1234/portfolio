@@ -600,6 +600,44 @@ async function seed() {
     }
   }
 
+  // 7. CooperationsPage-Defaults (Sprint 9 — schlank, Platzhalter fuer echte Daten)
+  //
+  // Idempotenz-Marker: `intro` — wird nur gesetzt, wenn leer.
+  // Reichweite-Zahlen (reachFacts) und bisherige Kooperationen (priorCooperations)
+  // bleiben bewusst leer; echte Werte kommen per Admin-Pflege ohne Code-Aenderung.
+  const cooperationsPage = await payload.findGlobal({ slug: "cooperations-page" });
+
+  if (!cooperationsPage.intro) {
+    await payload.updateGlobal({
+      slug: "cooperations-page",
+      data: {
+        intro:
+          "Ich produziere Bild- und Video-Content fuer Marken, die ihr Produkt in Bewegung zeigen wollen — Outdoor, Sport, Reise.",
+        services: [
+          { item: "Foto- und Video-Content fuer Social Media" },
+          { item: "Kurzformat-Reels und Stories" },
+          { item: "Produkt-Clips in natuerlichem Kontext" },
+          { item: "Behind-the-Scenes und Making-of" },
+        ],
+        industries: [
+          { item: "Outdoor & Sport" },
+          { item: "Reise & Travel" },
+          { item: "Fahrrad & Multisport" },
+          { item: "Hochzeit & Events" },
+        ],
+        // Reichweite-Zahlen leer — werden im Admin befuellt, sobald vorhanden
+        reachFacts: [],
+        // Bisherige Kooperationen leer — werden im Admin befuellt
+        priorCooperations: [],
+        mediaKitLabel: "Media-Kit herunterladen",
+      },
+      context: { disableRevalidate: true },
+    });
+    payload.logger.info("Seed: CooperationsPage-Defaults gesetzt.");
+  } else {
+    payload.logger.info("Seed: CooperationsPage bereits befuellt — uebersprungen.");
+  }
+
   payload.logger.info("Seed abgeschlossen.");
   process.exit(0);
 }

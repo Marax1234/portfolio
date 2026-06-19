@@ -73,6 +73,7 @@ export interface Config {
     projects: Project;
     journal: Journal;
     'contact-submissions': ContactSubmission;
+    documents: Document;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +87,7 @@ export interface Config {
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     journal: JournalSelect<false> | JournalSelect<true>;
     'contact-submissions': ContactSubmissionsSelect<false> | ContactSubmissionsSelect<true>;
+    documents: DocumentsSelect<false> | DocumentsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -98,10 +100,12 @@ export interface Config {
   globals: {
     'site-config': SiteConfig;
     'about-page': AboutPage;
+    'cooperations-page': CooperationsPage;
   };
   globalsSelect: {
     'site-config': SiteConfigSelect<false> | SiteConfigSelect<true>;
     'about-page': AboutPageSelect<false> | AboutPageSelect<true>;
+    'cooperations-page': CooperationsPageSelect<false> | CooperationsPageSelect<true>;
   };
   locale: null;
   widgets: {
@@ -424,6 +428,8 @@ export interface VideoBlock {
   blockType: 'video';
 }
 /**
+ * Eingehende Anfragen ueber das Kontaktformular.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "contact-submissions".
  */
@@ -431,10 +437,38 @@ export interface ContactSubmission {
   id: number;
   name: string;
   email: string;
+  /**
+   * Voraussortierung nach Anfrage-Art (Konzept §4.6).
+   */
+  category: 'hochzeit' | 'reise' | 'marke' | 'sonstiges';
   message: string;
   read?: boolean | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * PDF-Dokumente, z.B. Media-Kit. Getrennt von Bildern/Videos.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  /**
+   * Kurze Beschreibung des Dokuments (z.B. 'Media-Kit 2024').
+   */
+  alt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -483,6 +517,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'contact-submissions';
         value: number | ContactSubmission;
+      } | null)
+    | ({
+        relationTo: 'documents';
+        value: number | Document;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -753,10 +791,29 @@ export interface VideoBlockSelect<T extends boolean = true> {
 export interface ContactSubmissionsSelect<T extends boolean = true> {
   name?: T;
   email?: T;
+  category?: T;
   message?: T;
   read?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents_select".
+ */
+export interface DocumentsSelect<T extends boolean = true> {
+  alt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -938,6 +995,65 @@ export interface AboutPage {
   createdAt?: string | null;
 }
 /**
+ * Inhalte der Kooperationen-/Sponsoren-Seite (Konzept §4.5).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cooperations-page".
+ */
+export interface CooperationsPage {
+  id: number;
+  /**
+   * 1 Satz: was du für Marken machst. Knapp und direkt (Konzept §7).
+   */
+  intro?: string | null;
+  /**
+   * Konkrete Leistungen (Content-Produktion, Social Formats, …).
+   */
+  services?:
+    | {
+        item: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Branchen / Zielgruppen (Outdoor/Sport, Reise/Travel, …).
+   */
+  industries?:
+    | {
+        item: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Für den Fakten-Strip — ehrlich, nicht geschönt (Konzept §4.5). Leer lassen bis echte Zahlen vorliegen.
+   */
+  reachFacts?:
+    | {
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Logos + Kurzbeschreibungen bereits abgeschlossener Projekte.
+   */
+  priorCooperations?:
+    | {
+        name: string;
+        note?: string | null;
+        logo?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * PDF-Datei aus der Documents-Collection — wird über den Download-Button verlinkt. Austauschbar ohne Code-Änderung.
+   */
+  mediaKit?: (number | null) | Document;
+  mediaKitLabel?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-config_select".
  */
@@ -1040,6 +1156,45 @@ export interface AboutPageSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cooperations-page_select".
+ */
+export interface CooperationsPageSelect<T extends boolean = true> {
+  intro?: T;
+  services?:
+    | T
+    | {
+        item?: T;
+        id?: T;
+      };
+  industries?:
+    | T
+    | {
+        item?: T;
+        id?: T;
+      };
+  reachFacts?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  priorCooperations?:
+    | T
+    | {
+        name?: T;
+        note?: T;
+        logo?: T;
+        id?: T;
+      };
+  mediaKit?: T;
+  mediaKitLabel?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
