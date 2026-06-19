@@ -48,12 +48,23 @@ function ContactIcon() {
     </svg>
   );
 }
+function KoopsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="6.5" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="13.5" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M2 16c0-2.5 2-4.5 4.5-4.5S11 13.5 11 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M11 14c.4-1.8 2-3 3.5-3s3.1 1.2 3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 const ICONS: Record<string, React.ComponentType> = {
-  "/arbeiten": WorkIcon,
-  "/ueber":    AboutIcon,
-  "/journal":  JournalIcon,
-  "/kontakt":  ContactIcon,
+  "/arbeiten":      WorkIcon,
+  "/ueber":         AboutIcon,
+  "/journal":       JournalIcon,
+  "/kooperationen": KoopsIcon,
+  "/kontakt":       ContactIcon,
 };
 
 export default function MobileBottomBar() {

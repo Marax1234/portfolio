@@ -33,3 +33,6 @@ yarn-error.log*
 # landen im Object Storage). Auf Repo-Root verankert, damit das Pattern
 # nicht versehentlich src/lib/media/ (Medien-Abstraktion) mitverschluckt.
 /media/
+
+.claude/
+.agents

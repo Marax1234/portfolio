@@ -23,12 +23,13 @@ export interface SocialLink {
   platform: "instagram" | "tiktok" | "youtube";
 }
 
-/** Haupt-Navigation (4 Links, Konzept §3 Phase 1) */
+/** Haupt-Navigation (Konzept §3) */
 export const NAV_LINKS: NavLink[] = [
-  { href: "/arbeiten", label: "Arbeiten",  shortLabel: "Arbeiten" },
-  { href: "/ueber",   label: "Über mich", shortLabel: "Über" },
-  { href: "/journal", label: "Journal",   shortLabel: "Journal" },
-  { href: "/kontakt", label: "Kontakt",   shortLabel: "Kontakt" },
+  { href: "/arbeiten",      label: "Arbeiten",       shortLabel: "Arbeiten" },
+  { href: "/ueber",         label: "Über mich",      shortLabel: "Über" },
+  { href: "/journal",       label: "Journal",        shortLabel: "Journal" },
+  { href: "/kooperationen", label: "Kooperationen",  shortLabel: "Koops" },
+  { href: "/kontakt",       label: "Kontakt",        shortLabel: "Kontakt" },
 ];
 
 /** Social-Links (Platzhalter-href="#" bis Sprint 9/10) */
@@ -38,9 +39,8 @@ export const SOCIAL_LINKS: SocialLink[] = [
   { href: "#", label: "YouTube",   platform: "youtube" },
 ];
 
-/** Footer-Pflichtlinks (DE-Recht) + Phase-3-Kooperationen */
+/** Footer-Pflichtlinks (DE-Recht) */
 export const FOOTER_LEGAL: NavLink[] = [
-  { href: "/kooperationen", label: "Kooperationen" },  /* Phase 3 */
-  { href: "/impressum",     label: "Impressum" },      /* DE-Pflicht */
-  { href: "/datenschutz",   label: "Datenschutz" },    /* DE-Pflicht */
+  { href: "/impressum",   label: "Impressum" },   /* DE-Pflicht */
+  { href: "/datenschutz", label: "Datenschutz" }, /* DE-Pflicht */
 ];

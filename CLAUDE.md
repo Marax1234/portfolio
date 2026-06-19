@@ -7,7 +7,6 @@
 
 Vor jeder neuen UI-Arbeit folgende Dateien einlesen:
 - `design.md` — verbindliche Quelle für alle visuellen Werte
-- `portfolio-konzept-kilian-siebert.md` — Seitenstruktur, UX, Tone of Voice
 - `tech-stack-konfiguration.md` — Architektur-Entscheidungen
 
 Bei Konflikten gilt: Architektur aus Tech-Stack, Optik aus Design, Inhalt/UX aus Konzept.
