@@ -83,6 +83,7 @@ export default function MobileBottomBar() {
                 className={[
                   "flex flex-col items-center justify-center h-full gap-1",
                   "transition-colors",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                   isActive
                     ? "text-primary"
                     : "text-on-surface-variant hover:text-on-surface",

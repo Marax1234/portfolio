@@ -64,7 +64,7 @@ export default function SiteHeader() {
         {/* Name / Logo */}
         <Link
           href="/"
-          className="type-label-caps text-on-surface hover:text-primary transition-colors"
+          className="type-label-caps text-on-surface hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-sm"
         >
           Kilian Siebert
         </Link>
@@ -79,7 +79,8 @@ export default function SiteHeader() {
                 key={href}
                 href={href}
                 className={[
-                  "type-label-caps transition-colors",
+                  "type-label-caps transition-colors rounded-sm",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                   isActive
                     ? "text-primary"
                     : "text-on-surface-variant hover:text-on-surface",

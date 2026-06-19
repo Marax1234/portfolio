@@ -28,6 +28,7 @@ const dirname = path.dirname(filename);
  * Sprint 4 — Payload-Datenmodell & Admin (Basis).
  * Sprint 9 — E-Mail-Adapter (nodemailer), Documents-Collection,
  *            CooperationsPage-Global (Konzept §4.5).
+ * Sprint 10 — admin.components.beforeDashboard (Statistik-Karten via Umami).
  *
  * Läuft im selben Codebase/Prozess wie Next.js (kein zweiter Server,
  * siehe tech-stack-konfiguration.md §2.2). Versionsstand: Payload 3.85.1.
@@ -74,6 +75,12 @@ export default buildConfig({
     user: Users.slug,
     importMap: {
       baseDir: path.resolve(dirname),
+    },
+    // Sprint 10: Statistik-Karten oben im Admin-Dashboard (vor Collections).
+    // Zeigt Umami-Metriken wenn UMAMI_API_URL/TOKEN/WEBSITE_ID gesetzt sind,
+    // sonst Deployment-Hinweis (Akzeptanzkriterium Sprint 10).
+    components: {
+      beforeDashboard: ["@/components/admin/StatsDashboard"],
     },
   },
   collections: [Users, Media, Videos, Projects, JournalPosts, ContactSubmissions, Documents],

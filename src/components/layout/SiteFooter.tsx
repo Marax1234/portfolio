@@ -23,7 +23,7 @@ export default function SiteFooter() {
           <div className="md:col-span-1">
             <Link
               href="/"
-              className="type-label-caps text-on-surface hover:text-primary transition-colors"
+              className="type-label-caps text-on-surface hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-sm"
             >
               Kilian Siebert
             </Link>
@@ -34,7 +34,7 @@ export default function SiteFooter() {
             {/* Kontakt */}
             <a
               href="mailto:mail@kilian-siebert.de"
-              className="type-label-caps text-primary hover:text-primary-container transition-colors mt-4 inline-block"
+              className="type-label-caps text-primary hover:text-primary-container transition-colors mt-4 inline-block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-sm"
             >
               mail@kilian-siebert.de
             </a>
@@ -48,7 +48,7 @@ export default function SiteFooter() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="type-body-md text-on-surface-variant hover:text-on-surface transition-colors"
+                    className="type-body-md text-on-surface-variant hover:text-on-surface transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-sm"
                   >
                     {label}
                   </Link>
@@ -57,23 +57,33 @@ export default function SiteFooter() {
             </ul>
           </div>
 
-          {/* Spalte 3 — Social */}
+          {/* Spalte 3 — Social
+           * Sprint 10: Platzhalter-Links (href="#") werden gefiltert — sie führen
+           * nirgendwo hin und öffnen `_blank`-Tabs ins Leere. Echte URLs kommen
+           * per navigation.ts-Pflege nach dem Deployment.
+           */}
           <div>
             <p className="type-label-caps text-on-surface-variant mb-4">Social</p>
-            <ul className="space-y-3">
-              {SOCIAL_LINKS.map(({ href, label }) => (
-                <li key={label}>
-                  <a
-                    href={href}
-                    className="type-body-md text-on-surface-variant hover:text-on-surface transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {SOCIAL_LINKS.filter((s) => s.href !== "#").length === 0 ? (
+              <p className="type-body-md text-on-surface-variant">
+                Folg mir bald — Links folgen.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {SOCIAL_LINKS.filter((s) => s.href !== "#").map(({ href, label }) => (
+                  <li key={label}>
+                    <a
+                      href={href}
+                      className="type-body-md text-on-surface-variant hover:text-on-surface transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -91,7 +101,7 @@ export default function SiteFooter() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="type-label-caps text-on-surface-variant hover:text-on-surface transition-colors"
+                    className="type-label-caps text-on-surface-variant hover:text-on-surface transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-sm"
                   >
                     {label}
                   </Link>
