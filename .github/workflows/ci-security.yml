@@ -70,11 +70,14 @@ jobs:
         with:
           version: 10
 
+      # Kein `cache: pnpm` hier: Dieser Job führt nie `pnpm install` aus
+      # (nur `pnpm audit`, das ohne node_modules/Store arbeitet), daher würde
+      # der Cache-Save-Step nie einen Store-Pfad zum Sichern finden
+      # ("Path Validation Error: Path(s) specified ... do(es) not exist").
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
-          cache: pnpm
 
       # §5.2.2 — Critical/High-CVEs in Produktions-Dependencies blockieren den Merge.
       # --prod schließt devDependencies aus (die werden separat bewertet, §5.2.4).
