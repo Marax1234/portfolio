@@ -60,11 +60,15 @@ gh api -X POST repos/Marax1234/portfolio/rulesets \
 
 UI: **Settings → Code security and analysis**:
 
-- [ ] **§2.7** „Secret scanning" → **Enable**.
-- [ ] **§2.7** „Push protection" → **Enable** (blockt Pushes mit bekannten Secret-Patterns).
-- [ ] „Dependabot alerts" → **Enable** (unterstützt §5.2 / §3.4).
+- [x] **§2.7** „Secret scanning" → **blockiert**: `gh api` liefert
+      `"Secret scanning is not available for this repository."` — das aktuelle
+      Billing-Plan dieses privaten Repos enthält kein GitHub Advanced Security.
+- [x] **§2.7** „Push protection" → aus demselben Grund **nicht aktivierbar**
+      (PATCH läuft durch, greift aber nicht — `security_and_analysis` bleibt
+      `disabled`).
+- [x] „Dependabot alerts" → **Enabled** (`PUT /vulnerability-alerts`, 2026-06-20).
 
-`gh`-CLI:
+`gh`-CLI (zur Doku, schlägt mit diesem Plan fehl):
 
 ```bash
 gh api -X PATCH repos/Marax1234/portfolio \
@@ -73,7 +77,18 @@ gh api -X PATCH repos/Marax1234/portfolio \
 ```
 
 > Für **private** Repos ist Secret Scanning Teil von GitHub Advanced Security.
-> Ist das Repo öffentlich, ist es kostenlos verfügbar.
+> Ist das Repo öffentlich, ist es kostenlos verfügbar. **Gleiches Problem trifft
+> §5.3 (CodeQL):** Der SARIF-Upload in den Code-Scanning-Tab schlägt mit
+> `"Code scanning is not enabled for this repository"` fehl. Der CodeQL-Gate in
+> `ci-security.yml` läuft daher mit `upload: never` — die Analyse selbst (CLI)
+> braucht kein GHAS, nur der Upload ins Security-Tab tut es. Findings sind im
+> Job-Log statt im Security-Tab sichtbar.
+>
+> **Optionen, um GHAS-Features doch zu bekommen:** (a) Repo öffentlich machen
+> (verträgt sich nicht mit §4.2/self-hosted Runner), (b) GitHub Advanced
+> Security für private Repos zubuchen (kostenpflichtig), (c) so lassen — Gitleaks
+> deckt Secret-Scanning bereits redundant ab (§5.1), CodeQL-Gate bleibt über den
+> lokalen SARIF-Check wirksam.
 
 ---
 
@@ -81,16 +96,25 @@ gh api -X PATCH repos/Marax1234/portfolio \
 
 UI: **Settings → Environments**.
 
-1. Environment **`production`** anlegen:
-   - [ ] **§8.1** „Required reviewers" → mindestens 1 Person eintragen.
+1. Environment **`production`** — **angelegt** (2026-06-20):
+   - [x] **§8.1** „Required reviewers" → **blockiert**: `gh api` liefert
+         `"Failed to create the environment protection rule. Please ensure the
+         billing plan supports the required reviewers protection rule."` —
+         Required Reviewers für Environments sind für private Repos ein
+         GitHub-Team/Enterprise-Feature, auf diesem Plan nicht verfügbar.
+   - [x] Stattdessen **Deployment-Branch-Policy** gesetzt: nur `main` darf in
+         `production` deployen (`custom_branch_policies`, Branch `main`). Das ist
+         ohne Zusatzkosten verfügbar und deckt zumindest „kein Deploy von
+         Feature-Branches" ab.
    - [ ] **§2.2** Production-Secrets **nur hier** als Environment Secrets hinterlegen
          (`PAYLOAD_SECRET`, `S3_*`, `POSTGRES_PASSWORD`, SMTP …). Beim self-hosted
          Deploy liegen die Werte in `/opt/portfolio/.env.prod` — dann hier nur die
          Secrets, die der Workflow tatsächlich injiziert.
-   - [ ] **§9.2** Deployment-Approvals werden automatisch im Environment-Log
-         protokolliert (wer/wann freigegeben hat).
+   - [ ] **§9.2** Deployment-Approvals würden automatisch im Environment-Log
+         protokolliert — entfällt vorerst, da kein Required-Reviewer-Gate aktiv ist.
 
-2. Environment **`staging`** anlegen (für §6/§7, sobald Infra existiert):
+2. Environment **`staging`** — **angelegt** (2026-06-20, ohne Branch-Policy,
+   da noch keine Staging-Infrastruktur existiert, §6):
    - [ ] **§2.2** Separate Staging-Secrets, **keine** Production-Credentials.
 
 `gh`-CLI:

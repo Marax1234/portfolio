@@ -37,6 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: read # gitleaks-action listet PR-Commits zum Diff-Scan (§5.1.1)
     steps:
       - name: Checkout (vollständige History für Diff-Scan, §5.1.1)
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -76,10 +77,22 @@ jobs:
           cache: pnpm
 
       # §5.2.2 — Critical/High-CVEs in Produktions-Dependencies blockieren den Merge.
-      # --prod schließt devDependencies aus (die werden separat bewertet, §5.2.4),
-      # --audit-level high bricht ab High/Critical mit Exit-Code != 0 ab.
+      # --prod schließt devDependencies aus (die werden separat bewertet, §5.2.4).
+      # `--audit-level` wird NICHT als alleiniges Gate genutzt: pnpm gibt bei jedem
+      # gefundenen Advisory Exit-Code 1 zurück, unabhängig vom Level. Stattdessen
+      # werten wir das JSON aus und gaten explizit nur auf high/critical.
       - name: pnpm audit (prod, high+critical)
-        run: pnpm audit --prod --audit-level high
+        run: |
+          set -euo pipefail
+          pnpm audit --prod --json > audit.json || true
+          HIGH=$(jq '(.metadata.vulnerabilities.high // 0) + (.metadata.vulnerabilities.critical // 0)' audit.json)
+          echo "High/Critical-Vulnerabilities: $HIGH"
+          if [ "$HIGH" -gt 0 ]; then
+            jq -r '.advisories[]? | select(.severity == "high" or .severity == "critical") | "\(.severity): \(.module_name) — \(.title)"' audit.json
+            echo "::error::SCA-Gate fehlgeschlagen — $HIGH High/Critical-Finding(s)."
+            exit 1
+          fi
+          echo "SCA-Gate bestanden (0 High/Critical)."
 
   # ── §5.3 SAST Gate (Static Application Security Testing) ─────────────────
   sast:
@@ -87,7 +100,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write # §5.3.3 — SARIF-Upload in den Security-Tab
       actions: read
     steps:
       - name: Checkout
@@ -102,12 +114,16 @@ jobs:
           languages: javascript-typescript
           queries: security-extended
 
+      # upload: never — GitHub Code Scanning (SARIF-Upload in den Security-Tab)
+      # erfordert GitHub Advanced Security, das auf diesem Plan für private Repos
+      # nicht verfügbar ist ("Code scanning is not enabled for this repository").
+      # Das SARIF wird stattdessen nur als Job-Artefakt ausgewertet (siehe unten).
       - name: Analyze
         uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           category: "/language:javascript-typescript"
           output: sarif-results
-          upload: always
+          upload: never
 
       # §5.3.4 — High-/Critical-Findings blockieren den Merge. CodeQL/analyze
       # lädt nur hoch, bricht aber nicht ab; deshalb werten wir das SARIF
@@ -132,7 +148,7 @@ jobs:
             ] | length' "$SARIF")
           echo "High/Critical SAST-Findings: $COUNT"
           if [ "$COUNT" -gt 0 ]; then
-            echo "::error::SAST-Gate fehlgeschlagen — $COUNT High/Critical-Finding(s). Details im Security → Code-Scanning-Tab."
+            echo "::error::SAST-Gate fehlgeschlagen — $COUNT High/Critical-Finding(s). Details siehe Job-Log oben (kein Code-Scanning-Tab ohne GitHub Advanced Security)."
             exit 1
           fi
           echo "SAST-Gate bestanden."
