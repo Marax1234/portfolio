@@ -490,9 +490,12 @@ async function seed() {
   // verfügbar ist, damit der Bild-Seed (Schritte 0–5) auch ohne Docker-
   // Daemon vollständig bleibt.
   const videoSourcePath = path.resolve(dirname, "../../info/Video.mp4");
-  const videoSourceExists = await fs.access(videoSourcePath).then(() => true).catch(() => false);
+  // Einmal lesen statt access()-Probe + späterem readFile: vermeidet das
+  // TOCTOU-Muster (CodeQL js/file-system-race). Fehlt die Datei, ist der
+  // Buffer null und der Schritt wird übersprungen.
+  const videoBuffer = await fs.readFile(videoSourcePath).catch(() => null);
 
-  if (!videoSourceExists) {
+  if (!videoBuffer) {
     payload.logger.info("Seed: Test-Video (info/Video.mp4) nicht gefunden — übersprungen.");
   } else if (!(await isFfmpegAvailable())) {
     payload.logger.info(
@@ -512,8 +515,8 @@ async function seed() {
     let seedVideo = existingVideo;
 
     if (!existingVideo) {
-      // Video-Doc anlegen — das S3-Plugin lädt das Original in den Bucket
-      const videoBuffer = await fs.readFile(videoSourcePath);
+      // Video-Doc anlegen — das S3-Plugin lädt das Original in den Bucket.
+      // videoBuffer wurde oben bereits geladen (kein erneutes readFile -> kein TOCTOU).
       seedVideo = await payload.create({
         collection: "videos",
         data: {
