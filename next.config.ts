@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
   // Deployment (hillerhome, siehe deploy.md §7): Docker-Image kopiert nur
   // den standalone-Output, nicht node_modules.
   output: "standalone",
+  // Security-Header-Härtung (Security.md §7.2 — DAST prüft fehlende Header).
+  // Entfernt den verräterischen X-Powered-By-Header (ZAP 10037).
+  poweredByHeader: false,
   // sharp lädt sein Plattform-Binary (libvips) über einen dynamisch berechneten
   // Pfad — Next.js' Datei-Tracing für `standalone` erkennt das nicht zuverlässig
   // und lässt die .so-Datei im pnpm-Store (.pnpm/@img+sharp-libvips-*) weg, was
@@ -56,6 +59,35 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+  },
+  // Sicherheits-Response-Header für alle Routen (Security.md §7.2). Bewusst
+  // ohne CSP/COEP: ein zu strenger CSP würde Payload-Admin/Live-Preview, Umami
+  // und die HLS-/MinIO-Cross-Origin-Medien brechen — diese beiden sind in
+  // .zap/rules.tsv begründet als IGNORE dokumentiert (Follow-up).
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          // ZAP 10021 — verhindert MIME-Sniffing.
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // ZAP 10020 — Clickjacking-Schutz. SAMEORIGIN (nicht DENY), damit die
+          // Payload-Admin-Live-Preview ihre eigenen Same-Origin-iframes behält.
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          // ZAP 10063 — Permissions-Policy: nicht genutzte Browser-Features sperren.
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+          },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // Greift produktiv hinter HTTPS (Caddy); über http lokal ignorieren Browser ihn.
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
+    ];
   },
 };
 

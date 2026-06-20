@@ -6,5 +6,14 @@
 # das DAST-Gate, sobald die Staging-Umgebung bereitsteht (§7, derzeit blockiert
 # — siehe docs/security/github-settings.md).
 #
-# Beispiel (auskommentiert, bis ein konkreter False-Positive auftritt):
-# 10096	IGNORE	Timestamp-Disclosure: nur statische Hash-Assets, kein Risiko
+# --- Triagierte Ausnahmen aus dem ersten DAST-Lauf (2026-06-20) ---
+# Die echten, sicher behebbaren Header (10020/10021/10037/10063) wurden in
+# next.config.ts gesetzt. Folgende Findings sind informativ, False Positive
+# oder ohne App-Bruch nicht behebbar — daher begründet ignoriert.
+10038	IGNORE	CSP Not Set: strenger CSP bricht Payload-Admin/Live-Preview, Umami & HLS/MinIO. Follow-up: getunten CSP mit Tests einführen.
+90004	IGNORE	Cross-Origin-Embedder-Policy: require-corp bricht Cross-Origin-Medien (MinIO/CDN, Umami).
+10031	IGNORE	User Controllable HTML Element Attribute: FP — React escaped Werte, Query-Params werden nicht als roher HTML/Attribut gerendert.
+10049	IGNORE	Non-Storable Content: rein informativ (Cache-Control), keine Schwachstelle.
+10109	IGNORE	Modern Web Application: rein informativer Hinweis auf SPA-Charakter.
+10202	IGNORE	Absence of Anti-CSRF Tokens: Payload nutzt eigene CSRF-Schutzmechanismen (SameSite-Cookies); öffentliche Formulare posten gegen geschützte Payload-APIs.
+10019	IGNORE	Content-Type Header Missing: einzelne body-lose Antwort; X-Content-Type-Options=nosniff ist aktiv, Risiko gering.
