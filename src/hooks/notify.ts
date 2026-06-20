@@ -14,7 +14,7 @@ import type { CollectionAfterChangeHook } from "payload";
 const NOTIFY_TO =
   process.env.CONTACT_NOTIFY_TO ??
   process.env.SEED_ADMIN_EMAIL ??
-  "admin@kilian-siebert.de";
+  "admin@kilia-siebert.de";
 
 const CATEGORY_LABELS: Record<string, string> = {
   hochzeit: "Hochzeit",

@@ -49,10 +49,10 @@ export default function ImpressumPage() {
           <h2 className="type-label-caps text-on-surface mb-2">Kontakt</h2>
           <p>
             <a
-              href="mailto:mail@kilian-siebert.de"
+              href="mailto:mail@kilia-siebert.de"
               className="text-primary hover:text-primary-container transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              mail@kilian-siebert.de
+              mail@kilia-siebert.de
             </a>
           </p>
         </section>

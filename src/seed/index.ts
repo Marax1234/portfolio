@@ -127,7 +127,7 @@ async function seed() {
   });
 
   if (userCount === 0) {
-    const email = process.env.SEED_ADMIN_EMAIL ?? "admin@kilian-siebert.de";
+    const email = process.env.SEED_ADMIN_EMAIL ?? "admin@kilia-siebert.de";
     const password = process.env.SEED_ADMIN_PASSWORD ?? "changeme123";
 
     await payload.create({

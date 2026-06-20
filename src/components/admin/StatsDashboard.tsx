@@ -4,16 +4,16 @@
  * Wird über `admin.components.beforeDashboard` in payload.config.ts registriert
  * und erscheint oben im Admin-Dashboard vor den Collection-Karten.
  *
- * Ohne UMAMI_API_URL / UMAMI_API_TOKEN / UMAMI_WEBSITE_ID:
+ * Ohne UMAMI_API_URL / UMAMI_ADMIN_USERNAME / UMAMI_ADMIN_PASSWORD / UMAMI_WEBSITE_ID:
  *   → Karten im Leerzustand mit Deployment-Hinweis.
- * Mit allen drei Variablen:
+ * Mit allen vier Variablen:
  *   → Live-Daten aus Umami (letzte 30 Tage, 1 h gecacht).
  *
  * RSC — kein `"use client"` nötig, da kein Browser-State.
  * Kein Hardcode (§0.2): Styling über Payload-Admin-CSS-Variablen,
  * keine Projekt-Hex-Werte oder px-Hardcodes in dieser Datei.
  *
- * Versionsstatus: Payload 3.85.1 / Umami 2.x (Context7, 2026-06-19).
+ * Versionsstatus: Payload 3.85.1 / Umami 3.1.0 self-hosted (Context7, 2026-06-20).
  */
 
 import { getUmamiDashboardData } from "@/lib/umami";
@@ -190,8 +190,8 @@ export default async function StatsDashboard() {
           <br />
           <span style={{ fontSize: "0.75rem" }}>
             Benötigte Env-Vars:{" "}
-            <code>UMAMI_API_URL</code>, <code>UMAMI_API_TOKEN</code>,{" "}
-            <code>UMAMI_WEBSITE_ID</code>
+            <code>UMAMI_API_URL</code>, <code>UMAMI_ADMIN_USERNAME</code>,{" "}
+            <code>UMAMI_ADMIN_PASSWORD</code>, <code>UMAMI_WEBSITE_ID</code>
           </span>
         </div>
       ) : (

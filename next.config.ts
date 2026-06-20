@@ -19,6 +19,21 @@ const s3PublicUrl =
 const s3PublicUrlObj = new URL(s3PublicUrl);
 
 const nextConfig: NextConfig = {
+  // Deployment (hillerhome, siehe deploy.md §7): Docker-Image kopiert nur
+  // den standalone-Output, nicht node_modules.
+  output: "standalone",
+  // sharp lädt sein Plattform-Binary (libvips) über einen dynamisch berechneten
+  // Pfad — Next.js' Datei-Tracing für `standalone` erkennt das nicht zuverlässig
+  // und lässt die .so-Datei im pnpm-Store (.pnpm/@img+sharp-libvips-*) weg, was
+  // erst zur Laufzeit mit ERR_DLOPEN_FAILED auffällt (siehe deploy.md §14).
+  outputFileTracingIncludes: {
+    "/*": [
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*",
+      "node_modules/.pnpm/@img+**/**/*",
+      "node_modules/.pnpm/sharp@**/**/*",
+    ],
+  },
   images: {
     // Next.js 16 blockt standardmäßig die Bild-Optimierung von lokalen IPs
     // (SSRF-Schutz, Breaking Change v16). Lokal zeigt der Object-Storage-Host

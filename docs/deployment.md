@@ -25,7 +25,7 @@ Betrifft ausschließlich das Deployment — Entwicklung und Sprint-Planung sind 
 Alle anderen Ports (PostgreSQL, MinIO, App, Umami) sind **nur intern** — nie direkt nach außen.
 
 ### Domain
-- Hauptdomain: `kilian-siebert.de` (oder gewählt)
+- Hauptdomain: `kilia-siebert.de` (oder gewählt)
 - Caddy kümmert sich um DNS-Challenge und Zertifikat automatisch
 - DNS-A-Record auf die VPS-IP setzen
 
@@ -39,7 +39,7 @@ Internet
    ▼
 ┌─────────────────────────────────────────────────────────┐
 │  Caddy (Reverse Proxy + Auto-HTTPS)                      │
-│  → kilian-siebert.de  → App:3000                         │
+│  → kilia-siebert.de  → App:3000                         │
 └─────────────────────┬───────────────────────────────────┘
                       │ intern
           ┌───────────▼──────────────────┐
@@ -113,7 +113,8 @@ services:
       NEXT_PUBLIC_UMAMI_SRC: https://umami.${DOMAIN}/script.js
       NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID}
       UMAMI_API_URL: http://umami:3001
-      UMAMI_API_TOKEN: ${UMAMI_API_TOKEN}
+      UMAMI_ADMIN_USERNAME: ${UMAMI_ADMIN_USERNAME}
+      UMAMI_ADMIN_PASSWORD: ${UMAMI_ADMIN_PASSWORD}
       UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID}
     depends_on:
       postgres:
@@ -196,7 +197,7 @@ networks:
 ### Caddyfile (Beispiel)
 
 ```
-kilian-siebert.de {
+kilia-siebert.de {
     reverse_proxy app:3000
     encode gzip
     header {
@@ -208,7 +209,7 @@ kilian-siebert.de {
 }
 
 # Umami intern erreichbar machen (optional — falls subdomain gewünscht)
-# umami.kilian-siebert.de {
+# umami.kilia-siebert.de {
 #     reverse_proxy umami:3001
 # }
 ```
@@ -252,7 +253,7 @@ Vollständige Liste für `.env.prod` (Server-seitig, nie committen):
 ```bash
 # === Kern ===
 PAYLOAD_SECRET=<256-bit-random-hex>          # openssl rand -hex 32
-NEXT_PUBLIC_SERVER_URL=https://kilian-siebert.de
+NEXT_PUBLIC_SERVER_URL=https://kilia-siebert.de
 
 # === Datenbank ===
 POSTGRES_PASSWORD=<sicheres-passwort>
@@ -264,7 +265,7 @@ MINIO_SECRET_KEY=<zufällig>
 S3_BUCKET=portfolio-media
 
 # CDN-URL (Pull-Zone vor MinIO):
-NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilian-siebert.de
+NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de
 
 # === Video-Pipeline ===
 FFMPEG_DOCKER_IMAGE=jrottenberg/ffmpeg:6.1-ubuntu2204
@@ -274,23 +275,25 @@ SMTP_HOST=smtp.resend.com
 SMTP_PORT=587
 SMTP_USER=resend
 SMTP_PASS=<resend-api-key>
-EMAIL_FROM=noreply@kilian-siebert.de
+EMAIL_FROM=noreply@kilia-siebert.de
 EMAIL_FROM_NAME=Kilian Siebert Portfolio
-CONTACT_NOTIFY_TO=kilian@kilian-siebert.de
+CONTACT_NOTIFY_TO=kilian@kilia-siebert.de
 
 # === Umami Analytics ===
 UMAMI_DB_PASSWORD=<sicheres-passwort>
 UMAMI_APP_SECRET=<zufällig>
 UMAMI_WEBSITE_ID=<aus-umami-dashboard>
-UMAMI_API_TOKEN=<aus-umami-dashboard>
+# Kein API-Key bei self-hosted Umami (Cloud-only Feature) — Login-Credentials statt Token:
+UMAMI_ADMIN_USERNAME=<umami-admin-username>
+UMAMI_ADMIN_PASSWORD=<umami-admin-passwort>
 
 # === Umami Frontend (werden in die App-Binary eingebaut bei Build) ===
-NEXT_PUBLIC_UMAMI_SRC=https://umami.kilian-siebert.de/script.js
+NEXT_PUBLIC_UMAMI_SRC=https://umami.kilia-siebert.de/script.js
 # oder selbst-gehostetem Pfad / Proxy-Pfad (für Ad-Blocker-Bypass)
 NEXT_PUBLIC_UMAMI_WEBSITE_ID=<gleich wie UMAMI_WEBSITE_ID>
 
 # === Seed (nur beim initialen Setup) ===
-SEED_ADMIN_EMAIL=kilian@kilian-siebert.de
+SEED_ADMIN_EMAIL=kilian@kilia-siebert.de
 SEED_ADMIN_PASSWORD=<sicheres-passwort>
 ```
 
@@ -325,14 +328,14 @@ docker compose -f docker-compose.prod.yml exec app \
   pnpm payload run src/seed/index.ts
 
 # 7. Umami einrichten
-# → https://umami.kilian-siebert.de aufrufen (oder intern, je nach Caddyfile)
+# → https://umami.kilia-siebert.de aufrufen (oder intern, je nach Caddyfile)
 # → Website anlegen → Website-ID + API-Token ins .env.prod eintragen
 # → Stack neu starten: docker compose ... up -d
 
 # 8. CDN-Pull-Zone einrichten
 # → Bunny.net oder Cloudflare: Pull Zone auf http://<vps-ip>:9000/portfolio-media
-# → CNAME cdn.kilian-siebert.de → Pull-Zone-Hostname
-# → NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilian-siebert.de neu in .env, rebuild
+# → CNAME cdn.kilia-siebert.de → Pull-Zone-Hostname
+# → NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de neu in .env, rebuild
 ```
 
 ---
@@ -393,7 +396,7 @@ Mindest-Retention: 7 Tage täglich, 4 Wochen wöchentlich.
 ## 9. Monitoring (Empfehlung)
 
 - **Uptime:** Uptime Kuma (selbst gehostet, leichtgewichtig) oder UptimeRobot (Free-Tier)
-  → prüft `https://kilian-siebert.de` alle 60 Sekunden, Alert per Mail
+  → prüft `https://kilia-siebert.de` alle 60 Sekunden, Alert per Mail
 - **Logs:** `docker compose logs -f app` — Payload und Next.js loggen strukturiert
 - **Speicher:** `df -h` auf dem VPS, Alarm wenn < 20 % frei
 

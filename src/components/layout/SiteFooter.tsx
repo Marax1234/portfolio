@@ -33,10 +33,10 @@ export default function SiteFooter() {
             </p>
             {/* Kontakt */}
             <a
-              href="mailto:mail@kilian-siebert.de"
+              href="mailto:mail@kilia-siebert.de"
               className="type-label-caps text-primary hover:text-primary-container transition-colors mt-4 inline-block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-sm"
             >
-              mail@kilian-siebert.de
+              mail@kilia-siebert.de
             </a>
           </div>
 

@@ -18,6 +18,7 @@ import { Videos } from "./collections/Videos";
 import { AboutPage } from "./globals/AboutPage";
 import { CooperationsPage } from "./globals/CooperationsPage";
 import { SiteConfig } from "./globals/SiteConfig";
+import { migrations } from "./migrations";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -41,7 +42,7 @@ const dirname = path.dirname(filename);
  */
 
 function buildEmailAdapter() {
-  const from = process.env.EMAIL_FROM ?? "noreply@kilian-siebert.de";
+  const from = process.env.EMAIL_FROM ?? "noreply@kilia-siebert.de";
   const fromName = process.env.EMAIL_FROM_NAME ?? "Kilian Siebert Portfolio";
 
   if (process.env.SMTP_HOST) {
@@ -77,7 +78,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
     // Sprint 10: Statistik-Karten oben im Admin-Dashboard (vor Collections).
-    // Zeigt Umami-Metriken wenn UMAMI_API_URL/TOKEN/WEBSITE_ID gesetzt sind,
+    // Zeigt Umami-Metriken wenn UMAMI_API_URL/ADMIN_USERNAME/ADMIN_PASSWORD/WEBSITE_ID gesetzt sind,
     // sonst Deployment-Hinweis (Akzeptanzkriterium Sprint 10).
     components: {
       beforeDashboard: ["@/components/admin/StatsDashboard"],
@@ -91,6 +92,12 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI,
     },
+    // Push ist laut Payload-Doku ohnehin nur in development aktiv — in
+    // production zählen ausschließlich Migrations (siehe deploy.md / Dockerfile,
+    // `payload migrate` läuft vor `next build`, da /arbeiten/[slug] per
+    // generateStaticParams schon beim Build gegen die DB läuft).
+    push: false,
+    prodMigrations: migrations,
   }),
   // Sprint 7: Uploads der `media`-Collection landen im Object Storage
   // (MinIO lokal, siehe docker-compose.dev.yml) statt im lokalen `staticDir`

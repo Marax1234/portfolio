@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "Hochzeit, Reise, Sport oder Marke — schreib mir. Ich antworte meist innerhalb von 24 h.",
 };
 
-const CONTACT_EMAIL = "mail@kilian-siebert.de";
+const CONTACT_EMAIL = "mail@kilia-siebert.de";
 
 export default function KontaktPage() {
   return (

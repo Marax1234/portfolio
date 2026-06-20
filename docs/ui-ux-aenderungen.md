@@ -292,7 +292,7 @@ import Media from "@/components/Media";
 
 // ❌ Falsch — bricht wenn Object-Storage-URL wechselt
 <img src="/media/meinbild.jpg" />
-<Image src="https://cdn.kilian-siebert.de/meinbild.jpg" alt="" width={800} height={600} />
+<Image src="https://cdn.kilia-siebert.de/meinbild.jpg" alt="" width={800} height={600} />
 ```
 
 **Priority für LCP-Bilder** (erstes sichtbares Bild):

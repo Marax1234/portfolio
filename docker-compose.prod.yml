@@ -1,0 +1,109 @@
+# docker-compose.prod.yml
+# App + PostgreSQL + MinIO + Umami — läuft auf hillerhome
+# Ports gebunden an WireGuard-IP 10.10.0.2 (nur über Tunnel erreichbar)
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+      args:
+        NEXT_PUBLIC_SERVER_URL: https://${DOMAIN}
+        NEXT_PUBLIC_S3_PUBLIC_URL: https://cdn.${DOMAIN}
+        NEXT_PUBLIC_UMAMI_SRC: https://umami.${DOMAIN}/script.js
+        NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URI: postgres://portfolio:${POSTGRES_PASSWORD}@postgres:5432/portfolio
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      NEXT_PUBLIC_SERVER_URL: https://${DOMAIN}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_REGION: us-east-1
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
+      S3_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
+      S3_FORCE_PATH_STYLE: "true"
+      NEXT_PUBLIC_S3_PUBLIC_URL: https://cdn.${DOMAIN}
+      FFMPEG_DOCKER_IMAGE: ${FFMPEG_DOCKER_IMAGE}
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME}
+      CONTACT_NOTIFY_TO: ${CONTACT_NOTIFY_TO}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      NEXT_PUBLIC_UMAMI_SRC: https://umami.${DOMAIN}/script.js
+      NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID}
+      UMAMI_API_URL: http://umami:3000
+      UMAMI_ADMIN_USERNAME: ${UMAMI_ADMIN_USERNAME}
+      UMAMI_ADMIN_PASSWORD: ${UMAMI_ADMIN_PASSWORD}
+      UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID}
+    ports:
+      - "10.10.0.2:3000:3000"   # nur über WireGuard-Tunnel
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: portfolio
+      UMAMI_DB_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro   # legt umami-DB mit an (siehe §5)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+    # KEIN ports-Block — DB bleibt rein intern
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "10.10.0.2:9000:9000"   # nur über Tunnel — vom VPS-Caddy als cdn.* gefronted
+    networks:
+      - internal
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@postgres:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET}
+    ports:
+      - "10.10.0.2:3001:3000"   # Umami lauscht im Container auf 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+
+volumes:
+  pgdata:
+  minio-data:
+
+networks:
+  internal:
+    driver: bridge

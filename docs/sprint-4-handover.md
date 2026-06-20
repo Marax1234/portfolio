@@ -119,7 +119,7 @@ beim Bau der Daten-Queries.
 - `.env` (lokal, **nicht committed** — `.env.example` als Vorlage):
   `DATABASE_URI`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`,
   `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`.
-- Seed-Admin (lokal, nur Dev): `admin@kilian-siebert.de` /
+- Seed-Admin (lokal, nur Dev): `admin@kilia-siebert.de` /
   `changeme123` (Default aus `.env.example` — vor jedem produktiven Schritt
   ändern, gilt ausdrücklich nur für lokale Entwicklung).
 - Reihenfolge bei frischem Setup: `pnpm install` → `pnpm db:up` →

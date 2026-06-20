@@ -24,7 +24,7 @@
 | Kooperationen-Route (404) | `FOOTER_LEGAL[0]` | Sprint 9 |
 | Impressum / Datenschutz (404) | `FOOTER_LEGAL[1–2]` | Sprint 9 (oder früher als statische Seiten) |
 | Social-Links (`href="#"`) | `SOCIAL_LINKS` in `navigation.ts` | Sprint 9 / Sprint 10 |
-| Mail-Adresse im Footer | `SiteFooter.tsx` → `mailto:mail@kilian-siebert.de` | Sprint 9 (Kontakt-Sprint) |
+| Mail-Adresse im Footer | `SiteFooter.tsx` → `mailto:mail@kilia-siebert.de` | Sprint 9 (Kontakt-Sprint) |
 | `<Media id="placeholder">` in Galerie | `src/app/komponenten/page.tsx` | Sprint 7 (Object Storage) |
 | Lokaler Bild-Fallback (`Media`) | `src/lib/media/local-provider.ts` | **Sprint 7** |
 
