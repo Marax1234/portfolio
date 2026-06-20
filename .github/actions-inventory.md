@@ -15,15 +15,10 @@ Dependabot hält diese Liste über PRs aktuell (§3.4).
 | `github/codeql-action/init` | v4.36.2 | `8aad20d150bbac5944a9f9d289da16a4b0d87c1e` | https://github.com/github/codeql-action | 2026-06-20 |
 | `github/codeql-action/analyze` | v4.36.2 | `8aad20d150bbac5944a9f9d289da16a4b0d87c1e` | https://github.com/github/codeql-action | 2026-06-20 |
 | `gitleaks/gitleaks-action` | v3.0.0 | `e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e` | https://github.com/gitleaks/gitleaks-action | 2026-06-20 |
-
-## Noch nicht aktiviert (warten auf Infrastruktur — siehe docs/security/github-settings.md)
-
-Diese Actions sind für die Deploy-/DAST-Gates (§6, §7) vorgesehen und werden
-eingetragen, sobald die Staging-Umgebung bereitsteht:
-
-| Action | Version | Gepinnter SHA | Repository |
-|---|---|---|---|
-| `zaproxy/action-baseline` | v0.15.0 | `de8ad967d3548d44ef623df22cf95c3b0baf8b25` | https://github.com/zaproxy/action-baseline |
+| `actions/upload-artifact` | v4.6.2 | `ea165f8d65b6e75b540449e92b4886f43607fa02` | https://github.com/actions/upload-artifact | 2026-06-20 |
+| `actions/github-script` | v8.0.0 | `ed597411d8f924073f98dfc5c65a23a2325f34cd` | https://github.com/actions/github-script | 2026-06-20 |
+| `zaproxy/action-baseline` | v0.15.0 | `de8ad967d3548d44ef623df22cf95c3b0baf8b25` | https://github.com/zaproxy/action-baseline | 2026-06-20 |
+| `zaproxy/action-full-scan` | v0.13.0 | `3c58388149901b9a03b7718852c5ba889646c27c` | https://github.com/zaproxy/action-full-scan | 2026-06-20 |
 
 ## Incident-Response bei kompromittierter Action (§3.3)
 

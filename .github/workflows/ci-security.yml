@@ -104,6 +104,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      security-events: write # §5.3.3 — SARIF-Upload in den Security-Tab (Repo ist public -> Code Scanning kostenlos)
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -117,16 +118,14 @@ jobs:
           languages: javascript-typescript
           queries: security-extended
 
-      # upload: never — GitHub Code Scanning (SARIF-Upload in den Security-Tab)
-      # erfordert GitHub Advanced Security, das auf diesem Plan für private Repos
-      # nicht verfügbar ist ("Code scanning is not enabled for this repository").
-      # Das SARIF wird stattdessen nur als Job-Artefakt ausgewertet (siehe unten).
+      # §5.3.3 — upload: always lädt das SARIF in Security → Code Scanning hoch
+      # (für öffentliche Repos kostenlos). Trends sind dort zentral sichtbar.
       - name: Analyze
         uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           category: "/language:javascript-typescript"
           output: sarif-results
-          upload: never
+          upload: always
 
       # §5.3.4 — High-/Critical-Findings blockieren den Merge. CodeQL/analyze
       # lädt nur hoch, bricht aber nicht ab; deshalb werten wir das SARIF
@@ -151,7 +150,7 @@ jobs:
             ] | length' "$SARIF")
           echo "High/Critical SAST-Findings: $COUNT"
           if [ "$COUNT" -gt 0 ]; then
-            echo "::error::SAST-Gate fehlgeschlagen — $COUNT High/Critical-Finding(s). Details siehe Job-Log oben (kein Code-Scanning-Tab ohne GitHub Advanced Security)."
+            echo "::error::SAST-Gate fehlgeschlagen — $COUNT High/Critical-Finding(s). Details im Security → Code-Scanning-Tab."
             exit 1
           fi
           echo "SAST-Gate bestanden."
@@ -184,3 +183,112 @@ jobs:
       # dies effektiv `tsc --noEmit --strict`. Type-Fehler blockieren den Merge.
       - name: TypeScript check
         run: pnpm typecheck
+
+  # ── §6/§7 DAST Gate gegen EPHEMERE Umgebung (Staging-Workaround) ──────────
+  # Es gibt keine dauerhafte Staging-Umgebung. Workaround: Wir booten den vollen
+  # Stack (Postgres + MinIO aus docker-compose.dev.yml), migrieren (§6.2/§6.3),
+  # seeden Nicht-Echtdaten (§6.1), bauen und starten die App und scannen sie mit
+  # OWASP ZAP — alles ephemer im Runner. Läuft nur bei Push auf main; der
+  # Production-Deploy (deploy-production.yml) wartet via workflow_run auf den
+  # Erfolg dieses gesamten Workflows, dieser Job gatet also §7 vor §8.
+  dast-ephemeral:
+    name: DAST (ephemeral ZAP baseline)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      # §4.1 — ausschließlich Dummy-Werte, KEINE Produktions-Secrets.
+      PAYLOAD_SECRET: ci-dast-ephemeral-secret-not-a-real-key-000000
+      DATABASE_URI: postgres://portfolio:portfolio@localhost:5432/portfolio
+      S3_BUCKET: portfolio-media
+      S3_REGION: us-east-1
+      S3_ENDPOINT: http://localhost:9100
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_FORCE_PATH_STYLE: "true"
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+      NEXT_PUBLIC_S3_PUBLIC_URL: http://localhost:9100/portfolio-media
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@008330803749db0355799c700092d9a85fd074e9 # v6.0.9
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Infrastruktur hochfahren (Postgres + MinIO)
+        run: docker compose -f docker-compose.dev.yml up -d
+
+      - name: Auf Postgres warten
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose -f docker-compose.dev.yml exec -T postgres pg_isready -U portfolio >/dev/null 2>&1; then
+              echo "Postgres bereit."; exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Postgres wurde nicht rechtzeitig bereit."; exit 1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # §6.2/§6.3 — Migrationen in der Ephemer-Umgebung anwenden (payload migrate).
+      - name: Migrationen anwenden
+        run: pnpm migrate
+
+      # §6.1 — Repräsentative, NICHT echte Daten einspielen. Schlägt das Seeding
+      # fehl, scannen wir trotzdem die laufende App (leere DB).
+      - name: Seed-Daten
+        continue-on-error: true
+        run: pnpm seed
+
+      - name: App bauen
+        run: pnpm build
+
+      # output: "standalone" (next.config.ts) -> der Standalone-Server ist
+      # produktionsidentisch (§6.1). Static/Public wie im Dockerfile daneben legen.
+      - name: App starten (Standalone, Hintergrund) und auf Bereitschaft warten
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+          PORT=3000 HOSTNAME=0.0.0.0 nohup node .next/standalone/server.js > /tmp/app.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000 >/dev/null 2>&1; then
+              echo "App erreichbar."; exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::App wurde nicht erreichbar."; tail -50 /tmp/app.log; exit 1
+
+      # Ziel über die docker0-Bridge-IP, damit der ZAP-Container die auf dem
+      # Host laufende App (0.0.0.0:3000) erreicht.
+      - name: ZAP-Ziel ermitteln
+        run: |
+          HOST_IP=$(ip -4 -o addr show docker0 | awk '{print $4}' | cut -d/ -f1)
+          echo "ZAP_TARGET=http://${HOST_IP}:3000" >> "$GITHUB_ENV"
+
+      # §7.2 — ZAP Baseline prüft u. a. XSS, SQLi-Indikatoren, fehlende Security-
+      # Header, CSRF, offene Redirects, unsichere Cookies.
+      # §7.3 — fail_action: true -> High/Critical-Findings blockieren den Deploy.
+      # §7.4 — begründete Ausnahmen stehen in .zap/rules.tsv.
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: ${{ env.ZAP_TARGET }}
+          rules_file_name: .zap/rules.tsv
+          allow_issue_writing: false
+          fail_action: true
+          artifact_name: zap-baseline-report
+
+      - name: Stack herunterfahren
+        if: always()
+        run: docker compose -f docker-compose.dev.yml down -v

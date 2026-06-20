@@ -1,0 +1,150 @@
+# Nightly Full Scan (§10) — Portfolio Kilian Siebert
+#
+# Täglicher, von PRs/Deploys unabhängiger Scan-Lauf gegen `main` bzw. Production.
+#   §10.1  Vollständiger Dependency-Audit (ohne Level-Filter) + Issue bei High/Critical.
+#   §10.2  Vollständiger SAST-Scan über die gesamte Codebasis + SARIF in Security-Tab.
+#   §10.3  DAST Full Scan gegen die Production-URL, nicht-blockierend, Issue bei Neuem.
+#
+# Härtung wie ci-security.yml: read-all default, Writes nur per Job, Actions auf SHA
+# gepinnt, keine github.event.*-Interpolation in run.
+
+name: Nightly Security Scan
+
+on:
+  schedule:
+    # 03:17 UTC täglich (ungerade Minute, um Last-Spitzen zur vollen Stunde zu meiden)
+    - cron: "17 3 * * *"
+  workflow_dispatch: {} # §10.1.1 — manuell auslösbar
+
+permissions: read-all
+
+concurrency:
+  group: nightly-scan
+  cancel-in-progress: false
+
+jobs:
+  # ── §10.1 Vollständiger Dependency Audit ─────────────────────────────────
+  dependency-audit:
+    name: Full Dependency Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write # §10.1.3 — Issue bei neuen High/Critical-CVEs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@008330803749db0355799c700092d9a85fd074e9 # v6.0.9
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+
+      # §10.1.2 — ohne --audit-level-Einschränkung, vollständiger Report (alle
+      # Dependencies, alle Severities).
+      - name: Vollständiger Audit-Report
+        run: pnpm audit --json > audit-full.json || true
+
+      # §10.1.4 — Report als Artefakt, mindestens 30 Tage.
+      - name: Report archivieren
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dependency-audit-report
+          path: audit-full.json
+          retention-days: 30
+
+      # §10.1.3 — Pro neuem High/Critical-Advisory ein Issue; Duplikate werden
+      # über den Titel (Advisory-ID) verhindert.
+      - name: Issues für High/Critical anlegen
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('audit-full.json', 'utf8'));
+            const advisories = Object.values(data.advisories || {});
+            const severe = advisories.filter(a => ['high', 'critical'].includes(a.severity));
+            if (severe.length === 0) {
+              core.info('Keine neuen High/Critical-Advisories.');
+              return;
+            }
+            const existing = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'security', per_page: 100,
+            });
+            for (const a of severe) {
+              const id = a.github_advisory_id || a.id || a.url;
+              const title = `[security] ${a.module_name}: ${id}`;
+              if (existing.some(i => i.title === title)) {
+                core.info(`Issue existiert bereits: ${title}`);
+                continue;
+              }
+              const cvss = a.cvss?.score ?? a.metadata?.cvss?.score ?? 'n/a';
+              const body = [
+                `**Library:** \`${a.module_name}\``,
+                `**Severity:** ${a.severity}`,
+                `**CVSS:** ${cvss}`,
+                `**Vulnerable:** ${a.vulnerable_versions ?? 'n/a'}`,
+                `**Patched:** ${a.patched_versions ?? 'n/a'}`,
+                `**Advisory:** ${a.url ?? id}`,
+                '',
+                a.title ?? '',
+                '',
+                '_Automatisch erzeugt vom Nightly Dependency Audit (§10.1.3)._',
+              ].join('\n');
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['security', 'dependencies'],
+              });
+              core.info(`Issue angelegt: ${title}`);
+            }
+
+  # ── §10.2 Vollständiger SAST-Scan ────────────────────────────────────────
+  full-sast:
+    name: Full SAST (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write # §10.2.2 — SARIF-Upload (Trends im Security-Tab)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      # §10.2.1 — gesamte Codebasis (CodeQL analysiert den vollständigen Branch,
+      # keine Diff-Beschränkung).
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          category: "/language:javascript-typescript"
+          upload: always
+
+  # ── §10.3 DAST Full Scan gegen Production ────────────────────────────────
+  dast-full:
+    name: DAST Full Scan (Production)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write # §10.3.2 — Issue bei neuen Findings
+    steps:
+      # §10.3.1/§10.3.3 — Full Scan gegen Production-URL; bricht die Pipeline
+      # NICHT ab (fail_action: false), da Production bereits deployed ist.
+      # §10.3.2 — allow_issue_writing: true -> die Action pflegt ein Tracking-
+      # Issue und ergänzt nur neue Alerts (kein Noise durch bekannte Findings).
+      - name: OWASP ZAP Full Scan
+        uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c # v0.13.0
+        with:
+          target: https://kilia-siebert.de
+          rules_file_name: .zap/rules.tsv
+          allow_issue_writing: true
+          fail_action: false
+          artifact_name: zap-full-scan-report
