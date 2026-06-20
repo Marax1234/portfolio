@@ -139,12 +139,17 @@ jobs:
             echo "::error::Kein SARIF-Report gefunden — SAST-Gate kann nicht bewertet werden."
             exit 1
           fi
+          # CodeQL legt die security-severity der Regeln in tool.extensions[].rules
+          # ab (Query-Packs), nicht nur in tool.driver.rules — beide Quellen werden
+          # zusammengeführt, sonst findet das Gate die Werte nie (security-severity
+          # >= 7.0 = High/Critical).
           COUNT=$(jq '
             [ .runs[]
-              | (.tool.driver.rules // []) as $rules
+              | ((.tool.driver.rules // []) + ([.tool.extensions[]?.rules[]?])) as $rules
               | .results[]?
-              | . as $r
-              | (($rules[] | select(.id == $r.ruleId) | (.properties."security-severity" // "0")) // "0")
+              | .ruleId as $rid
+              | ([ $rules[] | select(.id == $rid) | (.properties."security-severity" // empty) ] | first)
+              | select(. != null)
               | tonumber
               | select(. >= 7.0)
             ] | length' "$SARIF")

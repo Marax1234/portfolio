@@ -163,10 +163,27 @@ export async function transcodeVideo(payload: Payload, videoId: number | string)
 
   try {
     // 1. Original herunterladen
+    // Härtung (CodeQL js/http-to-file-access): Bevor Netzwerkdaten auf die Platte
+    // geschrieben werden, die Quelle auf den eigenen Object Storage einschränken
+    // (kein beliebiger Host → kein SSRF/Fremdinhalt) und die Größe deckeln
+    // (kein Platten-/Speicher-Erschöpfen durch überdimensionierte Downloads).
+    const allowedBase = process.env.NEXT_PUBLIC_S3_PUBLIC_URL;
+    const sourceUrl = doc.url as string;
+    if (!allowedBase || !sourceUrl.startsWith(allowedBase)) {
+      throw new Error(`[transcode] Unerlaubte Video-Quelle für ${videoId}: ${sourceUrl}`);
+    }
+    const MAX_BYTES = 2 * 1024 * 1024 * 1024; // 2 GiB Obergrenze
     const inputPath = path.join(workDir, "input.mp4");
-    const response = await fetch(doc.url as string);
-    if (!response.ok) throw new Error(`Download fehlgeschlagen: ${response.status} ${doc.url}`);
+    const response = await fetch(sourceUrl);
+    if (!response.ok) throw new Error(`Download fehlgeschlagen: ${response.status} ${sourceUrl}`);
+    const declaredLength = Number(response.headers.get("content-length") ?? "0");
+    if (declaredLength > MAX_BYTES) {
+      throw new Error(`[transcode] Video ${videoId} zu groß (Content-Length ${declaredLength} > ${MAX_BYTES}).`);
+    }
     const buffer = Buffer.from(await response.arrayBuffer());
+    if (buffer.byteLength > MAX_BYTES) {
+      throw new Error(`[transcode] Video ${videoId} zu groß (${buffer.byteLength} > ${MAX_BYTES}).`);
+    }
     await fs.writeFile(inputPath, buffer);
 
     // 2. Probe
