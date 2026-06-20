@@ -11,10 +11,10 @@ Dependabot hält diese Liste über PRs aktuell (§3.4).
 |---|---|---|---|---|
 | `actions/checkout` | v5.0.0 | `08c6903cd8c0fde910a37f88322edcfb5dd907a8` | https://github.com/actions/checkout | 2026-06-20 |
 | `actions/setup-node` | v5.0.0 | `a0853c24544627f65ddf259abe73b1d18a591444` | https://github.com/actions/setup-node | 2026-06-20 |
-| `pnpm/action-setup` | v4.2.0 | `41ff72655975bd51cab0327fa583b6e92b6d3061` | https://github.com/pnpm/action-setup | 2026-06-20 |
+| `pnpm/action-setup` | v6.0.9 | `008330803749db0355799c700092d9a85fd074e9` | https://github.com/pnpm/action-setup | 2026-06-20 |
 | `github/codeql-action/init` | v4.36.2 | `8aad20d150bbac5944a9f9d289da16a4b0d87c1e` | https://github.com/github/codeql-action | 2026-06-20 |
 | `github/codeql-action/analyze` | v4.36.2 | `8aad20d150bbac5944a9f9d289da16a4b0d87c1e` | https://github.com/github/codeql-action | 2026-06-20 |
-| `gitleaks/gitleaks-action` | v2.3.9 | `ff98106e4c7b2bc287b24eaf42907196329070c7` | https://github.com/gitleaks/gitleaks-action | 2026-06-20 |
+| `gitleaks/gitleaks-action` | v3.0.0 | `e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e` | https://github.com/gitleaks/gitleaks-action | 2026-06-20 |
 
 ## Noch nicht aktiviert (warten auf Infrastruktur — siehe docs/security/github-settings.md)
 
