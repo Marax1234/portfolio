@@ -1,0 +1,10 @@
+# OWASP ZAP Baseline/Full-Scan Ignore-Liste (§7.4)
+#
+# Format (Tab-getrennt):  <ruleId>\t<WARN|IGNORE|FAIL>\t<Begründung>
+#
+# Nur begründete Ausnahmen eintragen; regelmäßig reviewen. Aktiv genutzt durch
+# das DAST-Gate, sobald die Staging-Umgebung bereitsteht (§7, derzeit blockiert
+# — siehe docs/security/github-settings.md).
+#
+# Beispiel (auskommentiert, bis ein konkreter False-Positive auftritt):
+# 10096	IGNORE	Timestamp-Disclosure: nur statische Hash-Assets, kein Risiko

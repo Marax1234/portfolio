@@ -1,0 +1,28 @@
+# Gitleaks-Konfiguration — Secret-Scan-Gate (§5.1)
+#
+# useDefault = true lädt den vollständigen Standard-Regelsatz von Gitleaks, der
+# API-Keys, Tokens, Passwörter und Connection Strings abdeckt (§5.1.2).
+#
+# §5.1.4 — False-Positive-Ausnahmen werden ausschließlich hier explizit und
+# versioniert gepflegt, niemals durch Deaktivieren des Checks. Jede Ausnahme
+# trägt eine Begründung. Verantwortlich: Repo-Owner (@Marax1234).
+
+title = "Portfolio Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Begründete, versionierte Ausnahmen"
+
+# Pfade, die bewusst nur Platzhalter-Werte enthalten (keine echten Secrets).
+paths = [
+  # .env.example dokumentiert benötigte Variablen mit Dummy-Werten
+  # (z. B. S3_SECRET_ACCESS_KEY=minioadmin). Keine produktiven Credentials.
+  '''\.env\.example$''',
+  # Lockfiles enthalten Integrity-Hashes, die wie Secrets aussehen können.
+  '''pnpm-lock\.yaml$''',
+]
+
+# Hinweis: .env, .env.prod, .env.*.local sind über .gitignore vom Repository
+# ausgeschlossen und werden daher gar nicht erst gescannt/committet (§2.1).

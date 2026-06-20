@@ -11,6 +11,8 @@
     "lint": "eslint src/",
     "check": "pnpm typecheck && pnpm lint",
     "payload": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload",
+    "migrate": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload migrate",
+    "migrate:status": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload migrate:status",
     "generate:types": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload generate:types",
     "generate:importmap": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload generate:importmap",
     "seed": "PAYLOAD_CONFIG_PATH=src/payload.config.ts payload run src/seed/index.ts",
@@ -51,6 +53,10 @@
     "onlyBuiltDependencies": [
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "undici@>=7.0.0 <7.28.0": "^7.28.0",
+      "nodemailer@<9.0.1": "^9.0.1"
+    }
   }
 }

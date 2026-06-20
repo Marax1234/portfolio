@@ -1,0 +1,98 @@
+# Production-Deploy Gate — Portfolio Kilian Siebert (§8)
+#
+# Deployt auf den hillerhome-Stack über den self-hosted Runner (Variante A aus
+# deploy.md §11). Der Deploy startet AUSSCHLIESSLICH, nachdem der Workflow
+# "CI Security Gates" auf `main` erfolgreich war.
+#
+# Erfüllte Must-Punkte:
+#   §8.2  Abhängigkeit auf alle Security-Gates: workflow_run-Trigger + Erfolgs-Gate
+#         (conclusion == 'success'). Ein rotes Gate verhindert den Deploy automatisch.
+#   §8.1  Eigenes GitHub Environment `production` mit Required Reviewer (in den
+#         Repo-Settings zu konfigurieren, siehe docs/security/github-settings.md) ->
+#         kein automatisches Deploy ohne menschliche Approval.
+#   §6.3  Migrationen laufen über `payload migrate` (im Dockerfile, builder-Stage),
+#         niemals `migrate dev`/`migrate:fresh`/`migrate:reset`.
+#   §4.1  main-Build läuft auf dem self-hosted Runner mit Deployment-Secrets;
+#         untrusted PR-Builds laufen getrennt auf GitHub-Hosted Runnern (ci-security.yml).
+#   §3.1  Externe Action auf Commit-SHA gepinnt.
+#   §3.5  Keine direkte Interpolation von github.event.*-Werten in run-Steps.
+#
+# VORAUSSETZUNGEN (sonst läuft dieser Workflow nicht — siehe Doku):
+#   1. Self-hosted Runner auf hillerhome registriert (deploy.md §11, Variante A).
+#   2. GitHub Environment `production` mit mindestens 1 Required Reviewer angelegt.
+#   3. .env.prod liegt auf hillerhome unter /opt/portfolio/.env.prod (nicht im Repo).
+
+name: Deploy Production
+
+on:
+  workflow_run:
+    workflows: ["CI Security Gates"]
+    types: [completed]
+    branches: [main]
+
+# §1.1.2 — Read-Only als Default.
+permissions: read-all
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    name: Deploy to Production (hillerhome)
+    # §8.2 — Nur deployen, wenn der auslösende Lauf ein Push auf main war UND
+    # alle CI-Security-Gates grün sind.
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: self-hosted
+    # §8.1 — Erzwingt Required-Reviewer-Approval (Environment-Schutzregel).
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      # Exakt den Commit auschecken, der die Gates bestanden hat. `ref` ist ein
+      # Action-Input (keine Shell-Interpolation) -> §3.5-konform.
+      - name: Checkout geprüften Commit
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Sync nach /opt/portfolio
+        run: |
+          rsync -a --delete \
+            --exclude='.git' --exclude='.env.prod' --exclude='init-db' \
+            ./ /opt/portfolio/
+
+      - name: Datenbank & Object-Storage hochfahren
+        working-directory: /opt/portfolio
+        run: |
+          docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres minio
+
+      - name: Build-Env generieren (Container-IPs)
+        working-directory: /opt/portfolio
+        run: ./scripts/gen-build-env.sh
+
+      # §8.3 (Should) — Vor dem Deploy ausstehende Migrationen sichtbar machen.
+      # Schlägt nicht hart fehl, falls die DB vom Host nicht erreichbar ist; der
+      # verbindliche Lauf passiert in der builder-Stage (§6.3).
+      - name: Migration-Status (Dry-Run)
+        working-directory: /opt/portfolio
+        continue-on-error: true
+        run: |
+          set -a && . ./.env.prod && set +a
+          pnpm install --frozen-lockfile
+          pnpm migrate:status
+
+      # §6.3 — `docker compose build app` führt in der builder-Stage `payload
+      # migrate` aus (Dockerfile Zeile 32). Migrationen werden also vor dem
+      # Start angewandt; der Build-Log listet die angewandten Migrationen.
+      - name: Build app (inkl. payload migrate)
+        working-directory: /opt/portfolio
+        run: |
+          docker compose --env-file .env.prod -f docker-compose.prod.yml build app
+
+      - name: App neu starten
+        working-directory: /opt/portfolio
+        run: |
+          docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --no-deps app

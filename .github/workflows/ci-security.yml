@@ -1,0 +1,183 @@
+# CI Security Gates — Portfolio Kilian Siebert
+#
+# Implementiert die 🔴-Must-Punkte der Security-Checkliste, die als Code im Repo
+# leben (Abschnitte 1.1, 3, 4, 5). Diese Gates laufen bei jedem Pull Request gegen
+# `main` und bei jedem Push auf `main`. Sie müssen in den Branch-Protection-Regeln
+# als "Required Status Checks" eingetragen werden (siehe docs/security/github-settings.md),
+# damit kein Merge ohne grüne Gates möglich ist (§1.2.4, §5.1.3, §5.2.2, §5.3.4, §5.4.1).
+#
+# Härtung:
+#   §1.1.2  permissions: read-all auf Workflow-Ebene; Jobs erhalten Writes nur explizit.
+#   §1.1.3  Kein Job hat write-all; jedes permissions-Feld ist begründet.
+#   §1.1.4  Kein pull_request_target -> Fork-PRs laufen ohne Produktions-Secrets.
+#   §3.1    Alle externen Actions sind auf einen 40-Zeichen-Commit-SHA gepinnt.
+#   §3.5    Kein github.event.*-Wert wird direkt in einen run-Step interpoliert.
+#   §4.1    Gates laufen auf GitHub-Hosted Runnern ohne Deployment-Secrets.
+
+name: CI Security Gates
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# §1.1.2 — Standard ist Read-Only. Jeder Job erweitert nur, was er wirklich braucht.
+permissions: read-all
+
+# Doppelte Läufe auf demselben Branch/PR abbrechen.
+concurrency:
+  group: ci-security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── §5.1 Secret Scan Gate ────────────────────────────────────────────────
+  secret-scan:
+    name: Secret Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # gitleaks-action listet PR-Commits zum Diff-Scan (§5.1.1)
+    steps:
+      - name: Checkout (vollständige History für Diff-Scan, §5.1.1)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      # §5.1.2/§5.1.3 — Gitleaks deckt API-Keys, Tokens, Passwörter, Connection
+      # Strings ab und bricht bei einem Fund mit Exit-Code != 0 ab (Merge-Blocker).
+      # False Positives werden in .gitleaks.toml gepflegt (§5.1.4), nicht durch
+      # Deaktivieren des Checks.
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_SUMMARY: "true"
+
+  # ── §5.2 SCA Gate (Software Composition Analysis) ────────────────────────
+  sca:
+    name: SCA (pnpm audit)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@008330803749db0355799c700092d9a85fd074e9 # v6.0.9
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # §5.2.2 — Critical/High-CVEs in Produktions-Dependencies blockieren den Merge.
+      # --prod schließt devDependencies aus (die werden separat bewertet, §5.2.4).
+      # `--audit-level` wird NICHT als alleiniges Gate genutzt: pnpm gibt bei jedem
+      # gefundenen Advisory Exit-Code 1 zurück, unabhängig vom Level. Stattdessen
+      # werten wir das JSON aus und gaten explizit nur auf high/critical.
+      - name: pnpm audit (prod, high+critical)
+        run: |
+          set -euo pipefail
+          pnpm audit --prod --json > audit.json || true
+          HIGH=$(jq '(.metadata.vulnerabilities.high // 0) + (.metadata.vulnerabilities.critical // 0)' audit.json)
+          echo "High/Critical-Vulnerabilities: $HIGH"
+          if [ "$HIGH" -gt 0 ]; then
+            jq -r '.advisories[]? | select(.severity == "high" or .severity == "critical") | "\(.severity): \(.module_name) — \(.title)"' audit.json
+            echo "::error::SCA-Gate fehlgeschlagen — $HIGH High/Critical-Finding(s)."
+            exit 1
+          fi
+          echo "SCA-Gate bestanden (0 High/Critical)."
+
+  # ── §5.3 SAST Gate (Static Application Security Testing) ─────────────────
+  sast:
+    name: SAST (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      # §5.3.2 — JavaScript/TypeScript inkl. Next.js-/React-/Node.js-Patterns.
+      # security-extended erweitert den Standard-Regelsatz um zusätzliche
+      # Security-Queries.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+
+      # upload: never — GitHub Code Scanning (SARIF-Upload in den Security-Tab)
+      # erfordert GitHub Advanced Security, das auf diesem Plan für private Repos
+      # nicht verfügbar ist ("Code scanning is not enabled for this repository").
+      # Das SARIF wird stattdessen nur als Job-Artefakt ausgewertet (siehe unten).
+      - name: Analyze
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          category: "/language:javascript-typescript"
+          output: sarif-results
+          upload: never
+
+      # §5.3.4 — High-/Critical-Findings blockieren den Merge. CodeQL/analyze
+      # lädt nur hoch, bricht aber nicht ab; deshalb werten wir das SARIF
+      # (security-severity >= 7.0 = High/Critical) explizit aus und lassen den
+      # Job fehlschlagen.
+      - name: Enforce SAST severity gate
+        run: |
+          set -euo pipefail
+          SARIF=$(find sarif-results -name '*.sarif' | head -1)
+          if [ -z "$SARIF" ]; then
+            echo "::error::Kein SARIF-Report gefunden — SAST-Gate kann nicht bewertet werden."
+            exit 1
+          fi
+          COUNT=$(jq '
+            [ .runs[]
+              | (.tool.driver.rules // []) as $rules
+              | .results[]?
+              | . as $r
+              | (($rules[] | select(.id == $r.ruleId) | (.properties."security-severity" // "0")) // "0")
+              | tonumber
+              | select(. >= 7.0)
+            ] | length' "$SARIF")
+          echo "High/Critical SAST-Findings: $COUNT"
+          if [ "$COUNT" -gt 0 ]; then
+            echo "::error::SAST-Gate fehlgeschlagen — $COUNT High/Critical-Finding(s). Details siehe Job-Log oben (kein Code-Scanning-Tab ohne GitHub Advanced Security)."
+            exit 1
+          fi
+          echo "SAST-Gate bestanden."
+
+  # ── §5.4 TypeScript Strict Check Gate ────────────────────────────────────
+  typecheck:
+    name: TypeScript Strict Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@008330803749db0355799c700092d9a85fd074e9 # v6.0.9
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # §5.4.1 — tsc --noEmit; strict ist in tsconfig.json aktiviert, daher ist
+      # dies effektiv `tsc --noEmit --strict`. Type-Fehler blockieren den Merge.
+      - name: TypeScript check
+        run: pnpm typecheck
