@@ -77,10 +77,12 @@ Täglich um 03:17 UTC + manuell (`workflow_dispatch`):
 
 ## Noch offen (deine Aktion)
 
-- [ ] **Bootstrap-PR**: Diese Dateien (`.github/`, `.gitleaks.toml`, `.zap/`,
-      `docs/`, `security-exceptions.md`, `package.json`, `pnpm-lock.yaml`) auf einem
-      Branch pushen und per **PR** mergen. Die vier Gates laufen auf dem PR und
-      müssen grün sein (Required Checks). Direkt-Push auf `main` ist jetzt gesperrt.
+- [x] **Basis-Gates gemerged** (PR #1): `ci-security.yml`, `deploy-production.yml`,
+      `.gitleaks.toml`, `.zap/`, Doku, `package.json`/`pnpm-lock.yaml`-Overrides.
+- [ ] **PR #8 mergen**: Nightly Scans (`nightly-scan.yml`) + ephemerer DAST-Job.
+      Die vier Gates müssen auf dem PR grün sein (Direkt-Push auf `main` ist gesperrt).
+      Beim Merge läuft erstmals der `dast-ephemeral`-Full-Stack-Boot — Log prüfen
+      und ggf. `.zap/rules.tsv`/Timeouts nachziehen.
 - [ ] **§2.2 Production-Secrets** im Environment `production` hinterlegen, **falls**
       `deploy-production.yml` Secrets injizieren soll. Aktuell liegen die Werte in
       `/opt/portfolio/.env.prod` auf hillerhome (nicht im Repo) — dann sind hier
