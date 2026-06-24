@@ -47,7 +47,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const baseClasses =
-  "inline-flex items-center justify-center gap-2 type-label-caps rounded-md px-6 py-3 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "inline-flex items-center justify-center gap-2 type-label-caps rounded-md px-6 py-3 transition-[color,background-color,border-color,transform] duration-160 ease-out active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:active:scale-100";
 
 /**
  * Button-Klassen ohne die Komponente — für die wenigen Stellen, die einen

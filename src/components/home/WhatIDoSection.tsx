@@ -22,6 +22,7 @@ interface Tile {
   label: string;
   href: string;
   ref: AnyMediaRef;
+  refColor?: AnyMediaRef;
 }
 
 const FALLBACK_TILES: Tile[] = [
@@ -51,7 +52,7 @@ export default function WhatIDoSection({
       {/* Redesign „Anti-Slop": kein 3-gleiche-Kacheln-Grid mehr — erste
           Kachel führt (2 Zeilen hoch), die übrigen stapeln sich daneben. */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {tiles.map(({ key, label, href, ref }, index) => (
+        {tiles.map(({ key, label, href, ref, refColor }, index) => (
           <Link
             key={key}
             href={href}
@@ -61,13 +62,32 @@ export default function WhatIDoSection({
             ].join(" ")}
           >
             <div className="relative w-full h-full overflow-hidden rounded-none border border-outline-variant">
-              <Media
-                {...ref}
-                alt={label}
-                className="absolute inset-0 w-full h-full"
-                imageClassName="object-cover w-full h-full transition-transform duration-500 motion-reduce:transition-none group-hover:scale-105"
-                sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
-              />
+              {refColor ? (
+                <>
+                  <Media
+                    {...ref}
+                    alt={label}
+                    className="absolute inset-0 w-full h-full"
+                    imageClassName="object-cover w-full h-full transition-opacity duration-500 motion-reduce:transition-none opacity-100 group-hover:opacity-0"
+                    sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
+                  />
+                  <Media
+                    {...refColor}
+                    alt={label}
+                    className="absolute inset-0 w-full h-full"
+                    imageClassName="object-cover w-full h-full transition-opacity duration-500 motion-reduce:transition-none opacity-0 group-hover:opacity-100"
+                    sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
+                  />
+                </>
+              ) : (
+                <Media
+                  {...ref}
+                  alt={label}
+                  className="absolute inset-0 w-full h-full"
+                  imageClassName="object-cover w-full h-full transition-transform duration-500 motion-reduce:transition-none group-hover:scale-105"
+                  sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/50 via-transparent to-transparent" />
               <span className="absolute bottom-5 left-5 type-label-caps text-inverse-on-surface">
                 {label}
