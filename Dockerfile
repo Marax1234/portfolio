@@ -1,7 +1,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 # sharp's prebuilt libvips binary is large and its optional-dependency fetch has been
 # observed to land incomplete (missing .so) under --frozen-lockfile on this registry —
 # verify it loads and force a clean re-fetch on failure instead of shipping a broken image.
@@ -25,7 +25,7 @@ ENV NEXT_PUBLIC_UMAMI_SRC=${NEXT_PUBLIC_UMAMI_SRC}
 ENV NEXT_PUBLIC_UMAMI_WEBSITE_ID=${NEXT_PUBLIC_UMAMI_WEBSITE_ID}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 # Migrations müssen vor dem Build laufen: /arbeiten/[slug] fragt Payload
 # (→ Postgres) schon zur Build-Zeit per generateStaticParams ab.
 # .env.production.local (siehe deploy.md/.env.prod) liegt im Build-Kontext.
