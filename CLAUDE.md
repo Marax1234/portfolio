@@ -7,7 +7,6 @@
 
 Vor jeder neuen UI-Arbeit folgende Dateien einlesen:
 - `design.md` — verbindliche Quelle für alle visuellen Werte
-- `tech-stack-konfiguration.md` — Architektur-Entscheidungen
 
 Bei Konflikten gilt: Architektur aus Tech-Stack, Optik aus Design, Inhalt/UX aus Konzept.
 
@@ -70,6 +69,13 @@ pnpm check
 ```
 
 Das läuft `tsc --noEmit` (Typsicherheit) und `eslint src/` (Code-Qualität) nacheinander durch. Erwartet: beide ohne Fehler. Sprint gilt erst als abgenommen, wenn `check` grün ist.
+
+## Git-Flow (enforced)
+
+- Niemals direkt auf `main` committen. Jede Änderung läuft über einen Feature-/Fix-Branch und einen Pull Request gegen `main`.
+- Branch-Namen themenbezogen halten (`fix/…`, `feat/…`) — ein Branch = ein Thema. Unzusammenhängende Änderungen gehören auf getrennte Branches, auch wenn sie zufällig gleichzeitig anfallen.
+- Vor dem Branchen: `main` per `git fetch origin main:main` aktuell halten (lokales `main` kann hinter `origin/main` zurückbleiben, z.B. nach Squash-Merges).
+- Nach Merge eines PRs: zurück zu `main` wechseln, nicht auf dem (jetzt obsoleten) Branch weiterarbeiten.
 
 ## Context7 (§0.3)
 
