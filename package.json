@@ -53,11 +53,6 @@
     "onlyBuiltDependencies": [
       "sharp",
       "unrs-resolver"
-    ],
-    "overrides": {
-      "undici@>=7.0.0 <7.28.0": "^7.28.0",
-      "nodemailer@<9.0.1": "^9.0.1",
-      "dompurify@<3.4.11": "^3.4.11"
-    }
+    ]
   }
 }

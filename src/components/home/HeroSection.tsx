@@ -1,6 +1,7 @@
 import Media from "@/components/Media";
 import VideoLoop from "@/components/VideoLoop";
 import HeroCarousel from "@/components/home/HeroCarousel";
+import HeroTextReveal from "@/components/home/HeroTextReveal";
 import type { AnyMediaRef, ResolvedVideo } from "@/lib/media";
 
 interface HeroSectionProps {
@@ -51,12 +52,12 @@ export default function HeroSection({
         <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/60 via-transparent to-transparent" />
       </div>
 
-      <div className="relative z-10 container-page pb-16 md:pb-24">
-        <p className="type-label-caps text-inverse-on-surface/80 mb-4">{eyebrow}</p>
-        <h1 className="type-display-lg text-inverse-on-surface">{name}</h1>
-        <p className="type-body-lg text-inverse-on-surface/90 mt-4 max-w-md">{tagline}</p>
-        <p className="type-label-caps text-inverse-on-surface/70 mt-12">{scrollHint}</p>
-      </div>
+      <HeroTextReveal
+        eyebrow={eyebrow}
+        name={name}
+        tagline={tagline}
+        scrollHint={scrollHint}
+      />
     </section>
   );
 }
