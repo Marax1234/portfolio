@@ -24,8 +24,9 @@ import os from "node:os";
 import path from "node:path";
 import type { Payload } from "payload";
 import type { CollectionAfterChangeHook } from "payload";
+import type { Video } from "@/payload-types";
 
-import { isFfmpegAvailable, runFfmpeg, runFfprobe } from "./ffmpeg-docker";
+import { isFfmpegAvailable, runFfmpeg, runFfprobe } from "./ffmpeg";
 import { uploadDirectory, uploadFile } from "./s3";
 
 /** Vom afterChange-Hook aufgerufen. Startet die Transkodierung fire-and-forget. */
@@ -35,8 +36,13 @@ export const triggerTranscode: CollectionAfterChangeHook = ({ doc, req, operatio
   if (operation !== "create" && doc.status === "ready") return doc;
   if (!doc.url) return doc;
 
-  // fire-and-forget — blockiert den Admin-Request nicht
-  transcodeVideo(req.payload, doc.id).catch((err: unknown) => {
+  // `doc` direkt verwenden statt per `payload.findByID` neu zu laden: Die
+  // Transaktion des `create`/`update`-Requests ist beim fire-and-forget-Start
+  // noch nicht committed — ein `findByID` aus einer neuen DB-Verbindung sah
+  // den gerade angelegten Datensatz daher gelegentlich noch nicht und warf
+  // "NotFound" *vor* dem try/catch unten, wodurch der Status für immer auf
+  // "processing" hängen blieb statt auf "error" zu wechseln.
+  transcodeVideo(req.payload, doc).catch((err: unknown) => {
     req.payload.logger.error(
       `[transcode] Video ${doc.id} fehlgeschlagen: ${String(err)}`,
     );
@@ -151,10 +157,13 @@ async function extractPoster(inputRel: string, workDir: string): Promise<void> {
 
 /**
  * Hauptfunktion: lädt das Original herunter, transkodiert, uploadt, aktualisiert das Doc.
+ *
+ * Nimmt das Doc direkt entgegen (statt per `findByID` neu zu laden) — siehe
+ * Kommentar bei `triggerTranscode` zur Transaktions-Race-Condition.
  */
-export async function transcodeVideo(payload: Payload, videoId: number | string): Promise<void> {
-  const doc = await payload.findByID({ collection: "videos", id: videoId });
-  if (!doc?.url) {
+export async function transcodeVideo(payload: Payload, doc: Video): Promise<void> {
+  const videoId = doc.id;
+  if (!doc.url) {
     payload.logger.warn(`[transcode] Video ${videoId}: keine URL — übersprungen.`);
     return;
   }

@@ -148,7 +148,69 @@ Die betroffenen §-Abschnitte unten sind entsprechend ergänzt.
   Tracker-Script liefert die korrekte Website-ID aus, Stats-Dashboard im Admin nutzt die
   neuen Credentials.
 
-**Offen / nächster Schritt:** §11 (Git-Pipeline / self-hosted Runner), §12 (Backup-Cron).
+- **Repo-Fix (2026-06-21): Video-Upload blieb dauerhaft auf „Verarbeitung …" hängen.**
+  Beim ersten echten Video-Upload (`Nepal Clip`, `videos`-Tabelle, id 1) zeigte die Admin-View
+  den Status nie etwas anderes als „Verarbeitung …" an. Untersuchung direkt im laufenden
+  `app`-Container und per `psql` gegen die `videos`-Tabelle ergab **zwei unabhängige Bugs**:
+  1. **Race Condition** in `triggerTranscode`/`transcodeVideo` (`src/lib/video/transcode.ts`):
+     der `afterChange`-Hook rief `transcodeVideo(req.payload, doc.id)` fire-and-forget auf, die
+     Funktion lud das Doc darin per `payload.findByID(videoId)` neu — in einer **neuen**
+     DB-Verbindung, die die Transaktion des gerade laufenden `create` noch nicht sehen konnte.
+     `findByID` warf dadurch ein `NotFound` (`general:notFound` aus
+     `@payloadcms/translations`, im minifizierten Production-Build als Klassenname `fa`
+     geloggt — daher der kryptische Logeintrag `[transcode] Video 1 fehlgeschlagen: fa: Not
+     Found`). Dieser Throw passierte **vor** dem eigentlichen `try/catch`, das `status: "error"`
+     setzen würde — der Datensatz blieb deshalb für immer auf `processing` stehen statt auf
+     `error` zu wechseln. Fix: `transcodeVideo` nimmt jetzt das vom Hook bereits übergebene
+     `doc`-Objekt direkt entgegen (kein erneutes `findByID` mehr nötig) — eliminiert die Race
+     vollständig, statt nur Transaktions-IDs durchzureichen (gegen Payloads eigene
+     Doku-Warnung in `docs/database/transactions.mdx`, fire-and-forget-Aufrufe mit `req` zu
+     versehen, per Context7 `/payloadcms/payload` verifiziert).
+  2. **Tieferliegender Bug, unabhängig von #1:** Die FFmpeg-Transkodierung lief bis dahin per
+     `docker run jrottenberg/ffmpeg:...` **aus dem App-Container heraus**
+     (`src/lib/video/ffmpeg-docker.ts`). Verifiziert direkt im Container: kein `docker`-CLI
+     installiert, kein `/var/run/docker.sock` gemountet (`docker-compose.prod.yml` sah beides
+     nie vor) — jeder echte Transkodierungs-Versuch wäre an `spawn docker ENOENT` gescheitert,
+     selbst nach Fix von #1. Nutzer-Entscheidung: **ffmpeg/ffprobe direkt im App-Image**
+     (Alpine-Paket) statt Docker-Socket in den App-Container zu mounten (Socket-Mount hätte dem
+     öffentlich erreichbaren App-Container faktisch Root-Rechte auf dem Host gegeben).
+     `ffmpeg-docker.ts` → `ffmpeg.ts` umgebaut: `execFile("docker", ["run", ...])` ersetzt durch
+     direkten `execFile("ffmpeg"/"ffprobe", ...)`-Aufruf. `Dockerfile`, `runner`-Stage: `RUN apk
+     add --no-cache ffmpeg` ergänzt (liefert auch `ffprobe` mit). `FFMPEG_DOCKER_IMAGE`
+     (Env-Var, `jrottenberg/ffmpeg:6.1-ubuntu2204`) komplett entfernt aus
+     `docker-compose.prod.yml`, `.env.prod`, `.env.example`, `docs/deployment.md` — wird nicht
+     mehr gebraucht.
+  - App-Image mit beiden Fixes gebaut und deployed (`./scripts/gen-build-env.sh` +
+    `docker compose --env-file .env.prod -f docker-compose.prod.yml build app && ... up -d
+    --no-deps app`). `ffmpeg`/`ffprobe` im Container verifiziert (`which ffmpeg ffprobe`),
+    App-Smoke-Test (`curl 10.10.0.2:3000` → 200).
+
+- **Repo-/Infra-Fix (2026-06-21), gefunden beim Retrigger-Versuch: CDN-URLs site-weit kaputt
+  — nicht nur Video, auch alle Bilder.** Retrigger-Skript (siehe oben) erreichte dank Fix #1
+  den Download-Schritt, scheiterte aber neu mit `Download fehlgeschlagen: 400
+  https://cdn.kilia-siebert.de/Video.mp4`. Ursache: `payload.config.ts` (`generateFileURL` für
+  `media`/`videos`/`documents`) erzeugt öffentliche URLs als
+  `${NEXT_PUBLIC_S3_PUBLIC_URL}/<key>` — **ohne Bucket-Namen**. MinIO läuft aber mit
+  `S3_FORCE_PATH_STYLE=true` (braucht `/<bucket>/<key>`), und die VPS-`Caddyfile` proxyt
+  `cdn.kilia-siebert.de` 1:1 ohne Pfad-Rewrite an `10.10.0.2:9000` durch — MinIO interpretiert
+  dadurch das erste Pfadsegment fälschlich als Bucket-Namen (`AccessDenied`/
+  `InvalidBucketName`). Verifiziert: `curl https://cdn.kilia-siebert.de/placeholder.png` → 403,
+  identischer Request mit Bucket-Präfix direkt gegen MinIO (`http://10.10.0.2:9000/
+  portfolio-media/placeholder.png`) → 200. **Betraf seit Go-Live (§9) jedes über
+  `cdn.kilia-siebert.de` ausgelieferte Bild** — die HTTP-200-Verifikation in §8/§9 prüfte nur
+  die HTML-Seiten, nicht das tatsächliche Laden der `<img>`/`<source>`-Inhalte.
+  Nutzer-Entscheidung: Fix am **Caddy-Reverse-Proxy auf dem VPS** (nicht im App-Code) — passt
+  zum ohnehin dokumentierten künftigen CDN-Plan (Pull-Zone-Origin zeigt laut
+  `docs/deployment.md` §5 schon auf `.../portfolio-media`) und braucht keinen App-Rebuild,
+  keine Korrektur bereits gespeicherter DB-URLs. Per Context7 (`/websites/caddyserver_caddyfile`)
+  die korrekte Syntax verifiziert: `rewrite /portfolio-media{uri}` vor `reverse_proxy
+  10.10.0.2:9000` im `cdn.kilia-siebert.de`-Block ergänzt (Backup der alten Datei als
+  `Caddyfile.bak-20260621` auf dem VPS), `caddy validate` + `caddy reload` (kein Neustart,
+  kein TLS-Zertifikat-Re-Issue nötig). Verifiziert: `placeholder.png` und `Video.mp4` über
+  `cdn.kilia-siebert.de` jetzt beide 200.
+
+**Offen / nächster Schritt:** „Nepal Clip"-Video erneut transkodieren lassen (Retrigger oder
+Re-Upload), danach §11 (Git-Pipeline / self-hosted Runner), §12 (Backup-Cron).
 Danach die übrigen Go-Live-Punkte: Kontaktformular-Test (Submission → E-Mail), Impressum/
 Datenschutz mit echtem Text, OG-Bild, Beispiel-Video/HLS-Test.
 
@@ -232,7 +294,6 @@ services:
       S3_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
       S3_FORCE_PATH_STYLE: "true"
       NEXT_PUBLIC_S3_PUBLIC_URL: https://cdn.${DOMAIN}
-      FFMPEG_DOCKER_IMAGE: jrottenberg/ffmpeg:6.1-ubuntu2204
       EMAIL_FROM: ${EMAIL_FROM}
       EMAIL_FROM_NAME: ${EMAIL_FROM_NAME}
       CONTACT_NOTIFY_TO: ${CONTACT_NOTIFY_TO}
@@ -382,9 +443,6 @@ MINIO_SECRET_KEY=        # openssl rand -hex 24
 S3_BUCKET=portfolio-media
 NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de
 
-# === Video-Pipeline ===
-FFMPEG_DOCKER_IMAGE=jrottenberg/ffmpeg:6.1-ubuntu2204
-
 # === E-Mail (z. B. Resend) ===
 SMTP_HOST=smtp.resend.com
 SMTP_PORT=587
@@ -453,6 +511,10 @@ RUN pnpm build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# ffmpeg/ffprobe für die HLS-Transkodierungs-Pipeline (src/lib/video) — direkt im
+# Image statt per `docker run` (App-Container hat keinen Zugriff auf den Docker-
+# Daemon, siehe §0.1 Repo-Fix 2026-06-21).
+RUN apk add --no-cache ffmpeg
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/.next/standalone ./
@@ -769,6 +831,12 @@ kilia-siebert.de {
 }
 
 cdn.kilia-siebert.de {
+    # Bucket-Name muss hier ergänzt werden — MinIO läuft mit
+    # S3_FORCE_PATH_STYLE=true und erwartet /<bucket>/<key>. Die App generiert
+    # öffentliche URLs bewusst ohne Bucket-Präfix (Storage-Implementierungsdetail
+    # bleibt aus der App-Schicht raus, siehe §0.1 Repo-Fix 2026-06-21) — das
+    # Mapping passiert hier am Reverse-Proxy.
+    rewrite /portfolio-media{uri}
     reverse_proxy 10.10.0.2:9000
     encode gzip
 }

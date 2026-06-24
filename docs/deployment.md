@@ -102,7 +102,6 @@ services:
       S3_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
       S3_FORCE_PATH_STYLE: "true"
       NEXT_PUBLIC_S3_PUBLIC_URL: https://cdn.${DOMAIN}   # CDN-URL vor MinIO
-      FFMPEG_DOCKER_IMAGE: jrottenberg/ffmpeg:6.1-ubuntu2204
       EMAIL_FROM: ${EMAIL_FROM}
       EMAIL_FROM_NAME: ${EMAIL_FROM_NAME}
       CONTACT_NOTIFY_TO: ${CONTACT_NOTIFY_TO}
@@ -267,9 +266,6 @@ S3_BUCKET=portfolio-media
 # CDN-URL (Pull-Zone vor MinIO):
 NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de
 
-# === Video-Pipeline ===
-FFMPEG_DOCKER_IMAGE=jrottenberg/ffmpeg:6.1-ubuntu2204
-
 # === E-Mail (transaktional, z. B. Resend oder Postmark) ===
 SMTP_HOST=smtp.resend.com
 SMTP_PORT=587
@@ -308,14 +304,12 @@ git clone <repo-url> /opt/portfolio && cd /opt/portfolio
 # 2. .env anlegen (aus obiger Liste, alle Werte setzen)
 cp .env.example .env.prod
 # → .env.prod bearbeiten
+# (ffmpeg/ffprobe für die Video-Pipeline stecken bereits im App-Image, siehe Dockerfile)
 
-# 3. FFmpeg-Image vorziehen (wird von der Video-Pipeline gebraucht)
-docker pull jrottenberg/ffmpeg:6.1-ubuntu2204
-
-# 4. Produktions-Stack starten
+# 3. Produktions-Stack starten
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
-# 5. MinIO-Bucket anlegen (einmalig)
+# 4. MinIO-Bucket anlegen (einmalig)
 docker compose -f docker-compose.prod.yml exec minio \
   mc alias set local http://localhost:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
 docker compose -f docker-compose.prod.yml exec minio \
@@ -323,16 +317,16 @@ docker compose -f docker-compose.prod.yml exec minio \
 docker compose -f docker-compose.prod.yml exec minio \
   mc anonymous set download local/portfolio-media
 
-# 6. Datenbank-Seed (legt Admin-User und Beispielinhalte an)
+# 5. Datenbank-Seed (legt Admin-User und Beispielinhalte an)
 docker compose -f docker-compose.prod.yml exec app \
   pnpm payload run src/seed/index.ts
 
-# 7. Umami einrichten
+# 6. Umami einrichten
 # → https://umami.kilia-siebert.de aufrufen (oder intern, je nach Caddyfile)
 # → Website anlegen → Website-ID + API-Token ins .env.prod eintragen
 # → Stack neu starten: docker compose ... up -d
 
-# 8. CDN-Pull-Zone einrichten
+# 7. CDN-Pull-Zone einrichten
 # → Bunny.net oder Cloudflare: Pull Zone auf http://<vps-ip>:9000/portfolio-media
 # → CNAME cdn.kilia-siebert.de → Pull-Zone-Hostname
 # → NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de neu in .env, rebuild
