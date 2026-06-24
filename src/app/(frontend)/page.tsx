@@ -35,7 +35,9 @@ export default async function Home() {
 
   const whatIDoTiles = (siteConfig.whatIDoTiles ?? []).flatMap((tile) => {
     const ref = payloadMediaRef(tile.media);
-    return ref ? [{ key: String(tile.id ?? tile.label), label: tile.label, href: tile.href, ref }] : [];
+    if (!ref) return [];
+    const refColor = payloadMediaRef(tile.mediaColor) ?? undefined;
+    return [{ key: String(tile.id ?? tile.label), label: tile.label, href: tile.href, ref, refColor }];
   });
 
   const ctaLeft = siteConfig.ctaLeft?.headline
@@ -79,7 +81,10 @@ export default async function Home() {
         name={siteConfig.hero?.name ?? undefined}
         tagline={siteConfig.hero?.tagline ?? undefined}
         scrollHint={siteConfig.hero?.scrollHint ?? undefined}
-        poster={payloadMediaRef(siteConfig.hero?.poster)}
+        posters={(siteConfig.hero?.posters ?? []).flatMap((item) => {
+          const ref = payloadMediaRef(item.image);
+          return ref ? [ref] : [];
+        })}
         video={payloadVideoRef(siteConfig.hero?.video)}
       />
 

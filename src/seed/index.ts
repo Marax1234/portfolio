@@ -449,7 +449,7 @@ async function seed() {
           tagline:
             "Ich filme das, was sich zu erleben lohnt — auf dem Rad genauso wie auf einer Hochzeit.",
           scrollHint: "↓ Scrollen",
-          poster: placeholderMedia.id,
+          posters: [{ image: placeholderMedia.id }],
         },
         intro: {
           eyebrow: "Über mich",

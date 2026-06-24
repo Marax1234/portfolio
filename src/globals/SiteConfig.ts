@@ -32,13 +32,23 @@ export const SiteConfig: GlobalConfig = {
         },
         { name: "scrollHint", type: "text", defaultValue: "↓ Scrollen" },
         {
-          name: "poster",
-          type: "upload",
-          relationTo: "media",
-          label: "Hero-Standbild (Poster-Fallback)",
+          name: "posters",
+          type: "array",
+          label: "Hero-Standbilder (Poster-Fallback)",
+          minRows: 0,
+          maxRows: 10,
           admin: {
-            description: "Wird angezeigt, bis das Video geladen ist oder wenn kein Video gesetzt ist.",
+            description:
+              "Werden angezeigt, wenn kein Video gesetzt ist. Bei mehreren Bildern entsteht ein automatisches Carousel.",
           },
+          fields: [
+            {
+              name: "image",
+              type: "upload",
+              relationTo: "media",
+              required: true,
+            },
+          ],
         },
         {
           name: "video",
@@ -80,7 +90,24 @@ export const SiteConfig: GlobalConfig = {
       fields: [
         { name: "label", type: "text", required: true },
         { name: "href", type: "text", required: true, defaultValue: "/arbeiten" },
-        { name: "media", type: "upload", relationTo: "media", required: true },
+        {
+          name: "media",
+          type: "upload",
+          relationTo: "media",
+          required: true,
+          label: "Schwarz-Weiß-Bild",
+          admin: { description: "Wird standardmäßig angezeigt." },
+        },
+        {
+          name: "mediaColor",
+          type: "upload",
+          relationTo: "media",
+          label: "Farbbild (Hover)",
+          admin: {
+            description:
+              "Wird bei Hover eingeblendet. Optional — ohne Farbbild bleibt nur das S/W-Bild.",
+          },
+        },
       ],
     },
     {

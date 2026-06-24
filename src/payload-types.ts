@@ -867,9 +867,14 @@ export interface SiteConfig {
     tagline?: string | null;
     scrollHint?: string | null;
     /**
-     * Wird angezeigt, bis das Video geladen ist oder wenn kein Video gesetzt ist.
+     * Werden angezeigt, wenn kein Video gesetzt ist. Bei mehreren Bildern entsteht ein automatisches Carousel.
      */
-    poster?: (number | null) | Media;
+    posters?:
+      | {
+          image: number | Media;
+          id?: string | null;
+        }[]
+      | null;
     /**
      * Video aus der Videos-Collection (status muss 'Bereit' sein). Überblendet das Standbild nach dem Laden.
      */
@@ -902,7 +907,14 @@ export interface SiteConfig {
     | {
         label: string;
         href: string;
+        /**
+         * Wird standardmäßig angezeigt.
+         */
         media: number | Media;
+        /**
+         * Wird bei Hover eingeblendet. Optional — ohne Farbbild bleibt nur das S/W-Bild.
+         */
+        mediaColor?: (number | null) | Media;
         id?: string | null;
       }[]
     | null;
@@ -1065,7 +1077,12 @@ export interface SiteConfigSelect<T extends boolean = true> {
         name?: T;
         tagline?: T;
         scrollHint?: T;
-        poster?: T;
+        posters?:
+          | T
+          | {
+              image?: T;
+              id?: T;
+            };
         video?: T;
       };
   intro?:
@@ -1087,6 +1104,7 @@ export interface SiteConfigSelect<T extends boolean = true> {
         label?: T;
         href?: T;
         media?: T;
+        mediaColor?: T;
         id?: T;
       };
   journalTeaser?:
