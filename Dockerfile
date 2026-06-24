@@ -35,6 +35,10 @@ RUN pnpm build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# ffmpeg/ffprobe für die HLS-Transkodierungs-Pipeline (src/lib/video) —
+# direkt im Image statt per `docker run` (App-Container hat in Produktion
+# keinen Zugriff auf den Docker-Daemon).
+RUN apk add --no-cache ffmpeg
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/.next/standalone ./

@@ -499,8 +499,8 @@ async function seed() {
     payload.logger.info("Seed: Test-Video (info/Video.mp4) nicht gefunden — übersprungen.");
   } else if (!(await isFfmpegAvailable())) {
     payload.logger.info(
-      "Seed: Docker/ffmpeg-Image nicht verfügbar — Video-Seed übersprungen. " +
-      "(docker pull jrottenberg/ffmpeg:6.1-ubuntu2204 und erneut ausführen.)",
+      "Seed: ffmpeg/ffprobe nicht verfügbar — Video-Seed übersprungen. " +
+      "(z. B. `apk add ffmpeg` / `apt install ffmpeg` und erneut ausführen.)",
     );
   } else {
     // Idempotenz: nur anlegen, wenn noch kein Video mit diesem Titel existiert
@@ -543,7 +543,7 @@ async function seed() {
 
     // Transkodierung anstoßen (awaited im Seed — blockiert hier nicht das Admin)
     if (seedVideo && seedVideo.status !== "ready") {
-      await transcodeVideo(payload, seedVideo.id);
+      await transcodeVideo(payload, seedVideo);
       // Nach Transkodierung Doc neu laden für aktuellen hlsUrl
       seedVideo = (
         await payload.find({
