@@ -42,22 +42,30 @@ export default async function UeberPage() {
       {/* Story-Text — 3-4 Absätze, erste Person */}
       {about.story && <RichText data={about.story} className="type-body-lg text-on-surface max-w-prose" />}
 
-      {/* Meilenstein-Timeline */}
+      {/* Meilenstein-Timeline — Jahr in eigener Spalte links der Schiene,
+          Marker exakt auf der Linie, großzügiger vertikaler Rhythmus. */}
       {about.milestones && about.milestones.length > 0 && (
-        <section className="section-gap-tight">
-          <h2 className="type-headline-md text-on-surface mb-8">Meilensteine</h2>
-          <ol className="flex flex-col gap-6 border-l-2 border-outline pl-6">
+        <section className="section-gap-tight max-w-2xl">
+          <h2 className="type-headline-md text-on-surface mb-10">Meilensteine</h2>
+          <ol className="flex flex-col">
             {about.milestones.map((milestone) => (
               <li
                 key={milestone.id ?? `${milestone.year}-${milestone.title}`}
-                className="relative"
+                className="grid grid-cols-[3rem_1fr] gap-x-5 sm:grid-cols-[4.5rem_1fr] sm:gap-x-8"
               >
-                <span className="timeline-marker rounded-sm bg-primary" aria-hidden="true" />
-                <p className="type-label-caps text-base text-primary mb-1">{milestone.year}</p>
-                <p className="type-body-md text-on-surface">{milestone.title}</p>
-                {milestone.description && (
-                  <p className="type-body-md text-on-surface-variant mt-1">{milestone.description}</p>
-                )}
+                {/* Jahr — rechtsbündig zur Schiene, mit dem Titel auf einer Linie */}
+                <p className="type-label-caps text-primary text-right tabular-nums pt-[0.3em]">
+                  {milestone.year}
+                </p>
+                {/* Durchgehende Schiene via Border + Padding-bottom; letzter
+                    Eintrag ohne Überhang. */}
+                <div className="relative border-l-2 border-outline-variant pl-6 pb-10 last:pb-0 sm:pl-8">
+                  <span className="timeline-marker rounded-sm bg-primary" aria-hidden="true" />
+                  <p className="type-body-lg text-on-surface">{milestone.title}</p>
+                  {milestone.description && (
+                    <p className="type-body-md text-on-surface-variant mt-1.5">{milestone.description}</p>
+                  )}
+                </div>
               </li>
             ))}
           </ol>
@@ -86,27 +94,52 @@ export default async function UeberPage() {
         </section>
       )}
 
-      {/* Backstage-Grid — lockerer Grid, „den Menschen greifen" */}
+      {/* Backstage-Grid — lockerer Grid, „den Menschen greifen". Jede Kachel
+          trägt einen ungefähren Zeitraum (immer sichtbar) und eine kurze
+          Beschreibung, die beim Hovern/Fokus aufgeht; das Bild zoomt dezent. */}
       {about.backstage && about.backstage.length > 0 && (
         <section className="section-gap-tight">
-          <h2 className="type-headline-md text-on-surface mb-8">Backstage</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <h2 className="type-headline-md text-on-surface mb-3">Backstage</h2>
+          <p className="type-body-md text-on-surface-variant mb-10 max-w-prose">
+            Zwischen den Bildern — Orte, Momente und der Weg dahin.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
             {about.backstage.flatMap((entry) => {
-              const ref = payloadMediaRef(entry.image, { alt: "Backstage" });
+              const ref = payloadMediaRef(entry.image, { alt: entry.caption ?? "Backstage" });
               if (!ref) return [];
+              const hasMeta = Boolean(entry.period || entry.caption);
               return [
-                <div
+                <figure
                   key={entry.id ?? JSON.stringify(entry)}
-                  className="relative w-full overflow-hidden rounded-sm"
-                  style={{ aspectRatio: "1 / 1" }}
+                  className="group relative w-full overflow-hidden rounded-lg bg-surface-container"
+                  style={{ aspectRatio: "4 / 5" }}
                 >
                   <Media
                     {...ref}
+                    alt={entry.caption ?? "Backstage"}
                     className="absolute inset-0 w-full h-full"
-                    imageClassName="object-cover w-full h-full"
+                    imageClassName="object-cover w-full h-full transition-transform duration-500 ease-[var(--ease-out-strong)] motion-reduce:transition-none group-hover:scale-105"
                     sizes="(max-width: 640px) 50vw, 33vw"
                   />
-                </div>,
+                  {hasMeta && (
+                    <>
+                      <div
+                        className="media-scrim-bottom pointer-events-none absolute inset-x-0 bottom-0 h-1/2 opacity-80 transition-opacity duration-300 motion-reduce:transition-none group-hover:h-2/3 group-hover:opacity-100"
+                        aria-hidden="true"
+                      />
+                      <figcaption className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                        {entry.caption && (
+                          <p className="type-body-md text-inverse-on-surface translate-y-1 opacity-0 transition-all duration-300 ease-[var(--ease-out-strong)] motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100 group-hover:translate-y-0 group-hover:opacity-100">
+                            {entry.caption}
+                          </p>
+                        )}
+                        {entry.period && (
+                          <p className="type-label-caps text-inverse-on-surface mt-1.5">{entry.period}</p>
+                        )}
+                      </figcaption>
+                    </>
+                  )}
+                </figure>,
               ];
             })}
           </div>
