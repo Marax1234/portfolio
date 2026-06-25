@@ -68,14 +68,14 @@ export default function WhatIDoSection({
                     {...ref}
                     alt={label}
                     className="absolute inset-0 w-full h-full"
-                    imageClassName="object-cover w-full h-full transition-opacity duration-500 motion-reduce:transition-none opacity-100 group-hover:opacity-0"
+                    imageClassName="object-cover w-full h-full transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none opacity-100 group-hover:opacity-0 group-hover:scale-105"
                     sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
                   />
                   <Media
                     {...refColor}
                     alt={label}
                     className="absolute inset-0 w-full h-full"
-                    imageClassName="object-cover w-full h-full transition-opacity duration-500 motion-reduce:transition-none opacity-0 group-hover:opacity-100"
+                    imageClassName="object-cover w-full h-full transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none opacity-0 group-hover:opacity-100 group-hover:scale-105"
                     sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
                   />
                 </>
@@ -84,7 +84,7 @@ export default function WhatIDoSection({
                   {...ref}
                   alt={label}
                   className="absolute inset-0 w-full h-full"
-                  imageClassName="object-cover w-full h-full transition-transform duration-500 motion-reduce:transition-none group-hover:scale-105"
+                  imageClassName="object-cover w-full h-full transition-transform duration-700 ease-out motion-reduce:transition-none group-hover:scale-105"
                   sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
                 />
               )}
