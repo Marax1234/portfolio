@@ -113,7 +113,7 @@ export default function WorksGrid({ items, categories }: WorksGridProps) {
           Noch keine Projekte in dieser Kategorie.
         </p>
       ) : (
-        <div className="columns-1 gap-4 sm:columns-2 sm:gap-6 lg:columns-3 xl:columns-4">
+        <div className="mx-auto columns-1 gap-4 sm:columns-2 sm:gap-6 lg:columns-3">
           {visible.map((item) => (
             <GalleryCard
               key={item.id}

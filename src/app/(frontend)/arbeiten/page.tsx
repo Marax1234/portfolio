@@ -38,7 +38,7 @@ export default async function ArbeitenPage() {
           alt={project.title}
           className="block w-full"
           imageClassName="block w-full h-auto"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
       ),
     };
