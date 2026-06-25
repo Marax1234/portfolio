@@ -1,8 +1,10 @@
 /**
- * ProjectCard — geteiltes Bauteil für „Arbeiten" und „Journal" (Sprint 2)
+ * ProjectCard — Story-/Projekt-Karte für das Journal (Sprint 2)
  *
- * Konzept §5: „Story-/Projekt-Karte — Cover + Titel + Mini-Info.
- * Gleiches Bauteil für Journal und Arbeiten."
+ * Konzept §5: „Story-/Projekt-Karte — Cover + Titel + Mini-Info."
+ * Genutzt von Journal-Teaser (Home), Journal-Detail (Related) und der
+ * Komponenten-Schau. /arbeiten nutzt seit dem Redesign-Sprint die
+ * Masonry-`GalleryCard` (Cover ohne Crop, Hover-Reveal der Beschriftung).
  *
  * Props:
  *   id|payload — AnyMediaRef für <Media> (Manifest-Slot oder
