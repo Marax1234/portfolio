@@ -21,23 +21,37 @@ export const metadata: Metadata = {
   description: "Hochzeiten, Reisen, Sport, Commercial — eine Auswahl.",
 };
 
+/**
+ * Kuratierter Seitenverhältnis-Rhythmus für die Masonry-Wand. Wechselt bewusst
+ * zwischen kurz/breit (3:2) und hoch (bis 5:7), damit die Kacheln sichtbar
+ * unterschiedlich lang werden — auch wenn die Quell-Cover alle 4:3 sind
+ * (`object-cover` mittig schneidet entsprechend zu). Pro Projekt-Index stabil
+ * zugewiesen, also unabhängig von Filter/Reihenfolge.
+ *
+ * Reine Layout-Werte (keine Design-Tokens), in der Skala absichtlich moderat
+ * gehalten, damit zentrale Motive erkennbar bleiben.
+ */
+const COVER_RATIOS = ["3 / 2", "4 / 5", "4 / 3", "5 / 7", "1 / 1"];
+
 export default async function ArbeitenPage() {
   const projects = await getProjects();
 
-  const items: WorksGridItem[] = projects.map((project) => {
+  const items: WorksGridItem[] = projects.map((project, index) => {
     const ref = payloadMediaRef(project.cover, { alt: project.title }) ?? { id: "placeholder" };
+    const aspectRatio = COVER_RATIOS[index % COVER_RATIOS.length];
     return {
       id: String(project.id),
       category: project.category,
       title: project.title,
       meta: formatMeta(project.category, project.publishedAt),
       href: `/arbeiten/${project.slug}`,
+      aspectRatio,
       media: (
         <Media
           {...ref}
           alt={project.title}
-          className="block w-full"
-          imageClassName="block w-full h-auto"
+          className="absolute inset-0 h-full w-full"
+          imageClassName="object-cover h-full w-full"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
       ),

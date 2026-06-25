@@ -31,6 +31,8 @@ export interface WorksGridItem {
   title: string;
   meta?: string;
   href: string;
+  /** Zugewiesenes Seitenverhältnis der Kachel (kuratierter Rhythmus), z.B. "3 / 2". */
+  aspectRatio: string;
   /** Server-gerenderter <Media>-Node (Cover) für die Kachel. */
   media: ReactNode;
 }
@@ -120,6 +122,7 @@ export default function WorksGrid({ items, categories }: WorksGridProps) {
               title={item.title}
               meta={item.meta}
               href={item.href}
+              aspectRatio={item.aspectRatio}
               media={item.media}
             />
           ))}
