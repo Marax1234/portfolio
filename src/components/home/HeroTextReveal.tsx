@@ -46,7 +46,7 @@ export default function HeroTextReveal({
       <p
         className="type-label-caps text-inverse-on-surface/70 mt-12"
         style={{
-          animation: "breathe 3s linear infinite",
+          animation: "scroll-nudge 2.4s var(--ease-out-strong) infinite",
           animationDelay: "1.5s",
         }}
       >

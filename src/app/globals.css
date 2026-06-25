@@ -258,6 +258,20 @@
   50% { opacity: 1; }
 }
 
+/* Sanfter „Scroll nach unten"-Impuls: kurze Abwärtsbewegung mit Halt,
+   statt durchgehendem Pulsieren. */
+@keyframes scroll-nudge {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
+  30% { transform: translateY(0.4rem); opacity: 1; }
+}
+
+/* Hero-Carousel: der aktive Fortschritts-Strich füllt sich im Takt des
+   automatischen Bildwechsels von links nach rechts. */
+@keyframes hero-progress {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.2s !important;

@@ -63,22 +63,26 @@ export default function WhatIDoSection({
           >
             <div className="relative w-full h-full overflow-hidden rounded-none border border-outline-variant">
               {refColor ? (
-                <>
+                /* Gemeinsamer Zoom-Wrapper: beide Bilder teilen sich EINEN
+                   durchgehenden Ran-Zoom (wie im Ein-Bild-Fall). Nur das
+                   Farbbild blendet langsam darüber — so kein abgehackter
+                   Sprung, wenn die Farbe dazukommt. */
+                <div className="absolute inset-0 transition-transform duration-700 ease-out motion-reduce:transition-none group-hover:scale-105">
                   <Media
                     {...ref}
                     alt={label}
                     className="absolute inset-0 w-full h-full"
-                    imageClassName="object-cover w-full h-full transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none opacity-100 group-hover:opacity-0 group-hover:scale-105"
+                    imageClassName="object-cover w-full h-full"
                     sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
                   />
                   <Media
                     {...refColor}
                     alt={label}
-                    className="absolute inset-0 w-full h-full"
-                    imageClassName="object-cover w-full h-full transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none opacity-0 group-hover:opacity-100 group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-1000 ease-out motion-reduce:transition-none group-hover:opacity-100"
+                    imageClassName="object-cover w-full h-full"
                     sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
                   />
-                </>
+                </div>
               ) : (
                 <Media
                   {...ref}
