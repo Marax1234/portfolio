@@ -440,15 +440,31 @@
   margin-top: var(--margin-desktop);
 }
 
-/* Eckiger Timeline-Marker auf der --border-tonal-Linie (rounded-sm statt
-   Punkt) — Redesign /ueber: Stationen sollen als Ereignis sichtbar sein,
-   nicht nur als Fließtext auf einer blassen Linie. */
+/* Eckiger Timeline-Marker, exakt auf der 2px-Schiene zentriert (rounded-sm
+   statt Punkt) — Redesign /ueber: Stationen sollen als Ereignis auf der
+   Linie sitzen, nicht daneben schweben. Der Surface-Ring stanzt den Marker
+   sauber aus der Schiene aus, statt dass die Linie durch ihn hindurchläuft.
+   Mitte des Markers = Mitte der Schiene: left = -1px (halbe Schiene)
+   - spacing-unit/2 (halbe Markerbreite). */
 @utility timeline-marker {
   position: absolute;
-  left: calc(-1 * var(--spacing-unit) - 2px);
-  top: 0.4em;
+  left: calc(-1px - var(--spacing-unit) / 2);
+  top: 0.5em;
   width: var(--spacing-unit);
   height: var(--spacing-unit);
+  box-shadow: 0 0 0 4px var(--color-surface);
+}
+
+/* Bodenständiger Verlaufs-Schleier für Bild-Overlays (Backstage-Kacheln):
+   trägt hellen Text, ohne das Bild komplett zu überdecken — „nur die Schrift
+   im unteren Bereich, kein kompletter Blocker". */
+@utility media-scrim-bottom {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-inverse-surface) 88%, transparent) 0%,
+    color-mix(in srgb, var(--color-inverse-surface) 55%, transparent) 38%,
+    transparent 78%
+  );
 }
 
 /* ── Sprint 2: Layout & Navigation Utilities ───────────────────────── */

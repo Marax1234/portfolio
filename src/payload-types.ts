@@ -1000,6 +1000,8 @@ export interface AboutPage {
   backstage?:
     | {
         image: number | Media;
+        period?: string | null;
+        caption?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1172,6 +1174,8 @@ export interface AboutPageSelect<T extends boolean = true> {
     | T
     | {
         image?: T;
+        period?: T;
+        caption?: T;
         id?: T;
       };
   updatedAt?: T;

@@ -422,7 +422,23 @@ async function seed() {
           { point: "Direktheit", description: "Zeigen statt behaupten." },
           { point: "Neugier", description: "14 Länder, noch lange nicht genug." },
         ],
-        backstage: [{ image: placeholderMedia.id }, { image: placeholderMedia.id }, { image: placeholderMedia.id }],
+        backstage: [
+          {
+            image: placeholderMedia.id,
+            period: "Frühjahr 2024",
+            caption: "Vor dem Start — Höhentraining am Gardasee.",
+          },
+          {
+            image: placeholderMedia.id,
+            period: "Sommer 2023",
+            caption: "Zwischen zwei Sets, irgendwo in Lissabon.",
+          },
+          {
+            image: placeholderMedia.id,
+            period: "Herbst 2022",
+            caption: "Erster Auslandsdreh, letzte Stunde Licht.",
+          },
+        ],
       },
       context: { disableRevalidate: true },
     });

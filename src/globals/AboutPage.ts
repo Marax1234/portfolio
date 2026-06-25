@@ -75,7 +75,25 @@ export const AboutPage: GlobalConfig = {
       admin: {
         description: "Alltags-/Backstage-Bilder — lockerer Grid, „den Menschen greifen“.",
       },
-      fields: [{ name: "image", type: "upload", relationTo: "media", required: true }],
+      fields: [
+        { name: "image", type: "upload", relationTo: "media", required: true },
+        {
+          name: "period",
+          type: "text",
+          label: "Zeitraum",
+          admin: {
+            description: "Ungefähr, kein genaues Datum (z. B. „Frühjahr 2024“, „Sommer in Lissabon“).",
+          },
+        },
+        {
+          name: "caption",
+          type: "text",
+          label: "Kurzbeschreibung",
+          admin: {
+            description: "Ein Satz, der beim Hovern erscheint. Minimal halten.",
+          },
+        },
+      ],
     },
   ],
 };
