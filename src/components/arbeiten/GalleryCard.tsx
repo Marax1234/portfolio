@@ -18,10 +18,14 @@
  *                 danach blendet das Bild sanft von opacity 0 → 1 ein.
  *   • Hover:      dezenter Zoom (scale 1.02) + Schleier + Beschriftung.
  *
- * Natürliches Seitenverhältnis (`h-auto`) — Hoch- und Querformat ohne Crop,
- * der Masonry-Fluss (CSS columns) ordnet die Höhen.
+ * Pro Card ein zugewiesenes Seitenverhältnis (`aspectRatio`, kuratierter
+ * Rhythmus aus der Seite) — `object-cover` mittig füllt die Box. So entstehen
+ * sichtbar unterschiedlich lange Kacheln (organische Masonry-Wand), auch wenn
+ * die Quell-Cover alle 4:3 sind. Das inline-`aspectRatio` folgt dem Muster der
+ * Backstage-Galerie auf /ueber.
  *
- * Kein Hardcode (§0.2): nur Tokens/Utilities und CSS-Variablen.
+ * Kein Hardcode (§0.2): Farben/Radii nur über Tokens/Utilities und CSS-Vars;
+ * das `aspectRatio` ist ein Layout-Wert (kein Design-Token), wie auf /ueber.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -33,14 +37,16 @@ interface GalleryCardProps {
   title: string;
   meta?: string;
   href: string;
-  /** Server-gerenderter <Media>-Node (Cover). */
+  /** Zugewiesenes Seitenverhältnis der Bild-Box, z.B. "3 / 2" oder "4 / 5". */
+  aspectRatio: string;
+  /** Server-gerenderter <Media>-Node (Cover, füllt die Box per object-cover). */
   media: ReactNode;
 }
 
 // Entspricht --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1)
 const EASE_OUT_STRONG = [0.23, 1, 0.32, 1] as const;
 
-export default function GalleryCard({ title, meta, href, media }: GalleryCardProps) {
+export default function GalleryCard({ title, meta, href, aspectRatio, media }: GalleryCardProps) {
   const reduceMotion = useReducedMotion();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
@@ -81,12 +87,12 @@ export default function GalleryCard({ title, meta, href, media }: GalleryCardPro
         href={href}
         className="group relative block overflow-hidden rounded-xl bg-surface-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
-        {/* Bild-Box — natürliches Seitenverhältnis, dezenter Hover-Zoom */}
+        {/* Bild-Box — zugewiesenes Seitenverhältnis, Cover-Fill, dezenter Hover-Zoom */}
         <div
           ref={wrapperRef}
+          style={{ aspectRatio }}
           className={[
-            "relative w-full transition-transform duration-500 ease-[var(--ease-out-strong)] motion-reduce:transition-none group-hover:scale-[1.02]",
-            "[&_img]:block [&_img]:h-auto [&_img]:w-full",
+            "relative w-full overflow-hidden transition-transform duration-500 ease-[var(--ease-out-strong)] motion-reduce:transition-none group-hover:scale-[1.02]",
             "[&_img]:transition-opacity [&_img]:duration-700 [&_img]:ease-[var(--ease-out-strong)] motion-reduce:[&_img]:transition-none",
             loaded ? "[&_img]:opacity-100" : "[&_img]:opacity-0",
           ].join(" ")}
