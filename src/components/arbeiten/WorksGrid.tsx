@@ -1,15 +1,20 @@
 "use client";
 
 /**
- * WorksGrid — Filter-Tabs + Grid für /arbeiten (Sprint 5, Konzept §4.2)
+ * WorksGrid — Filter-Tabs + Masonry-Galerie für /arbeiten (Sprint 5, §4.2)
  *
- * Die einzelnen Karten (`ProjectCard`, eine async Server-Komponente wegen
- * <Media>) werden server-seitig vorgerendert und als bereits aufgelöste
- * `node`s übergeben — diese Client-Komponente filtert nur per CSS/State,
- * ohne selbst Server-Komponenten zu instanziieren (RSC-Grenze, §0.5).
+ * Das Cover jeder Kachel wird server-seitig als <Media>-Node vorgerendert und
+ * hereingereicht — diese Client-Komponente filtert nur per CSS/State und
+ * animiert die Hülle (`GalleryCard`), ohne selbst eine Server-Komponente zu
+ * instanziieren (RSC-Grenze, §0.5).
  *
  * "Alle" zeigt alles; ein Klick wechselt die Kategorie ohne Reload.
- * Max. eine Klicktiefe zur Detailseite bleibt unberührt (ProjectCard-Link).
+ * Max. eine Klicktiefe zur Detailseite bleibt unberührt (GalleryCard-Link).
+ *
+ * Redesign-Sprint: Das Raster ist jetzt eine Masonry-Wand (CSS `columns`) —
+ * Hoch- und Querformat ohne Crop. Jede Kachel ist eine `GalleryCard` mit
+ * Eintritts-Animation, Skeleton und Hover-Reveal der Beschriftung. Das Cover
+ * kommt als server-gerenderter <Media>-Node herein (RSC-Grenze, §0.5).
  *
  * Sprint 10 — A11y: `role="tablist"` vervollständigt mit Roving-Tabindex +
  * Arrow-Key-Navigation (← → Home End), wie vom ARIA-Tab-Pattern erwartet.
@@ -18,11 +23,16 @@
  */
 import { useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
+import GalleryCard from "@/components/arbeiten/GalleryCard";
 
 export interface WorksGridItem {
   id: string;
   category: string;
-  node: ReactNode;
+  title: string;
+  meta?: string;
+  href: string;
+  /** Server-gerenderter <Media>-Node (Cover) für die Kachel. */
+  media: ReactNode;
 }
 
 export interface WorksGridCategory {
@@ -103,9 +113,15 @@ export default function WorksGrid({ items, categories }: WorksGridProps) {
           Noch keine Projekte in dieser Kategorie.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="columns-1 gap-4 sm:columns-2 sm:gap-6 lg:columns-3 xl:columns-4">
           {visible.map((item) => (
-            <div key={item.id}>{item.node}</div>
+            <GalleryCard
+              key={item.id}
+              title={item.title}
+              meta={item.meta}
+              href={item.href}
+              media={item.media}
+            />
           ))}
         </div>
       )}
