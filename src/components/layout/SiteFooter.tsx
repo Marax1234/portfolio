@@ -33,10 +33,10 @@ export default function SiteFooter() {
             </p>
             {/* Kontakt */}
             <a
-              href="mailto:mail@kilia-siebert.de"
+              href="mailto:Siebert.kilian@outlook.de"
               className="type-label-caps text-primary hover:text-primary-container transition-colors mt-4 inline-block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-sm"
             >
-              mail@kilia-siebert.de
+              Siebert.kilian@outlook.de
             </a>
           </div>
 
@@ -57,20 +57,16 @@ export default function SiteFooter() {
             </ul>
           </div>
 
-          {/* Spalte 3 — Social
-           * Sprint 10: Platzhalter-Links (href="#") werden gefiltert — sie führen
-           * nirgendwo hin und öffnen `_blank`-Tabs ins Leere. Echte URLs kommen
-           * per navigation.ts-Pflege nach dem Deployment.
-           */}
+          {/* Spalte 3 — Social */}
           <div>
             <p className="type-label-caps text-on-surface-variant mb-4">Social</p>
-            {SOCIAL_LINKS.filter((s) => s.href !== "#").length === 0 ? (
+            {SOCIAL_LINKS.length === 0 ? (
               <p className="type-body-md text-on-surface-variant">
                 Folg mir bald — Links folgen.
               </p>
             ) : (
               <ul className="space-y-3">
-                {SOCIAL_LINKS.filter((s) => s.href !== "#").map(({ href, label }) => (
+                {SOCIAL_LINKS.map(({ href, label }) => (
                   <li key={label}>
                     <a
                       href={href}

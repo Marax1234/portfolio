@@ -20,7 +20,7 @@ export interface NavLink {
 export interface SocialLink {
   href: string;
   label: string;
-  platform: "instagram" | "tiktok" | "youtube";
+  platform: "instagram" | "strava";
 }
 
 /** Haupt-Navigation (Konzept §3) */
@@ -32,11 +32,10 @@ export const NAV_LINKS: NavLink[] = [
   { href: "/kontakt",       label: "Kontakt",        shortLabel: "Kontakt" },
 ];
 
-/** Social-Links (Platzhalter-href="#" bis Sprint 9/10) */
+/** Social-Links — Go-Live-Stand, echte URLs */
 export const SOCIAL_LINKS: SocialLink[] = [
-  { href: "#", label: "Instagram", platform: "instagram" },
-  { href: "#", label: "TikTok",    platform: "tiktok" },
-  { href: "#", label: "YouTube",   platform: "youtube" },
+  { href: "https://www.instagram.com/strategieutopie/", label: "Instagram", platform: "instagram" },
+  { href: "https://strava.app.link/ig6cisK4YZb", label: "Strava", platform: "strava" },
 ];
 
 /** Footer-Pflichtlinks (DE-Recht) */
