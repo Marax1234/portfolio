@@ -3,7 +3,7 @@
  *
  * Konzept §4.1: „Journal-Teaser ist das Lebendige. Es zeigt: hier ist ein
  * Mensch mit laufendem Output, kein totes Schaufenster." Nutzt die
- * geteilte ProjectCard (Sprint 2) — gleiches Bauteil wie auf /arbeiten.
+ * geteilte ProjectCard (Sprint 2).
  *
  * Sprint 5: Einträge + Überschrift kommen aus `JournalPosts`/
  * `SiteConfig.journalTeaser` (Payload). Ohne Einträge greifen die
