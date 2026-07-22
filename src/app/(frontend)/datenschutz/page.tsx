@@ -27,52 +27,76 @@ export default function DatenschutzPage() {
       </h1>
 
       <div className="type-body-md text-on-surface-variant space-y-6">
-        {/* Platzhalter — bitte vor Deployment durch echten Rechtstext ersetzen */}
         <section>
           <h2 className="type-label-caps text-on-surface mb-2">
             1. Verantwortlicher
           </h2>
-          <p className="italic">Inhalt folgt vor Deployment.</p>
-        </section>
-
-        <section>
-          <h2 className="type-label-caps text-on-surface mb-2">
-            2. Erhobene Daten
-          </h2>
           <p>
-            Diese Website verwendet{" "}
-            <strong>Umami</strong> für cookieloses,
-            datenschutzkonformes Web-Analytics — ohne persönliche Daten,
-            ohne Cross-Site-Tracking, ohne Cookie-Banner-Pflicht.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="type-label-caps text-on-surface mb-2">
-            3. Kontaktformular
-          </h2>
-          <p>
-            Angaben im Kontaktformular werden zur Bearbeitung der Anfrage
-            gespeichert und nicht an Dritte weitergegeben.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="type-label-caps text-on-surface mb-2">
-            4. Weitere Informationen
-          </h2>
-          <p className="italic">Inhalt folgt vor Deployment.</p>
-        </section>
-
-        <section>
-          <h2 className="type-label-caps text-on-surface mb-2">Kontakt</h2>
-          <p>
+            Kilian Siebert
+            <br />
+            E-Mail:{" "}
             <a
-              href="mailto:mail@kilia-siebert.de"
+              href="mailto:Siebert.kilian@outlook.de"
               className="text-primary hover:text-primary-container transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              mail@kilia-siebert.de
+              Siebert.kilian@outlook.de
             </a>
+            <br />
+            <span className="italic">Ladungsfähige Anschrift wird nachgereicht.</span>
+          </p>
+        </section>
+
+        <section>
+          <h2 className="type-label-caps text-on-surface mb-2">
+            2. Hosting &amp; Server-Logs
+          </h2>
+          <p>
+            Diese Website wird auf eigener Infrastruktur betrieben. Beim
+            Aufruf werden vom Server automatisch technische Zugriffsdaten
+            (u. a. IP-Adresse, Datum/Uhrzeit, aufgerufene Seite,
+            Browsertyp) für die Dauer weniger Tage protokolliert, um den
+            Betrieb sicherzustellen und Missbrauch zu erkennen. Eine
+            Zusammenführung mit anderen Daten findet nicht statt.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="type-label-caps text-on-surface mb-2">
+            3. Web-Analytics (Umami)
+          </h2>
+          <p>
+            Diese Website verwendet <strong>Umami</strong> für
+            cookieloses, datenschutzkonformes Web-Analytics — ohne
+            persönliche Daten, ohne Cross-Site-Tracking, ohne
+            Cookie-Banner-Pflicht. Es werden keine individuellen Profile
+            erstellt.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="type-label-caps text-on-surface mb-2">
+            4. Kontaktaufnahme
+          </h2>
+          <p>
+            Ein Kontaktformular ist aktuell nicht aktiv. Kontaktaufnahme
+            erfolgt direkt per E-Mail oder Instagram-DM — die dabei von dir
+            übermittelten Angaben werden ausschließlich zur Bearbeitung
+            deiner Anfrage verwendet und nicht an Dritte weitergegeben. Für
+            Nachrichten per Instagram-DM gilt zusätzlich die
+            Datenschutzerklärung von Meta/Instagram.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="type-label-caps text-on-surface mb-2">
+            5. Deine Rechte
+          </h2>
+          <p>
+            Du hast jederzeit das Recht auf Auskunft, Berichtigung,
+            Löschung oder Einschränkung der Verarbeitung deiner
+            personenbezogenen Daten sowie ein Beschwerderecht bei einer
+            Datenschutz-Aufsichtsbehörde. Wende dich dazu an die oben
+            genannte E-Mail-Adresse.
           </p>
         </section>
       </div>

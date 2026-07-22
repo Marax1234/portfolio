@@ -26,13 +26,16 @@ export default function ImpressumPage() {
       <h1 className="type-headline-md text-on-surface mb-8">Impressum</h1>
 
       <div className="type-body-md text-on-surface-variant space-y-6">
-        {/* Platzhalter — bitte vor Deployment durch echten Rechtstext ersetzen */}
         <section>
           <h2 className="type-label-caps text-on-surface mb-2">
             Angaben gemäß §5 TMG
           </h2>
-          <p className="text-on-surface-variant italic">
-            Inhalt folgt vor Deployment.
+          <p>
+            Kilian Siebert
+            <br />
+            <span className="italic">
+              Ladungsfähige Anschrift wird nachgereicht.
+            </span>
           </p>
         </section>
 
@@ -40,8 +43,10 @@ export default function ImpressumPage() {
           <h2 className="type-label-caps text-on-surface mb-2">
             Verantwortlich für den Inhalt
           </h2>
-          <p className="text-on-surface-variant italic">
-            Inhalt folgt vor Deployment.
+          <p>
+            Kilian Siebert (Anschrift wie oben)
+            <br />
+            gemäß §18 Abs. 2 MStV
           </p>
         </section>
 
@@ -49,11 +54,32 @@ export default function ImpressumPage() {
           <h2 className="type-label-caps text-on-surface mb-2">Kontakt</h2>
           <p>
             <a
-              href="mailto:mail@kilia-siebert.de"
+              href="mailto:Siebert.kilian@outlook.de"
               className="text-primary hover:text-primary-container transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              mail@kilia-siebert.de
+              Siebert.kilian@outlook.de
             </a>
+          </p>
+        </section>
+
+        <section>
+          <h2 className="type-label-caps text-on-surface mb-2">
+            Streitschlichtung
+          </h2>
+          <p>
+            Die Europäische Kommission stellt eine Plattform zur
+            Online-Streitbeilegung (OS) bereit:{" "}
+            <a
+              href="https://ec.europa.eu/consumers/odr/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary-container transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              ec.europa.eu/consumers/odr
+            </a>
+            . Zur Teilnahme an einem Streitbeilegungsverfahren vor einer
+            Verbraucherschlichtungsstelle sind wir nicht verpflichtet und
+            nicht bereit.
           </p>
         </section>
       </div>
