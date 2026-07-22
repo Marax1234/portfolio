@@ -2,11 +2,13 @@
  * /arbeiten — Übersicht (Sprint 5, Konzept §4.2 · Redesign-Sprint)
  *
  * Masonry-Galerie mit Filter-Tabs (Alle/Hochzeiten/Menschen/Reisen/Sport/
- * Commercial). Cover pro Projekt im natürlichen Seitenverhältnis (kein Crop),
- * Beschriftung erst beim Hovern — getragen von `WorksGrid` + `GalleryCard`.
- * Max. eine Klicktiefe zur Detailseite (`/arbeiten/[slug]`).
+ * Commercial). Pro Projekt erscheint nicht nur das Cover, sondern jedes
+ * zugeordnete Bild (Cover + `gallery[]`) als eigene Kachel — alle verlinken
+ * auf dieselbe Detailseite (`/arbeiten/[slug]`). Beschriftung erst beim
+ * Hovern — getragen von `WorksGrid` + `GalleryCard`. Max. eine Klicktiefe
+ * zur Detailseite.
  *
- * Das Cover wird hier server-seitig als <Media>-Node gerendert und an die
+ * Jedes Bild wird hier server-seitig als <Media>-Node gerendert und an die
  * Client-Galerie übergeben (RSC-Grenze, §0.5). Bilder ausschließlich über
  * <Media> (§0.5). Kein Hardcode (§0.2).
  */
@@ -36,27 +38,60 @@ const COVER_RATIOS = ["3 / 2", "4 / 5", "4 / 3", "5 / 7", "1 / 1"];
 export default async function ArbeitenPage() {
   const projects = await getProjects();
 
-  const items: WorksGridItem[] = projects.map((project, index) => {
-    const ref = payloadMediaRef(project.cover, { alt: project.title }) ?? { id: "placeholder" };
-    const aspectRatio = COVER_RATIOS[index % COVER_RATIOS.length];
-    return {
-      id: String(project.id),
+  /**
+   * Jedes Projekt liefert nicht nur sein Cover, sondern alle zugeordneten
+   * Bilder (Cover + `gallery[]`) als eigene Kachel — alle mit gleichem
+   * Titel/Kategorie und Link auf dieselbe Detailseite (`/arbeiten/[slug]`).
+   * Bild-Strecke bleibt so auf der Übersicht sichtbar statt erst im Detail.
+   */
+  const items: WorksGridItem[] = [];
+  let tileIndex = 0;
+
+  for (const project of projects) {
+    const meta = formatMeta(project.category, project.publishedAt);
+    const href = `/arbeiten/${project.slug}`;
+
+    const coverRef = payloadMediaRef(project.cover, { alt: project.title }) ?? { id: "placeholder" };
+    items.push({
+      id: `${project.id}-cover`,
       category: project.category,
       title: project.title,
-      meta: formatMeta(project.category, project.publishedAt),
-      href: `/arbeiten/${project.slug}`,
-      aspectRatio,
+      meta,
+      href,
+      aspectRatio: COVER_RATIOS[tileIndex++ % COVER_RATIOS.length],
       media: (
         <Media
-          {...ref}
+          {...coverRef}
           alt={project.title}
           className="absolute inset-0 h-full w-full"
           imageClassName="object-cover h-full w-full"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
       ),
-    };
-  });
+    });
+
+    for (const [galleryIndex, entry] of (project.gallery ?? []).entries()) {
+      const ref = payloadMediaRef(entry.image, { alt: entry.caption ?? project.title });
+      if (!ref) continue;
+      items.push({
+        id: `${project.id}-${galleryIndex}`,
+        category: project.category,
+        title: project.title,
+        meta,
+        href,
+        aspectRatio: COVER_RATIOS[tileIndex++ % COVER_RATIOS.length],
+        media: (
+          <Media
+            {...ref}
+            alt={entry.caption ?? project.title}
+            className="absolute inset-0 h-full w-full"
+            imageClassName="object-cover h-full w-full"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        ),
+      });
+    }
+  }
 
   return (
     <div className="container-page section-gap-y">
