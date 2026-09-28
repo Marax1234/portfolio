@@ -1,0 +1,22 @@
+# Build-Kontext schlank halten: Abhängigkeiten kommen aus der deps-Stage,
+# Host-Artefakte würden sie sonst per `COPY . .` überschreiben.
+node_modules
+.pnpm-store
+.next
+out
+.git
+*.tsbuildinfo
+/media
+
+# Secrets, die der Build nicht braucht (.env.production.local wird für
+# `payload migrate` in der builder-Stage benötigt und bleibt drin).
+.env
+.env.local
+.env.prod
+.env.production
+
+# Tooling/Doku ohne Build-Relevanz
+.claude
+.agents
+.zap
+.github
