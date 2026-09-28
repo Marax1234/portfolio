@@ -5,9 +5,14 @@ RUN corepack enable && corepack prepare pnpm@10 --activate
 # sharp's prebuilt libvips binary is large and its optional-dependency fetch has been
 # observed to land incomplete (missing .so) under --frozen-lockfile on this registry —
 # verify it loads and force a clean re-fetch on failure instead of shipping a broken image.
+# Kein `pnpm install --force`: das installiert ALLE optionalen Plattform-Pakete
+# (@img/sharp-darwin-*, -win32-* …), an deren Verzeichnissen Turbopacks
+# File-Tracing ab Next 16.3 abbricht ("reading file … sharp-libvips-darwin-arm64:
+# Is a directory"). Stattdessen bei Fehlschlag Store + node_modules leeren → Re-Fetch.
 RUN for i in 1 2 3; do \
-      pnpm install --frozen-lockfile --force && node -e "require('sharp')" && exit 0; \
-      echo "sharp failed to load, retrying ($i/3)"; \
+      pnpm install --frozen-lockfile && node -e "require('sharp')" && exit 0; \
+      echo "sharp failed to load, retrying with clean store ($i/3)"; \
+      rm -rf node_modules "$(pnpm store path)"; \
     done; \
     node -e "require('sharp')"
 
