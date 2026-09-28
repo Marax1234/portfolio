@@ -29,12 +29,16 @@ const nextConfig: NextConfig = {
   // Pfad — Next.js' Datei-Tracing für `standalone` erkennt das nicht zuverlässig
   // und lässt die .so-Datei im pnpm-Store (.pnpm/@img+sharp-libvips-*) weg, was
   // erst zur Laufzeit mit ERR_DLOPEN_FAILED auffällt (siehe deploy.md §14).
+  // Setzt das flache (hoisted) node_modules aus dem Dockerfile voraus; keine
+  // Globs in node_modules/.pnpm — die treffen Symlinks auf Verzeichnisse, an denen
+  // Turbopack >= 16.3 mit "Is a directory" abbricht (vercel/next.js#97507).
+  // detect-libc/semver: Laufzeit-Abhängigkeiten von sharp, sonst nicht getract.
   outputFileTracingIncludes: {
     "/*": [
       "node_modules/sharp/**/*",
       "node_modules/@img/**/*",
-      "node_modules/.pnpm/@img+**/**/*",
-      "node_modules/.pnpm/sharp@**/**/*",
+      "node_modules/detect-libc/**/*",
+      "node_modules/semver/**/*",
     ],
   },
   images: {
