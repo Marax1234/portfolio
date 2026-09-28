@@ -5,12 +5,15 @@ RUN corepack enable && corepack prepare pnpm@10 --activate
 # sharp's prebuilt libvips binary is large and its optional-dependency fetch has been
 # observed to land incomplete (missing .so) under --frozen-lockfile on this registry —
 # verify it loads and force a clean re-fetch on failure instead of shipping a broken image.
-# Kein `pnpm install --force`: das installiert ALLE optionalen Plattform-Pakete
-# (@img/sharp-darwin-*, -win32-* …), an deren Verzeichnissen Turbopacks
-# File-Tracing ab Next 16.3 abbricht ("reading file … sharp-libvips-darwin-arm64:
-# Is a directory"). Stattdessen bei Fehlschlag Store + node_modules leeren → Re-Fetch.
+# node-linker=hoisted (nur im Image): flaches node_modules ohne Symlinks. Turbopack
+# (Next >= 16.3) bricht beim standalone-Tracing ab, sobald ein
+# outputFileTracingIncludes-Glob einen Symlink auf ein Verzeichnis trifft
+# ("reading file …/@img/sharp-libvips-*: Is a directory", vercel/next.js#97507) —
+# im isolierten pnpm-Layout sind sharps Plattform-Pakete genau solche Symlinks.
+# Kein `--force`: das installierte zusätzlich alle Fremdplattform-Binaries
+# (darwin/win32). Bei Fehlschlag Store + node_modules leeren → Re-Fetch.
 RUN for i in 1 2 3; do \
-      pnpm install --frozen-lockfile && node -e "require('sharp')" && exit 0; \
+      pnpm install --frozen-lockfile --config.node-linker=hoisted && node -e "require('sharp')" && exit 0; \
       echo "sharp failed to load, retrying with clean store ($i/3)"; \
       rm -rf node_modules "$(pnpm store path)"; \
     done; \
@@ -52,6 +55,9 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# Build-Gate: sharp (Payload-Bildgrößen, next/image) muss im standalone-Output
+# vollständig sein (Binary, libvips, detect-libc, semver) — sonst Build abbrechen.
+RUN node -e "require('sharp')"
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]
