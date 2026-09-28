@@ -10,6 +10,8 @@
 #
 # Voraussetzung: postgres + minio laufen bereits (docker compose up -d postgres minio).
 set -euo pipefail
+# Enthält Secrets → nur für den Eigentümer lesbar, auch wenn die Datei neu angelegt wird.
+umask 077
 cd "$(dirname "$0")/.."
 
 set -a
@@ -38,6 +40,7 @@ SMTP_PORT=${SMTP_PORT}
 SMTP_USER=${SMTP_USER}
 SMTP_PASS=${SMTP_PASS}
 EOF
+chmod 600 .env.production.local .env.prod
 
 echo "postgres: ${PG_IP}  minio: ${MINIO_IP}"
 echo ".env.production.local geschrieben."
