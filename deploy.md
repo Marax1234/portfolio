@@ -692,6 +692,11 @@ Zwei voneinander unabhängige Ursachen, beide gefixt:
    Damit bricht der Build hart ab, statt ein kaputtes Image zu produzieren, falls auch der
    dritte Versuch scheitert.
 
+   > **Stand 2026-09-28 (PR #75):** `--force` ist entfernt – es installierte alle
+   > Fremdplattform-Binaries (darwin/win32). Der Loop nutzt jetzt
+   > `pnpm install --frozen-lockfile --config.node-linker=hoisted` und leert bei Fehlschlag
+   > Store + `node_modules`. Siehe Hinweis am Ende von Punkt 2.
+
 2. **Next.js' `output: standalone`-Tracing lässt sharps Binary weg, selbst wenn es in der
    `builder`-Stage korrekt installiert ist.** sharp lädt sein Plattform-Binary über einen
    zur Laufzeit berechneten Pfad (abhängig von `process.platform`/`arch`/libc) — Next.js'
@@ -719,6 +724,15 @@ Zwei voneinander unabhängige Ursachen, beide gefixt:
    Next.js-Doku (für npm/yarn ohne Content-Store) reicht hier nicht. Kostet ca. 250 MB
    zusätzliche Image-Größe (296 MB → 553 MB), aber für ein selbst gehostetes Portfolio
    unkritisch.
+
+   > **Stand 2026-09-28 (PR #75, Next 16.3):** Die `.pnpm`-Globs sind entfernt. Turbopack
+   > ab Next 16.3 bricht ab, sobald ein Include-Glob einen Symlink auf ein Verzeichnis
+   > trifft (`TurbopackInternalError: reading file …/@img/sharp-libvips-…: Is a directory`,
+   > vercel/next.js#97507). Deshalb installiert das Image mit `node-linker=hoisted`
+   > (flaches `node_modules` ohne Symlinks), und `outputFileTracingIncludes` enthält nur
+   > noch `sharp`, `@img`, `detect-libc`, `semver`. Der Runner-Stage prüft
+   > `node -e "require('sharp')"` als Build-Gate. **Nicht** wieder `.pnpm`-Globs oder
+   > `--force` einführen.
 
 ---
 
