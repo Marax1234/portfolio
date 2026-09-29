@@ -38,6 +38,10 @@ updates:
     # Nur Releases, die mindestens 7 Tage alt sind (Supply-Chain-Schutz, B8/B16).
     cooldown:
       default-days: 7
+    ignore:
+      # @types/node folgt der Node-Runtime im Dockerfile (node:20), Major nur zusammen mit ihr.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       # Patch-/Minor-Updates bündeln, um PR-Rauschen zu reduzieren.
       minor-and-patch:
