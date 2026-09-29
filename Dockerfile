@@ -74,4 +74,8 @@ RUN mkdir -p .next/cache/images && chown -R nextjs:nodejs .next/cache
 RUN node -e "require('sharp')"
 USER nextjs
 EXPOSE 3000
+# server.js bindet an $HOSTNAME; Docker setzt dort die Container-ID (= nur die Container-IP).
+# 0.0.0.0, damit der Healthcheck 127.0.0.1 erreicht. Nach außen gilt weiter nur das
+# Port-Mapping auf 10.10.0.2 (docker-compose.prod.yml).
+ENV HOSTNAME=0.0.0.0
 CMD ["node", "server.js"]
