@@ -193,9 +193,9 @@ jobs:
   # Es gibt keine dauerhafte Staging-Umgebung. Workaround: Wir booten den vollen
   # Stack (Postgres + Garage aus docker-compose.dev.yml), migrieren (§6.2/§6.3),
   # seeden Nicht-Echtdaten (§6.1), bauen und starten die App und scannen sie mit
-  # OWASP ZAP — alles ephemer im Runner. Läuft nur bei Push auf main; der
-  # Production-Deploy (deploy-production.yml) wartet via workflow_run auf den
-  # Erfolg dieses gesamten Workflows, dieser Job gatet also §7 vor §8.
+  # OWASP ZAP — alles ephemer im Runner. Läuft nur bei Push auf main. Deploys
+  # laufen derzeit manuell (manual-deploy.md) erst nach grünem Lauf; ein
+  # automatischer Deploy-Trigger kommt erst mit dem GHCR-/Tailscale-Ablauf.
   dast-ephemeral:
     name: DAST (ephemeral ZAP baseline)
     runs-on: ubuntu-latest

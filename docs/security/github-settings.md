@@ -1,6 +1,6 @@
 # GitHub-Settings & Security-Status
 
-Stand: 2026-06-20 · Repo: `Marax1234/portfolio` · Sichtbarkeit: **public**
+Stand: 2026-09-29 · Repo: `Marax1234/portfolio` · Sichtbarkeit: **public**
 
 Diese Datei dokumentiert, welche 🔴-Must-Punkte der Security-Checkliste in den
 GitHub-Repository-Einstellungen umgesetzt sind (per `gh`-CLI angewendet) und welche
@@ -22,6 +22,8 @@ bewussten Abstriche bestehen.
 | §3.4/§5.2 | Dependabot Alerts + Security Updates | ✅ aktiv |
 | **§8.1** | Environment `production` mit **Required Reviewer** (@Marax1234) + Branch-Policy nur `main` | ✅ aktiv |
 | **§5.3.3** | CodeQL-SARIF-Upload in Security → Code Scanning (public → kostenlos) | ✅ aktiv (beim ersten Workflow-Lauf) |
+| – | „Automatically delete head branches" (`delete_branch_on_merge`) | ✅ aktiv (2026-09-29) |
+| – | Environment `staging` gelöscht (war leer, ohne Schutzregeln, kein Staging-Stack) | ✅ 2026-09-29 |
 
 Reproduzierbare Befehle stehen am Ende dieser Datei.
 
@@ -33,7 +35,8 @@ Reproduzierbare Befehle stehen am Ende dieser Datei.
 |---|---|---|
 | **§1.2.2** „≥1 Review, kein Self-Approval" | Required Approvals = **0** (statt 1) | Als einziger Maintainer kannst du eigene PRs nicht selbst approven — bei „≥1" könntest du gar nicht mehr mergen. Die **Required Status Checks bleiben hart** (kein Merge ohne grüne Gates). Wenn ein zweiter Reviewer dazukommt: `required_approving_review_count` auf 1 setzen. |
 | **§8.1** Self-Review beim Deploy | `prevent_self_review = false` | Du bist Reviewer **und** Deployer in Personalunion. Die Approval wird trotzdem im Environment-Log protokolliert (§9.2), ist aber eine Selbstfreigabe. |
-| **§4.2** Self-hosted Runner auf public Repo | akzeptiert | Der self-hosted Runner (hillerhome) wird **ausschließlich** von `deploy-production.yml` genutzt, und der Job läuft nur bei `workflow_run`-`push` (also nach dem Merge, vertrauenswürdiger Code). Fork-PRs erreichen den Runner nie — sie laufen auf GitHub-Hosted Runnern ohne Secrets. |
+| **§4.2** Self-hosted Runner auf public Repo | **entfällt** | Es ist kein Self-hosted Runner registriert, und es wird keiner kommen (kein dauerhafter Runner mit Docker-Rechten auf dem Prod-Host). `deploy-production.yml` ist stillgelegt (nur `workflow_dispatch`). Deploys laufen manuell nach `manual-deploy.md`, später per GHCR-Image + Tailscale-SSH mit Freigabe im Environment `production`. |
+| **§2.2** getrennte Secret-Sets `staging`/`production` | **entfällt** | Kein Staging-Stack, daher kein Environment `staging`. Das Environment `production` hat keine Secrets; die Prod-Werte liegen nur in `/opt/portfolio/.env.prod` auf hillerhome. |
 | **§6.1/§6.2** dauerhafte Staging-Umgebung | ersetzt durch **Ephemer-Umgebung in CI** | Es gibt keine dauerhafte Staging-Umgebung und wird keine geben. Siehe nächster Abschnitt. |
 
 ---
@@ -44,7 +47,7 @@ Statt einer permanenten Staging-Umgebung bootet der Job **`DAST (ephemeral ZAP
 baseline)`** in `ci-security.yml` (nur bei Push auf `main`) den vollen Stack
 flüchtig im Runner:
 
-1. `docker-compose.dev.yml` hoch (Postgres + MinIO),
+1. `docker-compose.dev.yml` hoch (Postgres + Garage),
 2. `pnpm migrate` (§6.2/§6.3 — Migrationen werden vor dem Scan getestet),
 3. `pnpm seed` (§6.1 — repräsentative, **keine echten** Nutzerdaten),
 4. `pnpm build` + `pnpm start`,
@@ -52,9 +55,9 @@ flüchtig im Runner:
    Findings blockieren), Ausnahmen in `.zap/rules.tsv` (§7.4),
 6. Stack wird wieder abgebaut.
 
-Weil `deploy-production.yml` per `workflow_run` auf den **Erfolg des gesamten**
-CI-Security-Workflows wartet, gatet dieser Job §7 **vor** dem Production-Deploy (§8)
-— genau wie es die Checkliste verlangt, nur eben ephemer statt persistent.
+Deployt wird derzeit manuell und erst nach einem grünen Lauf dieses Workflows auf
+`main`. Ein automatisches Gate §7 → §8 kommt mit dem GHCR-/Tailscale-Deploy zurück;
+bis dahin ist es eine Regel im Ablauf, keine technische Sperre.
 
 > **Erwartung beim ersten Lauf:** Der Full-Stack-Boot in CI ist der fragilste Teil
 > und braucht ggf. eine Iteration (Timeouts, ZAP-Ziel-IP). Findings, die kein
@@ -81,10 +84,6 @@ Täglich um 03:17 UTC + manuell (`workflow_dispatch`):
       `docs/`, `security-exceptions.md`, `package.json`, `pnpm-lock.yaml`) auf einem
       Branch pushen und per **PR** mergen. Die vier Gates laufen auf dem PR und
       müssen grün sein (Required Checks). Direkt-Push auf `main` ist jetzt gesperrt.
-- [ ] **§2.2 Production-Secrets** im Environment `production` hinterlegen, **falls**
-      `deploy-production.yml` Secrets injizieren soll. Aktuell liegen die Werte in
-      `/opt/portfolio/.env.prod` auf hillerhome (nicht im Repo) — dann sind hier
-      keine Environment-Secrets nötig.
 - [ ] **§9.5 (Should)** Log-Retention auf ≥ 90 Tage: **Settings → Actions → General
       → Artifact and log retention**.
 - [ ] **§5.4 / Kontaktformular**: Nach dem `nodemailer`-Override (8→9) einmal eine
@@ -113,4 +112,7 @@ JSON
 
 # Dependabot Security Updates
 gh api -X PUT repos/Marax1234/portfolio/automated-security-fixes
+
+# Head-Branches nach dem Merge automatisch löschen
+gh api -X PATCH repos/Marax1234/portfolio -F delete_branch_on_merge=true
 ```

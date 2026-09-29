@@ -1,8 +1,9 @@
 # Manuelles Deployment — Kurzreferenz
 
-Für den Fall, dass die GitHub-Actions-Pipeline (`deploy-production.yml`) nicht läuft oder
-manuell nachgeholt werden muss. Vollständiger Hintergrund in `deploy.md` — hier nur der
-eigentliche Befehlsablauf plus die Stolperfallen, die in der Praxis aufgetreten sind.
+**Das ist derzeit der einzige Deploy-Weg.** `deploy-production.yml` ist stillgelegt (nur
+`workflow_dispatch`, kein Runner, B24); ein automatischer Deploy über GHCR + Tailscale folgt
+später. Vollständiger Hintergrund in `deploy.md` — hier nur der eigentliche Befehlsablauf
+plus die Stolperfallen, die in der Praxis aufgetreten sind.
 
 Voraussetzung: auf hillerhome, im Repo unter `/opt/portfolio`, Postgres/Garage/Umami laufen
 bereits dauerhaft (`restart: unless-stopped`) — nur die App wird neu gebaut/gestartet.
