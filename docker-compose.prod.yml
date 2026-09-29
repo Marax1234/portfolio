@@ -105,7 +105,9 @@ services:
       - internal
 
   umami:
-    image: ghcr.io/umami-software/umami:postgresql-latest
+    # Gepinnt (B8): postgresql-latest ist seit Umami v3 deprecated und bekommt keine
+    # Updates mehr. Updates kommen als Dependabot-PR (docker-compose).
+    image: ghcr.io/umami-software/umami:3.1.0@sha256:e3f80c0625aad7179b49da27d475357cabb1068b8cacd9a792cfd6966888b123
     restart: unless-stopped
     mem_limit: 768m
     memswap_limit: 768m
