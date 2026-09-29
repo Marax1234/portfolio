@@ -1,6 +1,6 @@
-# Dev-Infrastruktur: Postgres (Sprint 4) + MinIO (Sprint 7 — Bild-Pipeline &
-# Object Storage). Bewusst getrennt vom produktiven Compose-Setup (siehe
-# Sprintplan §4 „Ausblick: Post-Development" — App/Postgres/MinIO/Umami/
+# Dev-Infrastruktur: Postgres (Sprint 4) + Object Storage (Sprint 7 — Bild-
+# Pipeline; seit B4 Garage statt MinIO). Bewusst getrennt vom produktiven Compose-Setup (siehe
+# Sprintplan §4 „Ausblick: Post-Development" — App/Postgres/Garage/Umami/
 # Caddy). Dieses File startet ausschließlich lokale Entwicklungsdienste.
 #
 # Verwendung: pnpm db:up / pnpm db:down
@@ -18,43 +18,35 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  minio:
-    image: minio/minio:latest
+  # Object Storage: Garage (S3-kompatibel, ersetzt MinIO — dessen Community-
+  # Edition ist archiviert, Images sind nicht mehr ziehbar). Single-Node;
+  # Key + Bucket legt Garage beim Start an, Website-Zugriff/Alias/CORS/
+  # Platzhalter setzt scripts/storage-init.sh (läuft in `pnpm db:up`).
+  # Nur Dummy-Werte — kein Produktions-Secret.
+  garage:
+    image: dxflrs/garage:v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020
     restart: unless-stopped
-    command: server /data --console-address ":9001"
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      GARAGE_RPC_SECRET: "0000000000000000000000000000000000000000000000000000000000000000"
+      GARAGE_DEFAULT_ACCESS_KEY: GKdevlocal0000000000000000
+      GARAGE_DEFAULT_SECRET_KEY: dev-local-only-not-a-secret
+      GARAGE_DEFAULT_BUCKET: portfolio-media
     ports:
-      # Host-Ports 9100/9101 statt der MinIO-Standardports 9000/9001 — auf
-      # dieser Maschine belegt ein anderer Container (Portainer) bereits
-      # 9000. Container-intern bleibt MinIO auf 9000/9001 (siehe
-      # `createbuckets`, das per Docker-Netzwerk auf `minio:9000` zugreift).
-      - "9100:9000" # S3-API
-      - "9101:9001" # Web-Console
+      # Host-Port 9100 wie bisher (auf dieser Maschine belegt Portainer 9000).
+      - "9100:3900" # S3-API (App, Uploads)
+      - "9102:3902" # Web-Endpoint (öffentliche Medien, NEXT_PUBLIC_S3_PUBLIC_URL)
     volumes:
-      - minio-data:/data
-
-  # Einmaliger Bootstrap: legt den Bucket an, setzt eine Public-Read-Policy
-  # (Sprint 7 liefert Bilder direkt aus MinIO, siehe payload.config.ts) und
-  # lädt den statischen Platzhalter für den manifest-`id`-Zweig
-  # (src/lib/media/object-storage-provider.ts) hoch. Läuft bei jedem
-  # `pnpm db:up` erneut — alle Schritte sind idempotent.
-  createbuckets:
-    image: minio/mc:latest
-    depends_on:
-      - minio
-    volumes:
-      - ./public/media:/assets:ro
-    entrypoint: >
-      /bin/sh -c "
-      until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 1; done;
-      mc mb --ignore-existing local/portfolio-media;
-      mc anonymous set download local/portfolio-media;
-      mc cp /assets/placeholder.svg local/portfolio-media/static/placeholder.svg;
-      exit 0;
-      "
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+    healthcheck:
+      test: ["CMD", "/garage", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
 volumes:
   pgdata:
-  minio-data:
+  garage-meta:
+  garage-data:

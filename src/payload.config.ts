@@ -100,7 +100,7 @@ export default buildConfig({
     prodMigrations: migrations,
   }),
   // Sprint 7: Uploads der `media`-Collection landen im Object Storage
-  // (MinIO lokal, siehe docker-compose.dev.yml) statt im lokalen `staticDir`
+  // (Garage, siehe docker-compose.dev.yml) statt im lokalen `staticDir`
   // — Collection-Schema bleibt stabil (src/collections/Media.ts).
   // `disablePayloadAccessControl` + `generateFileURL` liefern direkte
   // Storage-URLs statt eines Payload-Proxys (Produktions-Pendant: CDN vor
@@ -136,6 +136,12 @@ export default buildConfig({
         endpoint: process.env.S3_ENDPOINT,
         region: process.env.S3_REGION,
         forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+        // Garage liefert nach Multipart-Uploads eine Composite-Checksumme ohne
+        // "-<Teile>"-Suffix; das SDK prüft sie als Volltext-Checksumme und bricht
+        // GetObject mit "Checksum mismatch" ab (Garage-Issue #1228). Checksummen
+        // daher nur, wenn die Operation sie verlangt.
+        requestChecksumCalculation: "WHEN_REQUIRED",
+        responseChecksumValidation: "WHEN_REQUIRED",
         credentials: {
           accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
           secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",

@@ -6,6 +6,11 @@
 > bereits bestehenden WireGuard-Tunnel an hillerhome durch. Deployment per Git-Pipeline.
 >
 > **Kein Hetzner.** Stattdessen: vorhandene Infrastruktur aus `SYSTEM.md`.
+>
+> **Stand 2026-09 (B4): MinIO ist durch Garage ersetzt.** Die MinIO-Abschnitte unten
+> (Compose-Auszug, `mc`-Befehle, `MINIO_*`-Variablen, Caddy-Rewrite auf `/portfolio-media`)
+> sind historisch. Gültig sind `docker-compose.prod.yml`, `garage.toml`,
+> `scripts/storage-init.sh` und `manual-deploy.md` → „Object Storage (Garage)“.
 
 ---
 

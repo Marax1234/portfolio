@@ -67,7 +67,7 @@ jobs:
       - name: Datenbank & Object-Storage hochfahren
         working-directory: /opt/portfolio
         run: |
-          docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres minio
+          docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres garage
 
       - name: Build-Env generieren (Container-IPs)
         working-directory: /opt/portfolio
