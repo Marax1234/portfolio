@@ -149,6 +149,7 @@ export interface User {
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -171,6 +172,11 @@ export interface Media {
    * Beschreibender Alt-Text — Pflichtfeld für Barrierefreiheit.
    */
   alt: string;
+  /**
+   * Umgeht die Mindestbreite von 2000px (z.B. für Icons, Texturen, Screenshots — bewusst kein hochauflösendes Foto). Für Projekt-Cover/Galeriebilder nicht aktivieren.
+   */
+  allowLowResolution?: boolean | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -238,6 +244,7 @@ export interface Video {
    */
   posterUrl?: string | null;
   duration?: number | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -458,6 +465,7 @@ export interface Document {
    * Kurze Beschreibung des Dokuments (z.B. 'Media-Kit 2024').
    */
   alt?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -577,6 +585,7 @@ export interface UsersSelect<T extends boolean = true> {
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
+  resetPasswordRequestedAt?: T;
   loginAttempts?: T;
   lockUntil?: T;
   sessions?:
@@ -593,6 +602,8 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  allowLowResolution?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -650,6 +661,7 @@ export interface VideosSelect<T extends boolean = true> {
   hlsUrl?: T;
   posterUrl?: T;
   duration?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -803,6 +815,7 @@ export interface ContactSubmissionsSelect<T extends boolean = true> {
  */
 export interface DocumentsSelect<T extends boolean = true> {
   alt?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1000,7 +1013,13 @@ export interface AboutPage {
   backstage?:
     | {
         image: number | Media;
+        /**
+         * Ungefähr, kein genaues Datum (z. B. „Frühjahr 2024“, „Sommer in Lissabon“).
+         */
         period?: string | null;
+        /**
+         * Ein Satz, der beim Hovern erscheint. Minimal halten.
+         */
         caption?: string | null;
         id?: string | null;
       }[]
