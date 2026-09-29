@@ -87,11 +87,9 @@ const nextConfig: NextConfig = {
             value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
           },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          // Greift produktiv hinter HTTPS (Caddy); über http lokal ignorieren Browser ihn.
-          {
-            key: "Strict-Transport-Security",
-            value: "max-age=63072000; includeSubDomains; preload",
-          },
+          // HSTS setzt bewusst nur Caddy (1 Jahr, includeSubDomains, ohne preload),
+          // einmal für alle Subdomains und auch auf Fehlerseiten. Hier nicht wieder
+          // ergänzen, sonst kommt der Header doppelt (Ops-Repo, B25 B3/C2).
         ],
       },
     ];
