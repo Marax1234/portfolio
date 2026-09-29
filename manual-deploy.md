@@ -4,7 +4,7 @@ Für den Fall, dass die GitHub-Actions-Pipeline (`deploy-production.yml`) nicht 
 manuell nachgeholt werden muss. Vollständiger Hintergrund in `deploy.md` — hier nur der
 eigentliche Befehlsablauf plus die Stolperfallen, die in der Praxis aufgetreten sind.
 
-Voraussetzung: auf hillerhome, im Repo unter `/opt/portfolio`, Postgres/MinIO/Umami laufen
+Voraussetzung: auf hillerhome, im Repo unter `/opt/portfolio`, Postgres/Garage/Umami laufen
 bereits dauerhaft (`restart: unless-stopped`) — nur die App wird neu gebaut/gestartet.
 
 ## Ablauf
@@ -13,8 +13,8 @@ bereits dauerhaft (`restart: unless-stopped`) — nur die App wird neu gebaut/ge
 cd /opt/portfolio
 git pull origin main
 
-# Postgres/MinIO müssen für Migrations + SSG erreichbar sein (sind es i.d.R. schon)
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres minio
+# Postgres/Garage müssen für Migrations + SSG erreichbar sein (sind es i.d.R. schon)
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres garage
 
 # Container-IPs ändern sich bei jedem Neustart — vor JEDEM Build neu generieren
 ./scripts/gen-build-env.sh
@@ -31,12 +31,33 @@ curl -I https://kilia-siebert.de
 docker compose -f docker-compose.prod.yml logs --tail=40 app
 ```
 
+## Object Storage (Garage)
+
+Seit B4 (2026-09) ersetzt Garage (`dxflrs/garage`, Tag + Digest gepinnt) MinIO. Garage legt
+App-Key und Bucket beim Start selbst an (`--single-node --default-bucket`, Werte aus
+`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`/`S3_BUCKET`, dazu `GARAGE_RPC_SECRET` in `.env.prod`).
+Website-Zugriff, Host-Alias `cdn.<domain>`, CORS und Platzhalter setzt einmalig (idempotent):
+
+```bash
+set -a; . ./.env.prod; set +a
+COMPOSE_FILE=docker-compose.prod.yml S3_ENDPOINT=http://127.0.0.1:3900 \
+  NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.$DOMAIN ./scripts/storage-init.sh
+```
+
+- Caddy (VPS) proxyt `cdn.<domain>` ohne Rewrite auf den Web-Endpoint `10.10.0.2:3902`
+  (Host-Header bleibt erhalten → Bucket-Alias). Die S3-API (3900) ist nur intern bzw. auf
+  `127.0.0.1` erreichbar, ein öffentliches Bucket-Listing gibt es nicht mehr.
+- Status: `docker compose -f docker-compose.prod.yml exec garage /garage status` bzw.
+  `/garage bucket info portfolio-media`.
+- Update: Tag **und** Digest in beiden Compose-Dateien anheben (Release ≥ 7 Tage alt,
+  Release-Notes auf Breaking Changes prüfen), vorher Backup.
+
 ## Stolperfallen
 
 - **`--env-file` muss vor `-f` stehen.** Andere Reihenfolge interpoliert `${VAR}` in der
   Compose-Datei stillschweigend leer — keine Fehlermeldung, nur falsche/leere Env-Werte.
 
-- **`gen-build-env.sh` ist nicht optional.** Postgres/MinIO bekommen bei jedem
+- **`gen-build-env.sh` ist nicht optional.** Postgres/Garage bekommen bei jedem
   `docker compose up`/`down` potenziell neue Bridge-IPs. Das Skript schreibt sie nach
   `.env.production.local`, das der Build (Network-Mode `host`) braucht. Ohne frischen Lauf
   zeigt der Build auf eine tote IP → `payload migrate` schlägt mit Connection-Fehler fehl.

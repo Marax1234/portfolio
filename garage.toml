@@ -1,0 +1,39 @@
+# Garage — S3-kompatibler Object Storage (ersetzt MinIO, dessen Community-
+# Edition archiviert ist und keine Images mehr veröffentlicht). Single-Node,
+# gemeinsam für docker-compose.dev.yml und docker-compose.prod.yml.
+#
+# Secrets kommen ausschließlich per Env (nie in diese Datei):
+#   GARAGE_RPC_SECRET          32 Byte als Hex (openssl rand -hex 32)
+#   GARAGE_DEFAULT_ACCESS_KEY  Key-ID der App (= S3_ACCESS_KEY_ID)
+#   GARAGE_DEFAULT_SECRET_KEY  Secret der App (= S3_SECRET_ACCESS_KEY)
+#   GARAGE_DEFAULT_BUCKET      Bucket (= S3_BUCKET)
+# `garage server --single-node --default-bucket` legt Layout, Key und Bucket
+# beim Start idempotent an. Website-Zugriff, Alias und CORS setzt
+# scripts/storage-init.sh.
+#
+# Ports: 3900 S3-API (nur intern/localhost), 3902 Web-Endpoint (öffentliches,
+# read-only Ausliefern der Medien; kein Listing, keine Schreibzugriffe).
+# Der Web-Endpoint wählt den Bucket über den Host-Header: der Bucket bekommt
+# den Hostnamen aus NEXT_PUBLIC_S3_PUBLIC_URL als Alias (dev: localhost,
+# prod: cdn.<domain>). Kein Admin-API-Block → Admin-API lauscht nicht.
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+# Konsistente Kopie der Metadaten-DB unter meta/snapshots/ (für Backups).
+metadata_auto_snapshot_interval = "6h"
+
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+
+[s3_api]
+# Muss zu S3_REGION der App passen (Signaturprüfung).
+s3_region = "us-east-1"
+api_bind_addr = "[::]:3900"
+
+[s3_web]
+bind_addr = "[::]:3902"
+root_domain = ".web.garage.localhost"
+index = "index.html"

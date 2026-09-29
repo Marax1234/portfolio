@@ -191,7 +191,7 @@ jobs:
 
   # ── §6/§7 DAST Gate gegen EPHEMERE Umgebung (Staging-Workaround) ──────────
   # Es gibt keine dauerhafte Staging-Umgebung. Workaround: Wir booten den vollen
-  # Stack (Postgres + MinIO aus docker-compose.dev.yml), migrieren (§6.2/§6.3),
+  # Stack (Postgres + Garage aus docker-compose.dev.yml), migrieren (§6.2/§6.3),
   # seeden Nicht-Echtdaten (§6.1), bauen und starten die App und scannen sie mit
   # OWASP ZAP — alles ephemer im Runner. Läuft nur bei Push auf main; der
   # Production-Deploy (deploy-production.yml) wartet via workflow_run auf den
@@ -210,11 +210,11 @@ jobs:
       S3_BUCKET: portfolio-media
       S3_REGION: us-east-1
       S3_ENDPOINT: http://localhost:9100
-      S3_ACCESS_KEY_ID: minioadmin
-      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_ACCESS_KEY_ID: GKdevlocal0000000000000000
+      S3_SECRET_ACCESS_KEY: dev-local-only-not-a-secret
       S3_FORCE_PATH_STYLE: "true"
       NEXT_PUBLIC_SERVER_URL: http://localhost:3000
-      NEXT_PUBLIC_S3_PUBLIC_URL: http://localhost:9100/portfolio-media
+      NEXT_PUBLIC_S3_PUBLIC_URL: http://localhost:9102
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -230,8 +230,12 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Infrastruktur hochfahren (Postgres + MinIO)
-        run: docker compose -f docker-compose.dev.yml up -d
+      - name: Infrastruktur hochfahren (Postgres + Garage)
+        run: docker compose -f docker-compose.dev.yml up -d --wait
+
+      # Website-Zugriff, Host-Alias, CORS und Platzhalter im Bucket (idempotent).
+      - name: Object Storage einrichten
+        run: scripts/storage-init.sh
 
       - name: Auf Postgres warten
         run: |
@@ -243,8 +247,10 @@ jobs:
           done
           echo "::error::Postgres wurde nicht rechtzeitig bereit."; exit 1
 
+      # node-linker=hoisted wie im Dockerfile: Turbopack >= 16.3 bricht beim
+      # `next build` an pnpm-Symlinks der sharp-Includes ab (vercel/next.js#97507).
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --config.node-linker=hoisted
 
       # §6.2/§6.3 — Migrationen in der Ephemer-Umgebung anwenden (payload migrate).
       - name: Migrationen anwenden

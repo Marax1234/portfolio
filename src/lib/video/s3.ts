@@ -18,6 +18,12 @@ export function getS3Client(): S3Client {
     endpoint: process.env.S3_ENDPOINT,
     region: process.env.S3_REGION ?? "us-east-1",
     forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+    // Garage liefert nach Multipart-Uploads eine Composite-Checksumme ohne
+    // "-<Teile>"-Suffix; das SDK prüft sie als Volltext-Checksumme und bricht
+    // GetObject mit "Checksum mismatch" ab (Garage-Issue #1228). Checksummen
+    // daher nur, wenn die Operation sie verlangt.
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
     credentials: {
       accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
       secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
@@ -27,7 +33,7 @@ export function getS3Client(): S3Client {
 
 const BUCKET = () => process.env.S3_BUCKET ?? "portfolio-media";
 const PUBLIC_BASE = () =>
-  process.env.NEXT_PUBLIC_S3_PUBLIC_URL ?? "http://localhost:9100/portfolio-media";
+  process.env.NEXT_PUBLIC_S3_PUBLIC_URL ?? "http://localhost:9102";
 
 /** ContentType-Lookup für HLS-Ausgaben. */
 function contentType(filename: string): string {

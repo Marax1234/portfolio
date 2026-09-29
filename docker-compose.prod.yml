@@ -1,5 +1,5 @@
 # docker-compose.prod.yml
-# App + PostgreSQL + MinIO + Umami — läuft auf hillerhome
+# App + PostgreSQL + Garage (Object Storage) + Umami — läuft auf hillerhome
 # Ports gebunden an WireGuard-IP 10.10.0.2 (nur über Tunnel erreichbar)
 
 services:
@@ -26,9 +26,9 @@ services:
       NEXT_PUBLIC_SERVER_URL: https://${DOMAIN}
       S3_BUCKET: ${S3_BUCKET}
       S3_REGION: us-east-1
-      S3_ENDPOINT: http://minio:9000
-      S3_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
-      S3_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
+      S3_ENDPOINT: http://garage:3900
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       S3_FORCE_PATH_STYLE: "true"
       NEXT_PUBLIC_S3_PUBLIC_URL: https://cdn.${DOMAIN}
       EMAIL_FROM: ${EMAIL_FROM}
@@ -49,8 +49,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started
+      garage:
+        condition: service_healthy
     networks:
       - internal
 
@@ -76,19 +76,31 @@ services:
       - internal
     # KEIN ports-Block — DB bleibt rein intern
 
-  minio:
-    image: minio/minio:latest
+  # Object Storage (ersetzt MinIO, B4). Key + Bucket legt Garage beim Start an,
+  # Website-Zugriff/Alias/CORS einmalig per scripts/storage-init.sh (manual-deploy.md).
+  garage:
+    image: dxflrs/garage:v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020
     restart: unless-stopped
-    command: server /data --console-address ":9001"
-    mem_limit: 1g
-    memswap_limit: 1g
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    mem_limit: 256m
+    memswap_limit: 256m
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
+      GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY_ID}
+      GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_ACCESS_KEY}
+      GARAGE_DEFAULT_BUCKET: ${S3_BUCKET}
     volumes:
-      - minio-data:/data
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
     ports:
-      - "10.10.0.2:9000:9000"   # nur über Tunnel — vom VPS-Caddy als cdn.* gefronted
+      - "10.10.0.2:3902:3902"   # Web-Endpoint (read-only) — vom VPS-Caddy als cdn.* gefronted
+      - "127.0.0.1:3900:3900"   # S3-API nur lokal (storage-init, Backup-Export); App nutzt garage:3900
+    healthcheck:
+      test: ["CMD", "/garage", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     networks:
       - internal
 
@@ -111,7 +123,8 @@ services:
 
 volumes:
   pgdata:
-  minio-data:
+  garage-meta:
+  garage-data:
 
 networks:
   internal:
