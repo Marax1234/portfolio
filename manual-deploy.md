@@ -39,8 +39,9 @@ App-Key und Bucket beim Start selbst an (`--single-node --default-bucket`, Werte
 Website-Zugriff, Host-Alias `cdn.<domain>`, CORS und Platzhalter setzt einmalig (idempotent):
 
 ```bash
+# als hillerhome (Docker-Gruppe), NICHT mit sudo: sudo verwirft die Env mit den Credentials
 set -a; . ./.env.prod; set +a
-COMPOSE_FILE=docker-compose.prod.yml S3_ENDPOINT=http://127.0.0.1:3900 \
+COMPOSE_ENV_FILES=.env.prod COMPOSE_FILE=docker-compose.prod.yml S3_ENDPOINT=http://127.0.0.1:3900 \
   NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.$DOMAIN ./scripts/storage-init.sh
 ```
 

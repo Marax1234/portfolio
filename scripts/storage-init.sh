@@ -10,8 +10,9 @@
 #   4. Platzhalter static/placeholder.svg (object-storage-provider.ts)
 #
 # Dev/CI:  scripts/storage-init.sh          (Defaults passen zu docker-compose.dev.yml)
-# Prod:    set -a; . ./.env.prod; set +a
-#          COMPOSE_FILE=docker-compose.prod.yml S3_ENDPOINT=http://127.0.0.1:3900 \
+# Prod (als hillerhome, ohne sudo — sudo verwirft die Env mit den Credentials):
+#          set -a; . ./.env.prod; set +a
+#          COMPOSE_ENV_FILES=.env.prod COMPOSE_FILE=docker-compose.prod.yml S3_ENDPOINT=http://127.0.0.1:3900 \
 #            NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.$DOMAIN scripts/storage-init.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -25,7 +26,8 @@ cd "$(dirname "$0")/.."
 : "${NEXT_PUBLIC_S3_PUBLIC_URL:=http://localhost:9102}"
 export COMPOSE_FILE
 
-garage() { docker compose exec -T -e RUST_LOG=warn garage /garage "$@" >/dev/null; }
+# </dev/null: `compose exec` liest sonst stdin des Aufrufers leer (bricht `ssh … bash -s`-Heredocs ab).
+garage() { docker compose exec -T -e RUST_LOG=warn garage /garage "$@" </dev/null >/dev/null; }
 
 for i in $(seq 1 30); do
   garage bucket info "$S3_BUCKET" 2>/dev/null && break
