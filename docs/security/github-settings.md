@@ -23,6 +23,7 @@ bewussten Abstriche bestehen.
 | **§8.1** | Environment `production` mit **Required Reviewer** (@Marax1234) + Branch-Policy nur `main` | ✅ aktiv |
 | **§5.3.3** | CodeQL-SARIF-Upload in Security → Code Scanning (public → kostenlos) | ✅ aktiv (beim ersten Workflow-Lauf) |
 | – | „Automatically delete head branches" (`delete_branch_on_merge`) | ✅ aktiv (2026-09-29) |
+| – | Nur Squash-Merge erlaubt (Merge-Commit und Rebase aus) | ✅ aktiv (2026-09-29) |
 | – | Environment `staging` gelöscht (war leer, ohne Schutzregeln, kein Staging-Stack) | ✅ 2026-09-29 |
 
 Reproduzierbare Befehle stehen am Ende dieser Datei.
@@ -113,6 +114,7 @@ JSON
 # Dependabot Security Updates
 gh api -X PUT repos/Marax1234/portfolio/automated-security-fixes
 
-# Head-Branches nach dem Merge automatisch löschen
-gh api -X PATCH repos/Marax1234/portfolio -F delete_branch_on_merge=true
+# Head-Branches nach dem Merge automatisch löschen, nur Squash-Merge
+gh api -X PATCH repos/Marax1234/portfolio -F delete_branch_on_merge=true \
+  -F allow_squash_merge=true -F allow_merge_commit=false -F allow_rebase_merge=false
 ```
