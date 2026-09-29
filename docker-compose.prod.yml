@@ -44,6 +44,10 @@ services:
       UMAMI_ADMIN_USERNAME: ${UMAMI_ADMIN_USERNAME}
       UMAMI_ADMIN_PASSWORD: ${UMAMI_ADMIN_PASSWORD}
       UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID}
+    volumes:
+      # E2/B23: nur der next/image-Cache überlebt ein Deploy; HTML/ISR startet mit
+      # jedem neuen Container frisch (sonst alte Seiten nach dem Deploy).
+      - next-image-cache:/app/.next/cache/images
     ports:
       - "10.10.0.2:3000:3000"   # nur über WireGuard-Tunnel
     depends_on:
@@ -124,6 +128,7 @@ services:
       - internal
 
 volumes:
+  next-image-cache:
   pgdata:
   garage-meta:
   garage-data:

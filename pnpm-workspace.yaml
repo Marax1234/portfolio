@@ -1,6 +1,10 @@
 packages:
   - "."
 
+# Supply-Chain (B25 C-09): pnpm löst nur Versionen auf, die mindestens 7 Tage alt sind
+# (in Minuten). Ergänzt den Dependabot-Cooldown, gilt auch für manuelle `pnpm add`.
+minimumReleaseAge: 10080
+
 overrides:
   "undici@<7.29.1": "7.29.1"
   "nodemailer@<9.1.1": "9.1.1"
