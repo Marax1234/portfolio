@@ -10,10 +10,13 @@
 # Die echten, sicher behebbaren Header (10020/10021/10037/10063) wurden in
 # next.config.ts gesetzt. Folgende Findings sind informativ, False Positive
 # oder ohne App-Bruch nicht behebbar — daher begründet ignoriert.
-10038	IGNORE	CSP Not Set: strenger CSP bricht Payload-Admin/Live-Preview, Umami & HLS/MinIO. Follow-up: getunten CSP mit Tests einführen.
-90004	IGNORE	Cross-Origin-Embedder-Policy: require-corp bricht Cross-Origin-Medien (MinIO/CDN, Umami).
+10038	IGNORE	CSP Not Set: strenger CSP bricht Payload-Admin/Live-Preview, Umami & HLS/Object-Storage (Garage/CDN). Follow-up: getunten CSP mit Tests einführen.
+90004	IGNORE	Cross-Origin-Embedder-Policy: require-corp bricht Cross-Origin-Medien (Garage/CDN, Umami).
 10031	IGNORE	User Controllable HTML Element Attribute: FP — React escaped Werte, Query-Params werden nicht als roher HTML/Attribut gerendert.
 10049	IGNORE	Non-Storable Content: rein informativ (Cache-Control), keine Schwachstelle.
 10109	IGNORE	Modern Web Application: rein informativer Hinweis auf SPA-Charakter.
 10202	IGNORE	Absence of Anti-CSRF Tokens: Payload nutzt eigene CSRF-Schutzmechanismen (SameSite-Cookies); öffentliche Formulare posten gegen geschützte Payload-APIs.
 10019	IGNORE	Content-Type Header Missing: einzelne body-lose Antwort; X-Content-Type-Options=nosniff ist aktiv, Risiko gering.
+#
+# --- Triage 2026-09-29 (erster vollständiger DAST-Lauf nach MinIO -> Garage) ---
+90003	IGNORE	Sub Resource Integrity Missing: FP — betrifft nur <link rel="preload" as="image"> (next/image priority) auf den Medien-Host. SRI gilt nur für script/style, Browser werten integrity bei Bild-Preloads nicht aus. Achtung: ignoriert die Regel global, deckt also auch den Umami-Tracker (eigene Subdomain, cross-origin, im DAST ohne NEXT_PUBLIC_UMAMI_SRC nicht aktiv) nicht ab; SRI dort bewusst nicht gesetzt, weil sich script.js mit jedem Umami-Update ändert. Neu bewerten, sobald fremde Skripte/Styles dazukommen.
