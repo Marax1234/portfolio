@@ -19,15 +19,36 @@
  * das abschließende `payload.update` den Hook erneut auslöst.
  */
 
+import { createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { Readable, Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import type { ReadableStream as WebReadableStream } from "node:stream/web";
 import type { Payload } from "payload";
 import type { CollectionAfterChangeHook } from "payload";
 import type { Video } from "@/payload-types";
 
 import { isFfmpegAvailable, runFfmpeg, runFfprobe } from "./ffmpeg";
-import { uploadDirectory, uploadFile } from "./s3";
+import { MAX_VIDEO_BYTES } from "./limits";
+import { uploadDirectory } from "./s3";
+
+/**
+ * O-06: höchstens eine Transkodierung gleichzeitig. Die Hooks laufen fire-and-forget,
+ * ohne Warteschlange liefen bei mehreren Uploads mehrere ffmpeg parallel. Die Kette liegt
+ * auf `globalThis`, weil Next denselben Code in mehreren Bundles laden kann.
+ */
+const QUEUE_KEY = Symbol.for("portfolio.transcodeQueue");
+type QueueHolder = { [QUEUE_KEY]?: Promise<unknown> };
+
+function enqueueTranscode<T>(job: () => Promise<T>): Promise<T> {
+  const holder = globalThis as QueueHolder;
+  const previous = holder[QUEUE_KEY] ?? Promise.resolve();
+  const run = previous.then(job, job);
+  holder[QUEUE_KEY] = run.catch(() => undefined);
+  return run;
+}
 
 /** Vom afterChange-Hook aufgerufen. Startet die Transkodierung fire-and-forget. */
 export const triggerTranscode: CollectionAfterChangeHook = ({ doc, req, operation }) => {
@@ -42,7 +63,7 @@ export const triggerTranscode: CollectionAfterChangeHook = ({ doc, req, operatio
   // den gerade angelegten Datensatz daher gelegentlich noch nicht und warf
   // "NotFound" *vor* dem try/catch unten, wodurch der Status für immer auf
   // "processing" hängen blieb statt auf "error" zu wechseln.
-  transcodeVideo(req.payload, doc).catch((err: unknown) => {
+  enqueueTranscode(() => transcodeVideo(req.payload, doc)).catch((err: unknown) => {
     req.payload.logger.error(
       `[transcode] Video ${doc.id} fehlgeschlagen: ${String(err)}`,
     );
@@ -69,9 +90,8 @@ async function probe(
   inputPath: string,
   workDir: string,
 ): Promise<{ width: number; height: number; duration: number; hasAudio: boolean }> {
-  const rel = path.relative(workDir, inputPath);
   const raw = await runFfprobe(
-    ["-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", rel],
+    ["-v", "quiet", "-print_format", "json", "-show_streams", "-show_format", inputPath],
     workDir,
   );
   const info: FfprobeResult = JSON.parse(raw);
@@ -90,7 +110,7 @@ async function probe(
 }
 
 async function buildHls(
-  inputRel: string,
+  inputPath: string,
   workDir: string,
   hasAudio: boolean,
 ): Promise<void> {
@@ -112,7 +132,7 @@ async function buildHls(
 
   await runFfmpeg(
     [
-      "-i", inputRel,
+      "-i", inputPath,
       "-filter_complex",
       "[0:v]split=3[v1][v2][v3];" +
         "[v1]scale=-2:1080[v1o];" +
@@ -128,6 +148,8 @@ async function buildHls(
       "-map", "[v3o]", "-c:v:2", "libx264",
       "-b:v:2", "1400k", "-maxrate:v:2", "1498k", "-bufsize:v:2", "2100k",
       ...audioMaps,
+      // O-06: Threads pro Encoder begrenzen (3 Encoder), zusätzlich nice + cpus im Compose.
+      "-threads", "2",
       "-preset", "veryfast",
       "-profile:v", "main",
       "-pix_fmt", "yuv420p",
@@ -148,9 +170,9 @@ async function buildHls(
   );
 }
 
-async function extractPoster(inputRel: string, workDir: string): Promise<void> {
+async function extractPoster(inputPath: string, workDir: string): Promise<void> {
   await runFfmpeg(
-    ["-i", inputRel, "-ss", "00:00:01", "-frames:v", "1", "-q:v", "2", "poster.jpg"],
+    ["-i", inputPath, "-ss", "00:00:01", "-frames:v", "1", "-q:v", "2", "poster.jpg"],
     workDir,
   );
 }
@@ -169,6 +191,10 @@ export async function transcodeVideo(payload: Payload, doc: Video): Promise<void
   }
 
   const workDir = await fs.mkdtemp(path.join(os.tmpdir(), `hls-${videoId}-`));
+  // Original und Ausgaben getrennt: hochgeladen wird nur `out/` (vorher landete das
+  // Original als videos/hls/<id>/input.mp4 ein zweites Mal im Bucket).
+  const inputPath = path.join(workDir, "input.mp4");
+  const outDir = path.join(workDir, "out");
 
   try {
     // 1. Original herunterladen
@@ -181,37 +207,48 @@ export async function transcodeVideo(payload: Payload, doc: Video): Promise<void
     if (!allowedBase || !sourceUrl.startsWith(allowedBase)) {
       throw new Error(`[transcode] Unerlaubte Video-Quelle für ${videoId}: ${sourceUrl}`);
     }
-    const MAX_BYTES = 2 * 1024 * 1024 * 1024; // 2 GiB Obergrenze
-    const inputPath = path.join(workDir, "input.mp4");
     const response = await fetch(sourceUrl);
-    if (!response.ok) throw new Error(`Download fehlgeschlagen: ${response.status} ${sourceUrl}`);
+    if (!response.ok || !response.body) {
+      throw new Error(`Download fehlgeschlagen: ${response.status} ${sourceUrl}`);
+    }
     const declaredLength = Number(response.headers.get("content-length") ?? "0");
-    if (declaredLength > MAX_BYTES) {
-      throw new Error(`[transcode] Video ${videoId} zu groß (Content-Length ${declaredLength} > ${MAX_BYTES}).`);
+    if (declaredLength > MAX_VIDEO_BYTES) {
+      throw new Error(`[transcode] Video ${videoId} zu groß (Content-Length ${declaredLength} > ${MAX_VIDEO_BYTES}).`);
     }
-    const buffer = Buffer.from(await response.arrayBuffer());
-    if (buffer.byteLength > MAX_BYTES) {
-      throw new Error(`[transcode] Video ${videoId} zu groß (${buffer.byteLength} > ${MAX_BYTES}).`);
-    }
-    await fs.writeFile(inputPath, buffer);
+    // O-06: direkt auf die Platte streamen statt das ganze Video in den Heap zu laden
+    // (mem_limit 2g), die Obergrenze gilt auch ohne Content-Length.
+    let received = 0;
+    const limit = new Transform({
+      transform(chunk: Buffer, _encoding, callback) {
+        received += chunk.length;
+        if (received > MAX_VIDEO_BYTES) {
+          callback(new Error(`[transcode] Video ${videoId} zu groß (> ${MAX_VIDEO_BYTES} Bytes).`));
+        } else {
+          callback(null, chunk);
+        }
+      },
+    });
+    await pipeline(
+      Readable.fromWeb(response.body as WebReadableStream<Uint8Array>),
+      limit,
+      createWriteStream(inputPath),
+    );
+    await fs.mkdir(outDir);
 
     // 2. Probe
-    const { width, height, duration, hasAudio } = await probe(inputPath, workDir);
+    const { width, height, duration, hasAudio } = await probe(inputPath, outDir);
 
     // 3. HLS transkodieren
-    await buildHls("input.mp4", workDir, hasAudio);
+    await buildHls(inputPath, outDir, hasAudio);
 
     // 4. Poster-Frame
-    await extractPoster("input.mp4", workDir);
+    await extractPoster(inputPath, outDir);
 
-    // 5. In Object Storage hochladen
+    // 5. In Object Storage hochladen (poster.jpg ist in out/ enthalten)
     const s3Prefix = `videos/hls/${videoId}`;
-    await uploadDirectory(workDir, s3Prefix);
+    await uploadDirectory(outDir, s3Prefix);
     const masterUrl = `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${s3Prefix}/master.m3u8`;
-    const posterKey = `${s3Prefix}/poster.jpg`;
-    // poster.jpg wurde schon via uploadDirectory mitgenommen — URL ableiten
-    const posterUrl = `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${posterKey}`;
-    void (await uploadFile); // tree-shaking guard (uploadFile bereits importiert)
+    const posterUrl = `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${s3Prefix}/poster.jpg`;
 
     // 6. Doc aktualisieren
     await payload.update({

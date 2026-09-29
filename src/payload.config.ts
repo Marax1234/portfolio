@@ -1,3 +1,4 @@
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import path from "path";
 import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
@@ -18,6 +19,7 @@ import { Videos } from "./collections/Videos";
 import { AboutPage } from "./globals/AboutPage";
 import { CooperationsPage } from "./globals/CooperationsPage";
 import { SiteConfig } from "./globals/SiteConfig";
+import { MAX_VIDEO_BYTES } from "./lib/video/limits";
 import { migrations } from "./migrations";
 
 const filename = fileURLToPath(import.meta.url);
@@ -153,6 +155,14 @@ export default buildConfig({
   // `SharpDependency`-Typ (siehe Payload-GitHub-Issues zu `sharp`-Typings) —
   // Laufzeitverhalten ist unverändert, daher expliziter, dokumentierter Cast.
   sharp: sharp as Config["sharp"],
+  // O-06 (B25 Session 8): Uploads als Temp-Datei statt komplett im Heap (mem_limit 2g,
+  // Videos > 1 GB sind möglich). storage-s3 streamt die Datei dann per Multipart in den
+  // Bucket. /tmp statt des Defaults `./tmp`, weil /app im Image nicht beschreibbar ist.
+  upload: {
+    useTempFiles: true,
+    tempFileDir: path.join(os.tmpdir(), "payload-uploads"),
+    limits: { fileSize: MAX_VIDEO_BYTES },
+  },
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },

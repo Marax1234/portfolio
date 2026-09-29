@@ -13,12 +13,18 @@ import { promisify } from "node:util";
 
 const execFile = promisify(execFileCb);
 
-/** Führt `ffmpeg <args>` mit `workDir` als cwd aus. */
+/**
+ * Führt `ffmpeg <args>` mit `workDir` als cwd aus.
+ *
+ * O-06 (B25 Session 8): ffmpeg läuft im selben Container wie die Website. `nice -n 19`
+ * gibt den Requests Vorrang (Threads begrenzt `buildHls`). Nur Fehler loggen
+ * (`-loglevel error -nostats`), damit stderr bei langen Videos klein bleibt.
+ */
 export async function runFfmpeg(args: string[], workDir: string): Promise<string> {
   const { stdout, stderr } = await execFile(
-    "ffmpeg",
-    args,
-    { cwd: workDir, maxBuffer: 64 * 1024 * 1024 }, // 64 MB stderr buffer
+    "nice",
+    ["-n", "19", "ffmpeg", "-hide_banner", "-nostats", "-loglevel", "error", ...args],
+    { cwd: workDir, maxBuffer: 16 * 1024 * 1024 }, // 16 MB stderr buffer
   ).catch((err: NodeJS.ErrnoException & { stdout?: string; stderr?: string }) => {
     // ffmpeg schreibt Fortschritt UND Fehler nach stderr; stdout oft leer.
     throw new Error(`ffmpeg failed:\n${err.stderr ?? ""}\n${err.message}`);

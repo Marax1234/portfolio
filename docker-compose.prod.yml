@@ -19,6 +19,9 @@ services:
     # Kernel nur diesen Container, `restart` startet ihn neu.
     mem_limit: 2g
     memswap_limit: 2g
+    # O-06: ffmpeg (nice 19) darf höchstens 3 der 4 Kerne belegen, einer bleibt für
+    # Postgres, Garage, Umami und Vaultwarden.
+    cpus: 3
     environment:
       NODE_ENV: production
       DATABASE_URI: postgres://portfolio:${POSTGRES_PASSWORD}@postgres:5432/portfolio
