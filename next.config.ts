@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
   // Security-Header-Härtung (Security.md §7.2 — DAST prüft fehlende Header).
   // Entfernt den verräterischen X-Powered-By-Header (ZAP 10037).
   poweredByHeader: false,
+  // `next dev` soll CLAUDE.md/AGENTS.md nicht bei jedem Start um einen
+  // eigenen Block ergänzen; die Projektregeln stehen in CLAUDE.md.
+  agentRules: false,
   // sharp lädt sein Plattform-Binary (libvips) über einen dynamisch berechneten
   // Pfad — Next.js' Datei-Tracing für `standalone` erkennt das nicht zuverlässig
   // und lässt die .so-Datei im pnpm-Store (.pnpm/@img+sharp-libvips-*) weg, was
