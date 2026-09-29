@@ -9,8 +9,8 @@ Dependabot hält diese Liste über PRs aktuell (§3.4).
 
 | Action | Version | Gepinnter SHA | Repository | Letztes Review |
 |---|---|---|---|---|
-| `actions/checkout` | v7.0.0 | `9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0` | https://github.com/actions/checkout | 2026-09-29 |
-| `actions/setup-node` | v6.4.0 | `48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e` | https://github.com/actions/setup-node | 2026-09-29 |
+| `actions/checkout` | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` | https://github.com/actions/checkout | 2026-09-29 |
+| `actions/setup-node` | v7.0.0 | `820762786026740c76f36085b0efc47a31fe5020` | https://github.com/actions/setup-node | 2026-09-29 |
 | `pnpm/action-setup` | v6.0.9 | `0ebf47130e4866e96fce0953f49152a61190b271` | https://github.com/pnpm/action-setup | 2026-09-29 |
 | `github/codeql-action/init` | v4.36.2 | `8aad20d150bbac5944a9f9d289da16a4b0d87c1e` | https://github.com/github/codeql-action | 2026-06-20 |
 | `github/codeql-action/analyze` | v4.36.2 | `8aad20d150bbac5944a9f9d289da16a4b0d87c1e` | https://github.com/github/codeql-action | 2026-06-20 |
