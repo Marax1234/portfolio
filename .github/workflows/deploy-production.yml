@@ -1,34 +1,27 @@
-# Production-Deploy Gate — Portfolio Kilian Siebert (§8)
+# Production-Deploy — Portfolio Kilian Siebert (§8)
 #
-# Deployt auf den hillerhome-Stack über den self-hosted Runner (Variante A aus
-# deploy.md §11). Der Deploy startet AUSSCHLIESSLICH, nachdem der Workflow
-# "CI Security Gates" auf `main` erfolgreich war.
+# STILLGELEGT seit 2026-09-29 (B24, Review D-01): kein automatischer Trigger mehr.
+# Bis dahin startete der Workflow nach jedem grünen "CI Security Gates"-Lauf auf
+# `main` und wartete auf eine Freigabe, obwohl kein Runner existiert.
 #
-# Erfüllte Must-Punkte:
-#   §8.2  Abhängigkeit auf alle Security-Gates: workflow_run-Trigger + Erfolgs-Gate
-#         (conclusion == 'success'). Ein rotes Gate verhindert den Deploy automatisch.
-#   §8.1  Eigenes GitHub Environment `production` mit Required Reviewer (in den
-#         Repo-Settings zu konfigurieren, siehe docs/security/github-settings.md) ->
-#         kein automatisches Deploy ohne menschliche Approval.
-#   §6.3  Migrationen laufen über `payload migrate` (im Dockerfile, builder-Stage),
-#         niemals `migrate dev`/`migrate:fresh`/`migrate:reset`.
-#   §4.1  main-Build läuft auf dem self-hosted Runner mit Deployment-Secrets;
-#         untrusted PR-Builds laufen getrennt auf GitHub-Hosted Runnern (ci-security.yml).
+# - Es gibt keinen Self-hosted Runner und wird keinen geben (Entscheidung A1:
+#   öffentliches Repo, kein dauerhafter Runner mit Docker-Rechten auf dem Prod-Host).
+# - Deploys laufen manuell nach manual-deploy.md.
+# - Dieser Workflow wird durch den Zielablauf ersetzt, nicht repariert: Image in CI
+#   → GHCR → Freigabe im Environment `production` → Deploy per Tailscale-SSH
+#   (Portfolio-Review, Sessions 13–15).
+# - Die Schritte unten entsprechen NICHT dem gelebten Ablauf (rsync statt git pull,
+#   kein Dump, kein Rollback-Tag). Nicht manuell starten.
+#
+# Beibehaltene Schutzmechanismen, falls doch jemand startet:
+#   §8.1  Environment `production` mit Required Reviewer + Branch-Policy `main`.
 #   §3.1  Externe Action auf Commit-SHA gepinnt.
 #   §3.5  Keine direkte Interpolation von github.event.*-Werten in run-Steps.
-#
-# VORAUSSETZUNGEN (sonst läuft dieser Workflow nicht — siehe Doku):
-#   1. Self-hosted Runner auf hillerhome registriert (deploy.md §11, Variante A).
-#   2. GitHub Environment `production` mit mindestens 1 Required Reviewer angelegt.
-#   3. .env.prod liegt auf hillerhome unter /opt/portfolio/.env.prod (nicht im Repo).
 
 name: Deploy Production
 
 on:
-  workflow_run:
-    workflows: ["CI Security Gates"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
 
 # §1.1.2 — Read-Only als Default.
 permissions: read-all
@@ -40,23 +33,18 @@ concurrency:
 jobs:
   deploy-production:
     name: Deploy to Production (hillerhome)
-    # §8.2 — Nur deployen, wenn der auslösende Lauf ein Push auf main war UND
-    # alle CI-Security-Gates grün sind.
-    if: >-
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.conclusion == 'success'
+    if: github.ref == 'refs/heads/main'
     runs-on: self-hosted
+    timeout-minutes: 30
     # §8.1 — Erzwingt Required-Reviewer-Approval (Environment-Schutzregel).
     environment: production
     permissions:
       contents: read
     steps:
-      # Exakt den Commit auschecken, der die Gates bestanden hat. `ref` ist ein
-      # Action-Input (keine Shell-Interpolation) -> §3.5-konform.
-      - name: Checkout geprüften Commit
+      - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
 
       - name: Sync nach /opt/portfolio
         run: |

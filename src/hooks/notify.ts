@@ -10,6 +10,7 @@
  * (dev-Nachweis des Sprint-9-Akzeptanzkriteriums).
  */
 import type { CollectionAfterChangeHook } from "payload";
+import { escapeHtml } from "../lib/html";
 
 const NOTIFY_TO =
   process.env.CONTACT_NOTIFY_TO ??
@@ -40,14 +41,16 @@ export const notifyContactSubmission: CollectionAfterChangeHook = async ({
 
     const subject = `Neue Kontaktanfrage von ${name} (${categoryLabel})`;
 
+    const mailto = encodeURIComponent(email).replace(/%40/g, "@");
+
     const html = `
       <h2>Neue Kontaktanfrage</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>E-Mail:</strong> <a href="mailto:${email}">${email}</a></p>
-      <p><strong>Kategorie:</strong> ${categoryLabel}</p>
+      <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+      <p><strong>E-Mail:</strong> <a href="mailto:${escapeHtml(mailto)}">${escapeHtml(email)}</a></p>
+      <p><strong>Kategorie:</strong> ${escapeHtml(categoryLabel)}</p>
       <hr />
       <p><strong>Nachricht:</strong></p>
-      <p style="white-space: pre-wrap">${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+      <p style="white-space: pre-wrap">${escapeHtml(message)}</p>
     `.trim();
 
     const text =
