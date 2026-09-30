@@ -7,7 +7,7 @@ minimumReleaseAge: 10080
 
 overrides:
   "undici@<7.29.1": "7.29.1"
-  "nodemailer@<9.1.1": "9.1.1"
+  "nodemailer@<10.0.6": "10.0.10"
   "dompurify@<3.4.15": "3.4.15"
   "esbuild@<0.28.1": "0.28.1"
   "postcss@<8.5.28": "8.5.28"

@@ -6,6 +6,7 @@ import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
 import type { Config } from "payload";
+import nodemailer from "nodemailer";
 import { buildConfig } from "payload";
 import sharp from "sharp";
 
@@ -51,16 +52,17 @@ function buildEmailAdapter() {
     return nodemailerAdapter({
       defaultFromAddress: from,
       defaultFromName: fromName,
-      // `transportOptions` wird intern an nodemailer.createTransport übergeben.
-      // Kein direkter nodemailer-Import nötig (Adapter bundelt nodemailer).
-      transportOptions: {
+      // Transport selbst erzeugen statt `transportOptions`: Der Adapter typisiert die
+      // Optionen als SMTPConnection.Options, die in nodemailer 10 (eigene Typen) kein
+      // `auth` mehr enthalten. Zur Laufzeit identisch (Adapter ruft createTransport auf).
+      transport: nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT ?? "587", 10),
         auth: {
           user: process.env.SMTP_USER ?? "",
           pass: process.env.SMTP_PASS ?? "",
         },
-      },
+      }),
     });
   }
 
