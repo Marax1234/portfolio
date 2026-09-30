@@ -26,7 +26,7 @@ importers:
   .:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: ^3.1137.0
+        specifier: 3.1137.0
         version: 3.1137.0
       '@payloadcms/db-postgres':
         specifier: 3.90.1
@@ -50,13 +50,13 @@ importers:
         specifier: 3.90.1
         version: 3.90.1(@types/react@19.3.0)(monaco-editor@0.55.1)(next@16.3.5(@babel/core@7.29.7)(@types/node@24.13.6)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(sass@1.77.4))(payload@3.90.1(graphql@17.0.2)(typescript@6.0.3))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
       graphql:
-        specifier: ^17.0.2
+        specifier: 17.0.2
         version: 17.0.2
       hls.js:
-        specifier: ^1.7.3
+        specifier: 1.7.3
         version: 1.7.3
       motion:
-        specifier: ^12.43.0
+        specifier: 12.43.0
         version: 12.43.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       next:
         specifier: 16.3.5
@@ -78,34 +78,31 @@ importers:
         version: 0.35.4(@types/node@24.13.6)
     devDependencies:
       '@tailwindcss/postcss':
-        specifier: ^4.3.3
+        specifier: 4.3.3
         version: 4.3.3
       '@types/node':
-        specifier: ^24.13.6
+        specifier: 24.13.6
         version: 24.13.6
       '@types/nodemailer':
-        specifier: ^8.0.2
+        specifier: 8.0.2
         version: 8.0.2
       '@types/react':
-        specifier: ^19.3.0
+        specifier: 19.3.0
         version: 19.3.0
       '@types/react-dom':
-        specifier: ^19.3.0
+        specifier: 19.3.0
         version: 19.3.0(@types/react@19.3.0)
       eslint:
-        specifier: ^9
+        specifier: 9.39.4
         version: 9.39.4(jiti@2.7.0)
       eslint-config-next:
         specifier: 16.3.5
         version: 16.3.5(@typescript-eslint/parser@8.62.0(eslint@9.39.4(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.4(jiti@2.7.0))(typescript@6.0.3)
       tailwindcss:
-        specifier: ^4.3.3
+        specifier: 4.3.3
         version: 4.3.3
-      tsx:
-        specifier: ^4.23.15
-        version: 4.23.15
       typescript:
-        specifier: ^6.0.3
+        specifier: 6.0.3
         version: 6.0.3
       vitest:
         specifier: 4.1.11
@@ -8432,6 +8429,7 @@ snapshots:
       esbuild: 0.28.1
     optionalDependencies:
       fsevents: 2.3.3
+    optional: true
 
   type-check@0.4.0:
     dependencies:

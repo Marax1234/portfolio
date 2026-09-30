@@ -457,8 +457,8 @@ export default function StyleguidePage() {
             />
           </div>
           <p className="type-label-caps text-outline-variant mt-4" style={{ textTransform: "none" }}>
-            Quelle: /public/media/placeholder.svg · Provider: LocalProvider ·
-            Sprint 7 Umbau: nur src/lib/media/index.ts
+            Quelle: static/placeholder.svg im Bucket · Provider: ObjectStorageProvider ·
+            Provider-Wechsel: nur src/lib/media/index.ts
           </p>
         </section>
 

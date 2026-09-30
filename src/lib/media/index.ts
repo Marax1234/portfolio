@@ -21,9 +21,8 @@ import objectStorageProvider from "./object-storage-provider";
 
 /**
  * Der aktive Medien-Provider.
- * Sprint 1–6: LocalProvider (lokaler Datei-Fallback, `local-provider.ts`,
- * weiterhin im Repo als Referenz).
- * Sprint 7: ObjectStorageProvider — liefert Manifest-Slots aus dem Object
- * Storage (MinIO lokal, siehe docker-compose.dev.yml).
+ * Sprint 1–6: LocalProvider (lokaler Datei-Fallback, in B25 S-12 entfernt).
+ * Seit Sprint 7: ObjectStorageProvider — liefert Manifest-Slots aus dem Object
+ * Storage (Garage lokal, siehe docker-compose.dev.yml).
  */
 export const mediaProvider = objectStorageProvider;

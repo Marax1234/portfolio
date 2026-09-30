@@ -42,7 +42,7 @@ const ensureMinResolution: CollectionBeforeValidateHook = async ({ data, operati
 /**
  * Media — Datenmodell für die Medien-Abstraktion (Sprint 1: src/lib/media/).
  *
- * Uploads landen seit Sprint 7 im Object Storage (MinIO lokal, siehe
+ * Uploads landen seit Sprint 7 im Object Storage (Garage lokal, siehe
  * docker-compose.dev.yml) statt im lokalen `staticDir` — der S3-Storage-
  * Adapter wird in `payload.config.ts` (`plugins: [s3Storage(...)]`)
  * registriert und setzt `disableLocalStorage` automatisch. Collection-

@@ -10,6 +10,9 @@
  *
  * Ergänzt, ersetzt aber nicht die manuelle No-Code-Pflege im Admin-Panel
  * (Akzeptanzkriterium Sprint 4: Inhalte lassen sich ohne Code anlegen).
+ *
+ * Nur lokal (B25 D2): läuft ausschließlich gegen eine Datenbank auf localhost
+ * (Dev-Compose, DAST-Job). Produktion hat keine `SEED_ADMIN_*`-Werte.
  */
 import path from "path";
 import fs from "node:fs/promises";
@@ -18,6 +21,7 @@ import config from "@payload-config";
 import { getPayload } from "payload";
 import sharp from "sharp";
 import { isFfmpegAvailable, transcodeVideo } from "../lib/video/transcode";
+import { isLocalDatabaseUri } from "../lib/seedGuard";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLACEHOLDER_IMAGE_PATH = path.resolve(
@@ -49,6 +53,11 @@ function lexicalParagraphs(paragraphs: string[]) {
 }
 
 async function seed() {
+  if (!isLocalDatabaseUri(process.env.DATABASE_URI)) {
+    throw new Error(
+      "Seed abgebrochen: DATABASE_URI zeigt nicht auf localhost. Der Seed ist nur für lokale Daten gedacht (B25 D2).",
+    );
+  }
   const payload = await getPayload({ config });
 
   // 0. Platzhalter-Medium — dient dazu, die `required`-Upload-Felder der
@@ -61,7 +70,7 @@ async function seed() {
   // (gleiche Quelle wie der manifest-`id`-Zweig, siehe
   // src/lib/media/object-storage-provider.ts) wird daher mit dem ohnehin
   // konfigurierten `sharp` zu PNG gerendert und als Buffer hochgeladen — das
-  // S3-Storage-Plugin schreibt Original und Varianten dann nach MinIO.
+  // S3-Storage-Plugin schreibt Original und Varianten dann in den Bucket.
   let placeholderMedia = (
     await payload.find({
       collection: "media",
@@ -503,8 +512,9 @@ async function seed() {
 
   // 6. Test-Video (Sprint 8) — info/Video.mp4 → HLS in Object Storage
   //
-  // Guard: Schritt wird übersprungen, wenn Docker/das ffmpeg-Image nicht
-  // verfügbar ist, damit der Bild-Seed (Schritte 0–5) auch ohne Docker-
+  // Das Video liegt nicht im Repo (B25 D1, `/info/` ist gitignored): wer den
+  // Video-Seed lokal braucht, legt eine beliebige MP4 unter info/Video.mp4 ab.
+  // Guard: Schritt wird übersprungen, wenn die Datei oder ffmpeg fehlt, damit der Bild-Seed (Schritte 0–5) auch ohne Docker-
   // Daemon vollständig bleibt.
   const videoSourcePath = path.resolve(dirname, "../../info/Video.mp4");
   // Einmal lesen statt access()-Probe + späterem readFile: vermeidet das
