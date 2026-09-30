@@ -1,0 +1,112 @@
+# Production-Deploy — Portfolio Kilian Siebert (§8, B25 A1, Sessions 13–15)
+#
+# Merge auf main → "CI Security Gates" grün (Gates, Image nach GHCR, Trivy, SBOM, Provenance,
+# DAST gegen genau dieses Image) → dieser Workflow → Freigabe durch Max im Environment
+# `production` → Provenance prüfen → Tailscale (ephemerer Node, tag:ci, OIDC ohne Secret)
+# → `ssh deploy@hillerhome <digest>`.
+#
+# Auf hillerhome erzwingt authorized_keys den Wrapper /usr/local/sbin/portfolio-deploy
+# (nur `sha256:<64 hex>`, Ops-Repo hillerhome/), der scripts/deploy.sh als hillerhome startet:
+# Rollback-Tag, pg_dump, Pull per Digest, Healthcheck, Smoke-Test, automatischer Rollback, ntfy.
+#
+# Kein Self-hosted Runner (A1/D-07), nichts dauerhaft auf dem Host. Zugangsdaten:
+#   secrets.DEPLOY_SSH_KEY       Environment-Secret von `production`, erst nach Freigabe lesbar
+#   vars.TS_OAUTH_CLIENT_ID      Tailscale Federated Identity (Client-ID, kein Secret)
+#   vars.TS_AUDIENCE             Tailscale Federated Identity (Audience, kein Secret)
+# Tailscale-ACL: tag:ci darf nur hillerhome:22. Ersetzt deploy-production.yml (Runner-Variante).
+#
+# Härtung wie ci-security.yml: Actions auf SHA gepinnt, github.event.*-Werte nur über env.
+
+name: Deploy
+
+# workflow_run statt eines Jobs in ci-security.yml: Dort bricht `cancel-in-progress` ältere Läufe
+# ab, ein Abbruch mitten im SSH-Deploy soll nicht passieren. Die üblichen workflow_run-Risiken
+# greifen hier nicht: kein Checkout, keine Artefakte aus dem auslösenden Lauf, nur Push-Läufe auf
+# main aus diesem Repo (if unten), das Image wird per Provenance an genau diesen Commit gebunden.
+on:
+  workflow_run: # zizmor: ignore[dangerous-triggers]
+    workflows: ["CI Security Gates"]
+    types: [completed]
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production (hillerhome)
+    # Nur grüne Push-Läufe auf main aus diesem Repo (keine PR- oder Fork-Läufe).
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # §8.1 — Required Reviewer (Max) + Branch-Policy main.
+    environment:
+      name: production
+      url: https://kilia-siebert.de
+    permissions:
+      contents: read
+      id-token: write # Tailscale Workload Identity Federation (GitHub-OIDC-Token)
+      attestations: read # gh attestation verify
+    env:
+      IMAGE: ghcr.io/marax1234/portfolio-app
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_HOST: 100.88.181.87 # hillerhome im Tailnet
+      # Host-Key von hillerhome (/etc/ssh/ssh_host_ed25519_key.pub), öffentlich.
+      DEPLOY_HOST_KEY: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJIdutGfzKQwATR6j5w7ya8vMw5tL9UYm89ftMclNmfF
+    steps:
+      - name: Digest zum Commit bestimmen
+        id: image
+        run: |
+          set -euo pipefail
+          DIGEST=$(docker buildx imagetools inspect "${IMAGE}:${HEAD_SHA}" --format '{{json .Manifest}}' | jq -r .digest)
+          if [[ ! $DIGEST =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Kein Image ${IMAGE}:${HEAD_SHA} in GHCR (Package öffentlich?)"; exit 1
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Deploy \`${IMAGE}@${DIGEST}\` (Commit ${HEAD_SHA})" >> "$GITHUB_STEP_SUMMARY"
+
+      # Nur ein Image, das ci-security.yml auf main aus genau diesem Commit auf einem
+      # GitHub-Hosted Runner gebaut hat (signierte SLSA-Provenance, Sigstore).
+      - name: Provenance prüfen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          gh attestation verify "oci://${IMAGE}@${DIGEST}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/ci-security.yml" \
+            --source-ref refs/heads/main \
+            --source-digest "$HEAD_SHA" \
+            --deny-self-hosted-runners
+
+      - name: Tailscale (ephemerer Node, tag:ci)
+        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
+        with:
+          oauth-client-id: ${{ vars.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ vars.TS_AUDIENCE }}
+          tags: tag:ci
+          use-cache: "false"
+          ping: ${{ env.DEPLOY_HOST }}
+
+      - name: Deploy (erzwungenes Kommando auf hillerhome)
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          ( umask 077; printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key )
+          echo "${DEPLOY_HOST} ${DEPLOY_HOST_KEY}" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes -o ServerAliveInterval=15 "deploy@${DEPLOY_HOST}" "$DIGEST"
+
+      - name: Schlüssel entfernen
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

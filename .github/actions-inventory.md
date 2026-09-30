@@ -19,6 +19,18 @@ Dependabot hält diese Liste über PRs aktuell (§3.4).
 | `actions/github-script` | v9.0.0 | `3a2844b7e9c422d3c10d287c895573f7108da1b3` | https://github.com/actions/github-script | 2026-09-29 |
 | `zaproxy/action-baseline` | v0.15.0 | `de8ad967d3548d44ef623df22cf95c3b0baf8b25` | https://github.com/zaproxy/action-baseline | 2026-06-20 |
 | `zaproxy/action-full-scan` | v0.13.0 | `3c58388149901b9a03b7718852c5ba889646c27c` | https://github.com/zaproxy/action-full-scan | 2026-06-20 |
+| `actions/download-artifact` | v8.0.1 | `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c` | https://github.com/actions/download-artifact | 2026-09-30 |
+| `actions/attest` | v4.2.2 | `1e69f48acb82d1966a394da916b4c1698aa569d6` | https://github.com/actions/attest | 2026-09-30 |
+| `docker/setup-buildx-action` | v4.4.1 | `f87e5991a6d7451dcb8d9637bfbc97413f497069` | https://github.com/docker/setup-buildx-action | 2026-09-30 |
+| `docker/login-action` | v4.6.0 | `dbcb813823bdd20940b903addbd779551569679f` | https://github.com/docker/login-action | 2026-09-30 |
+| `docker/build-push-action` | v7.4.0 | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | https://github.com/docker/build-push-action | 2026-09-30 |
+| `tailscale/github-action` | v4.2.0 | `d1b6cd204f8dceda5b3eaad7f1f767be390056cd` | https://github.com/tailscale/github-action | 2026-09-30 |
+
+Kein Action, aber ebenfalls gepinnt (B25 C-03): **Trivy-CLI** v0.74.0 als Release-Binary mit
+sha256 in `ci-security.yml` (Job `build`). Bewusst nicht `aquasecurity/trivy-action`/`setup-trivy`:
+deren Tags wurden im März 2026 durch Schadcode ersetzt (GHSA-69fq-xp46-6x23). Update: Release ≥ 7 Tage,
+sha256 aus `trivy_<v>_checksums.txt` (Release ist immutable), beide Werte im Job anheben.
+Tailscale-Client im Deploy: Version aus dem Default der Action (v4.2.0 → 1.94.2).
 
 ## Incident-Response bei kompromittierter Action (§3.3)
 

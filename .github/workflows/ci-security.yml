@@ -226,15 +226,13 @@ jobs:
       - name: ESLint
         run: pnpm lint
 
-  # ── Build Gate (B25 C-01/C-02, D-02/D-03) ────────────────────────────────
-  # Baut das Produktions-Image genau wie auf hillerhome, aber ohne DB, ohne
-  # Secrets und ohne Push. Findet Build-Fehler (RSC/Client-Boundaries, Dockerfile,
-  # sharp-Gate), die tsc/Lint nicht sehen. NEXT_PUBLIC_* sind öffentliche Werte.
-  # Als Required Check "Build" eintragen (github-settings.md).
-  build:
-    name: Build
+  # ── Test Gate (B25 S-07) ─────────────────────────────────────────────────
+  # Vitest-Unit-Tests für src/lib (ohne DB, ohne Payload-Boot, ohne Netz).
+  # Als Required Check "Test" eintragen (github-settings.md).
+  test:
+    name: Test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -243,13 +241,170 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Docker-Image bauen (ohne DB/Secrets)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Vitest
+        run: pnpm test
+
+  # ── Build + Image (B25 C-01/C-02/C-03, D-02/D-03, A2) ────────────────────
+  # Baut das Produktions-Image ohne DB und ohne Secrets. Die Build-Args sind dieselben
+  # öffentlichen NEXT_PUBLIC_*-Werte wie in docker-compose.prod.yml (die Umami-Website-ID
+  # steht in jeder ausgelieferten Seite). Trivy: HIGH/CRITICAL mit verfügbarem Fix blockiert,
+  # Ausnahmen nur begründet in .trivyignore.
+  #   PR:           Image als Artefakt für den DAST-Job, kein Push.
+  #   Push auf main: ghcr.io/marax1234/portfolio-app:<sha> (öffentlich, A2), dazu CycloneDX-SBOM
+  #                 und SLSA-Provenance als signierte Attestationen am Digest (Sigstore).
+  #                 deploy.yml prüft die Provenance vor dem Deploy.
+  # Als Required Check "Build" eintragen (github-settings.md).
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    permissions:
+      contents: read
+      packages: write # nur bei Push auf main genutzt: GHCR-Push + Attestation in der Registry
+      id-token: write # Sigstore-Signaturzertifikat für die Attestationen (nur main)
+      attestations: write # Attestationen speichern (nur main)
+      artifact-metadata: write # Storage-Record zur Attestation (nur main)
+    env:
+      IMAGE: ghcr.io/marax1234/portfolio-app
+      # Trivy direkt als Release-Binary (sha256 gepinnt) statt trivy-action/setup-trivy:
+      # deren Tags waren im März 2026 kompromittiert (GHSA-69fq-xp46-6x23).
+      TRIVY_VERSION: 0.74.0
+      TRIVY_SHA256: 2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # Cache nur für Image-Schichten (keine Secrets im Build, D-03). PR-Läufe lesen den
+      # main-Cache, schreiben aber nur in ihren eigenen Scope.
+      - name: Image bauen (ohne DB/Secrets)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          provenance: false
+          sbom: false
+          tags: portfolio-app:ci
+          labels: |
+            org.opencontainers.image.source=https://github.com/Marax1234/portfolio
+            org.opencontainers.image.revision=${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SERVER_URL=https://kilia-siebert.de
+            NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de
+            NEXT_PUBLIC_UMAMI_SRC=https://umami.kilia-siebert.de/script.js
+            NEXT_PUBLIC_UMAMI_WEBSITE_ID=edfe3c11-7959-4750-85de-134e840880c2
+          cache-from: type=gha,scope=image
+          cache-to: type=gha,scope=image,mode=max
+
+      - name: Trivy installieren (Release-Binary, sha256 geprüft)
         run: |
-          docker build \
-            --build-arg NEXT_PUBLIC_SERVER_URL=https://kilia-siebert.de \
-            --build-arg NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de \
-            --build-arg NEXT_PUBLIC_UMAMI_SRC=https://umami.kilia-siebert.de/script.js \
-            -t portfolio-app:ci .
+          set -euo pipefail
+          curl -fsSLo "$RUNNER_TEMP/trivy.tgz" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  $RUNNER_TEMP/trivy.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/trivy.tgz" -C "$RUNNER_TEMP" trivy
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Trivy-Gate (HIGH/CRITICAL mit verfügbarem Fix)
+        run: |
+          trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+            --ignorefile .trivyignore --exit-code 1 --no-progress portfolio-app:ci
+
+      - name: Image für DAST weitergeben (nur PR)
+        if: github.event_name == 'pull_request'
+        run: docker save portfolio-app:ci | zstd -T0 -3 -q -o "$RUNNER_TEMP/portfolio-app.tar.zst"
+
+      - name: Image-Artefakt hochladen (nur PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: portfolio-app-image
+          path: ${{ runner.temp }}/portfolio-app.tar.zst
+          retention-days: 1
+          compression-level: 0
+
+      - name: Login GHCR (nur main)
+        if: github.event_name == 'push'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Gleiche Eingaben wie oben → alle Schichten aus dem Cache, nur der Push kommt dazu.
+      - name: Image nach GHCR pushen (nur main)
+        id: push
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          provenance: false
+          sbom: false
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/Marax1234/portfolio
+            org.opencontainers.image.revision=${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SERVER_URL=https://kilia-siebert.de
+            NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de
+            NEXT_PUBLIC_UMAMI_SRC=https://umami.kilia-siebert.de/script.js
+            NEXT_PUBLIC_UMAMI_WEBSITE_ID=edfe3c11-7959-4750-85de-134e840880c2
+          cache-from: type=gha,scope=image
+
+      - name: SBOM erzeugen (CycloneDX, nur main)
+        if: github.event_name == 'push'
+        run: trivy image --format cyclonedx --output sbom.cdx.json --no-progress portfolio-app:ci
+
+      - name: Provenance-Attestation (SLSA, nur main)
+        if: github.event_name == 'push'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: SBOM-Attestation (nur main)
+        if: github.event_name == 'push'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          sbom-path: sbom.cdx.json
+          push-to-registry: true
+
+      - name: SBOM archivieren (nur main)
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cdx.json
+          retention-days: 90
+
+      - name: Digest in die Zusammenfassung
+        if: github.event_name == 'push'
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          echo "Image: \`${IMAGE}@${DIGEST}\`" >> "$GITHUB_STEP_SUMMARY"
 
   # ── Workflow-Linter (B25 C-08, vorerst nur Hinweise) ─────────────────────
   # zizmor prüft die Workflows auf typische Actions-Schwachstellen (Credential-
@@ -274,21 +429,23 @@ jobs:
           pipx run --spec zizmor==1.30.1 zizmor --format=github .github/workflows \
             || echo "::warning::zizmor meldet Findings (advisory, siehe Annotationen)."
 
-  # ── §6/§7 DAST Gate gegen EPHEMERE Umgebung (Staging-Workaround) ──────────
-  # Es gibt keine dauerhafte Staging-Umgebung. Workaround: Wir booten den vollen
-  # Stack (Postgres + Garage aus docker-compose.dev.yml), migrieren (§6.2/§6.3),
-  # seeden Nicht-Echtdaten (§6.1), bauen und starten die App und scannen sie mit
-  # OWASP ZAP — alles ephemer im Runner. Läuft nur bei Push auf main. Deploys
-  # laufen derzeit manuell (manual-deploy.md) erst nach grünem Lauf; ein
-  # automatischer Deploy-Trigger kommt erst mit dem GHCR-/Tailscale-Ablauf.
-  dast-ephemeral:
-    name: DAST (ephemeral ZAP baseline)
+  # ── §6/§7 DAST gegen das gebaute Image (B25 C-04, A6) ─────────────────────
+  # Kein dauerhaftes Staging: ephemerer Stack im Runner. Gescannt wird genau das Image aus
+  # dem Build-Job – im PR das Artefakt, auf main der GHCR-Digest (= was deploy.yml ausrollt).
+  # Postgres + Garage aus docker-compose.dev.yml, nur Dummy-Secrets (§4.1), Migrationen beim
+  # App-Start (prodMigrations, §6.2/§6.3), Seed mit Nicht-Echtdaten (§6.1), dann OWASP ZAP
+  # Baseline (§7.2), Ausnahmen in .zap/rules.tsv (§7.4). Rot im PR = vor dem Merge sichtbar;
+  # rot auf main = kein Deploy (deploy.yml braucht einen grünen Lauf) + Issue (Job dast-issue).
+  dast:
+    name: DAST (ZAP baseline, Image)
+    needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    timeout-minutes: 25
+    timeout-minutes: 30
     permissions:
       contents: read
+      packages: read # Pull des GHCR-Digests auf main
     env:
+      IMAGE: ghcr.io/marax1234/portfolio-app
       # §4.1 — ausschließlich Dummy-Werte, KEINE Produktions-Secrets.
       PAYLOAD_SECRET: ci-dast-ephemeral-secret-not-a-real-key-000000
       DATABASE_URI: postgres://portfolio:portfolio@localhost:5432/portfolio
@@ -298,6 +455,8 @@ jobs:
       S3_ACCESS_KEY_ID: GKdevlocal0000000000000000
       S3_SECRET_ACCESS_KEY: dev-local-only-not-a-secret
       S3_FORCE_PATH_STYLE: "true"
+      # Nur für den Seed (läuft aus dem Checkout). Die App im Image hat die Prod-Werte
+      # eingebacken (NEXT_PUBLIC_* sind Build-Zeit-Werte).
       NEXT_PUBLIC_SERVER_URL: http://localhost:3000
       NEXT_PUBLIC_S3_PUBLIC_URL: http://localhost:9102
     steps:
@@ -305,6 +464,58 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Image-Artefakt holen (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: portfolio-app-image
+          path: ${{ runner.temp }}
+
+      - name: Image laden (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          zstd -d -q -c "$RUNNER_TEMP/portfolio-app.tar.zst" | docker load
+          docker tag portfolio-app:ci portfolio-app:dast
+
+      - name: Login GHCR (main)
+        if: github.event_name == 'push'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image per Digest holen (main)
+        if: github.event_name == 'push'
+        env:
+          DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          docker pull "${IMAGE}@${DIGEST}"
+          docker tag "${IMAGE}@${DIGEST}" portfolio-app:dast
+
+      - name: Infrastruktur hochfahren (Postgres + Garage)
+        run: docker compose -f docker-compose.dev.yml up -d --wait
+
+      # Website-Zugriff, Host-Alias, CORS und Platzhalter im Bucket (idempotent).
+      - name: Object Storage einrichten
+        run: scripts/storage-init.sh
+
+      # Env-Werte per Name durchreichen (nicht als Argument). Host-Netz, damit die App
+      # Postgres/Garage unter localhost erreicht; prodMigrations laufen beim Start.
+      - name: App aus dem Image starten und auf /api/health warten
+        run: |
+          docker run -d --name app --network host \
+            -e DATABASE_URI -e PAYLOAD_SECRET -e S3_BUCKET -e S3_REGION -e S3_ENDPOINT \
+            -e S3_ACCESS_KEY_ID -e S3_SECRET_ACCESS_KEY -e S3_FORCE_PATH_STYLE \
+            portfolio-app:dast
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/api/health >/dev/null 2>&1; then
+              echo "App bereit."; exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::App wurde nicht bereit."; docker logs --tail 80 app; exit 1
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
@@ -315,67 +526,22 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
-      - name: Infrastruktur hochfahren (Postgres + Garage)
-        run: docker compose -f docker-compose.dev.yml up -d --wait
+      - name: Install dependencies (für den Seed)
+        run: pnpm install --frozen-lockfile
 
-      # Website-Zugriff, Host-Alias, CORS und Platzhalter im Bucket (idempotent).
-      - name: Object Storage einrichten
-        run: scripts/storage-init.sh
-
-      - name: Auf Postgres warten
-        run: |
-          for i in $(seq 1 30); do
-            if docker compose -f docker-compose.dev.yml exec -T postgres pg_isready -U portfolio >/dev/null 2>&1; then
-              echo "Postgres bereit."; exit 0
-            fi
-            sleep 2
-          done
-          echo "::error::Postgres wurde nicht rechtzeitig bereit."; exit 1
-
-      # node-linker=hoisted wie im Dockerfile: Turbopack >= 16.3 bricht beim
-      # `next build` an pnpm-Symlinks der sharp-Includes ab (vercel/next.js#97507).
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.node-linker=hoisted
-
-      # §6.2/§6.3 — Migrationen in der Ephemer-Umgebung anwenden (payload migrate).
-      - name: Migrationen anwenden
-        run: pnpm migrate
-
-      # §6.1 — Repräsentative, NICHT echte Daten einspielen. Schlägt das Seeding
-      # fehl, scannen wir trotzdem die laufende App (leere DB).
+      # §6.1 — Repräsentative, NICHT echte Daten. Schlägt das Seeding fehl, scannen wir
+      # trotzdem die laufende App (leere DB).
       - name: Seed-Daten
         continue-on-error: true
         run: pnpm seed
 
-      - name: App bauen
-        run: pnpm build
-
-      # output: "standalone" (next.config.ts) -> der Standalone-Server ist
-      # produktionsidentisch (§6.1). Static/Public wie im Dockerfile daneben legen.
-      - name: App starten (Standalone, Hintergrund) und auf Bereitschaft warten
-        run: |
-          cp -r .next/static .next/standalone/.next/static
-          cp -r public .next/standalone/public
-          PORT=3000 HOSTNAME=0.0.0.0 nohup node .next/standalone/server.js > /tmp/app.log 2>&1 &
-          for i in $(seq 1 30); do
-            if curl -fsS http://localhost:3000 >/dev/null 2>&1; then
-              echo "App erreichbar."; exit 0
-            fi
-            sleep 3
-          done
-          echo "::error::App wurde nicht erreichbar."; tail -50 /tmp/app.log; exit 1
-
-      # Ziel über die docker0-Bridge-IP, damit der ZAP-Container die auf dem
-      # Host laufende App (0.0.0.0:3000) erreicht.
+      # Ziel über die docker0-Bridge-IP, damit der ZAP-Container die App im Host-Netz erreicht.
       - name: ZAP-Ziel ermitteln
         run: |
           HOST_IP=$(ip -4 -o addr show docker0 | awk '{print $4}' | cut -d/ -f1)
           echo "ZAP_TARGET=http://${HOST_IP}:3000" >> "$GITHUB_ENV"
 
-      # §7.2 — ZAP Baseline prüft u. a. XSS, SQLi-Indikatoren, fehlende Security-
-      # Header, CSRF, offene Redirects, unsichere Cookies.
-      # §7.3 — fail_action: true -> High/Critical-Findings blockieren den Deploy.
-      # §7.4 — begründete Ausnahmen stehen in .zap/rules.tsv.
+      # §7.2/§7.3 — fail_action: true -> Findings blockieren (PR: Merge-Hinweis, main: Deploy).
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
         with:
@@ -385,6 +551,55 @@ jobs:
           fail_action: true
           artifact_name: zap-baseline-report
 
+      - name: App-Log bei Fehlschlag
+        if: failure()
+        run: docker logs --tail 150 app || true
+
       - name: Stack herunterfahren
         if: always()
-        run: docker compose -f docker-compose.dev.yml down -v
+        run: |
+          docker rm -f app || true
+          docker compose -f docker-compose.dev.yml down -v
+
+  # ── A6: roter DAST auf main → GitHub-Issue (kein ntfy aus GitHub) ─────────
+  # Eigener Job, damit nur er Issues schreiben darf. Ein offenes Issue bekommt bei weiteren
+  # Fehlschlägen einen Kommentar statt eines Duplikats.
+  dast-issue:
+    name: DAST-Fehlschlag melden (main)
+    needs: dast
+    if: always() && github.event_name == 'push' && needs.dast.result == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Issue anlegen oder kommentieren
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = '[dast] ZAP-Baseline auf main fehlgeschlagen';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `Der DAST-Job (ZAP-Baseline gegen das GHCR-Image) ist auf \`main\` rot: ${runUrl}`,
+              `Commit: ${context.sha}`,
+              '',
+              'Folge: deploy.yml startet für diesen Commit nicht. Report: Artefakt `zap-baseline-report`.',
+              'Echte Findings beheben, False Positives begründet in `.zap/rules.tsv` eintragen (§7.4).',
+              '',
+              '_Automatisch erzeugt (B25 A6)._',
+            ].join('\n');
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels: 'security', per_page: 100,
+            });
+            const existing = open.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: existing.number, body,
+              });
+              core.info(`Kommentar an #${existing.number}`);
+            } else {
+              const { data } = await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo, title, body, labels: ['security'],
+              });
+              core.info(`Issue #${data.number} angelegt`);
+            }

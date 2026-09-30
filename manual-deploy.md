@@ -1,40 +1,45 @@
 # Manuelles Deployment — Kurzreferenz
 
-**Das ist derzeit der einzige Deploy-Weg.** `deploy-production.yml` ist stillgelegt (nur
-`workflow_dispatch`, kein Runner, B24); ein automatischer Deploy über GHCR + Tailscale folgt
-später. Vollständiger Hintergrund in `deploy.md` — hier nur der eigentliche Befehlsablauf
-plus die Stolperfallen, die in der Praxis aufgetreten sind.
+**Einziger Deploy-Weg ist `scripts/deploy.sh`** – aus der CI (`deploy.yml`: Merge → Image in GHCR →
+Freigabe im Environment `production` → Tailscale → Deploy-User → Skript) oder von Hand auf hillerhome.
+Hintergrund in `deploy.md`, hier nur die Befehle und die Stolperfallen aus der Praxis.
 
-Voraussetzung: auf hillerhome, im Repo unter `/opt/portfolio`, Postgres/Garage/Umami laufen
-bereits dauerhaft (`restart: unless-stopped`) — nur die App wird neu gebaut/gestartet.
+Voraussetzung: auf hillerhome als `hillerhome`, Postgres/Garage/Umami laufen dauerhaft
+(`restart: unless-stopped`), nur die App wird ersetzt.
 
 ## Ablauf
 
 ```bash
 cd /opt/portfolio
-git pull origin main
-C="docker compose --env-file .env.prod -f docker-compose.prod.yml"
-TS=$(date +%F-%H%M)
-
-# Rückweg sichern: Image taggen, DB-Dump (Migrationen laufen gleich beim Start)
-docker tag portfolio-app:latest "portfolio-app:rollback-$TS"
-$C exec -T postgres pg_dump -U portfolio -Fc portfolio | sudo tee "/var/backups/predeploy/portfolio-$TS.dump" >/dev/null
-
-# Build: braucht keine DB und keine Secrets (B25 Session 10), die laufende App bleibt online
-$C build app
-
-# Neustart nur der App; --wait wartet auf den Healthcheck (/api/health = Payload inkl.
-# prodMigrations + Postgres bereit). Caddy überbrückt die ~10 s (lb_try_duration).
-$C up -d --no-deps --wait --wait-timeout 180 app
-
-# Verifizieren
-for p in / /arbeiten /journal /api/health; do curl -fsS -o /dev/null -w "%{http_code} $p\n" "https://kilia-siebert.de$p"; done
-$C logs --tail=40 app
+scripts/deploy.sh sha256:<digest>   # Image aus ghcr.io/marax1234/portfolio-app (wie die CI)
+scripts/deploy.sh build             # Rückfall ohne GHCR: origin/main lokal bauen
+scripts/deploy.sh build <commit>    # bestimmter Commit, muss auf origin/main liegen
 ```
 
-**Rollback:** `docker tag portfolio-app:rollback-$TS portfolio-app:latest && $C up -d --no-deps --wait app`.
-Nur wenn die neue Version eine Migration mit Contract-Schritt (Drop/Umbenennung) hatte, zusätzlich den
-Dump zurückspielen (`pg_restore --clean`, vorher App stoppen). Ab Session 11 macht das `scripts/deploy.sh`.
+Das Skript macht nacheinander:
+
+1. Commit bestimmen (beim Digest aus dem Label `org.opencontainers.image.revision`), nur Commits
+   auf `origin/main`, Checkout **detached** auf diesen Commit (`git status` zeigt, was läuft).
+2. Laufendes Image als `portfolio-app:rollback-<datum-uhrzeit>` taggen, `pg_dump -Fc` nach
+   `/var/backups/predeploy/portfolio-<datum-uhrzeit>.dump` (Modus 600).
+3. Image holen (Digest) bzw. bauen (`build`, ohne DB und Secrets), als `portfolio-app:latest` taggen.
+4. `up -d --no-deps --wait` (Healthcheck `/api/health` = Payload inkl. `prodMigrations` bereit;
+   Caddy überbrückt die ~10 s mit `lb_try_duration`).
+5. Smoke-Test: `/api/health` intern und über die Domain, `/`, `/arbeiten`, `/journal`, `/impressum`
+   mit 200 und `<h1`.
+6. ntfy OK bzw. PROBLEM (Topic aus `/etc/server-alerts.conf`), Log: `journalctl -t portfolio-deploy`.
+7. Aufräumen: nur die 3 jüngsten Rollback-Tags und Dumps bleiben.
+
+**Automatischer Rollback:** Scheitert Start oder Smoke-Test, taggt das Skript das vorige Image
+zurück, stellt den vorigen Commit wieder her, startet neu, prüft erneut und meldet per ntfy.
+Übung: `DEPLOY_FORCE_SMOKE_FAIL=1 scripts/deploy.sh build` (prüft einen Pfad, den es nicht gibt).
+
+**Manueller Rollback:** `scripts/deploy.sh sha256:<voriger digest>` (Digests: GHCR bzw. Deploy-Log)
+oder lokal `docker tag portfolio-app:rollback-<ts> portfolio-app:latest` und
+`docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --no-deps --wait app`.
+Nur bei einer Migration mit Contract-Schritt (Drop/Umbenennung, siehe `CLAUDE.md`) zusätzlich den
+Dump zurückspielen: App stoppen, dann
+`sudo cat <dump> | docker compose … exec -T postgres pg_restore -U portfolio -d portfolio --clean --if-exists`.
 
 ## Object Storage (Garage)
 
@@ -79,8 +84,11 @@ COMPOSE_ENV_FILES=.env.prod COMPOSE_FILE=docker-compose.prod.yml S3_ENDPOINT=htt
   ```bash
   pnpm db:up && pnpm payload migrate:create <name>
   ```
-  Anschließend committen. Expand/Contract beachten (Session 11 / `CLAUDE.md`), damit die
-  vorige App-Version beim Rollback weiterläuft.
+  Anschließend committen. Expand/Contract beachten (`CLAUDE.md`), damit die vorige
+  App-Version beim Rollback weiterläuft.
+
+- **Checkout in `/opt/portfolio` ist detached** (seit `deploy.sh`). Kein `git pull` von Hand,
+  keine lokalen Änderungen: Das Skript bricht bei einem unsauberen Checkout ab.
 
 - **`sharp`/libvips-Fetch ist flaky.** Der Retry-Loop im Dockerfile (`deps`-Stage) fängt
   das normalerweise ab; falls der Build trotz 3 Versuchen an `require('sharp')` scheitert,
@@ -95,6 +103,5 @@ COMPOSE_ENV_FILES=.env.prod COMPOSE_FILE=docker-compose.prod.yml S3_ENDPOINT=htt
   Container frisch. Bei kaputten Bildvarianten: App stoppen, Volume löschen, neu starten.
 
 - **Alle Code-Fixes, die dabei nötig werden (Dockerfile, Migrations, Scripts), gehören auf
-  einen Fix-Branch + PR** — auch wenn der manuelle Deploy selbst lokal auf hillerhome ohne
-  PR läuft. Sonst bricht der nächste automatische Deploy (Runner-Pipeline) am selben
-  Problem erneut.
+  einen Fix-Branch + PR**. `deploy.sh` deployt ohnehin nur Commits auf `origin/main`, der
+  nächste CI-Deploy würde sonst am selben Problem erneut scheitern.

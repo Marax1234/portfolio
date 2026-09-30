@@ -57,6 +57,11 @@ ENV NODE_ENV=production
 # direkt im Image statt per `docker run` (App-Container hat in Produktion
 # keinen Zugriff auf den Docker-Daemon).
 RUN apk add --no-cache ffmpeg
+# B25 C-03: Paketmanager des Basis-Images raus. Der Runner startet nur `node server.js`;
+# npm, corepack und yarn brachten eigene, nie genutzte Abhängigkeiten mit (Trivy: HIGH in
+# npm/node_modules/{brace-expansion,tar,undici,ip-address}) und vergrößern die Angriffsfläche.
+RUN rm -rf /usr/local/lib/node_modules /opt/yarn-v* \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 # B23: Next schreibt zur Laufzeit in .next (Bild-Cache unter .next/cache/images, ISR-Seiten,
