@@ -33,6 +33,7 @@ import type { Video } from "@/payload-types";
 import { isFfmpegAvailable, runFfmpeg, runFfprobe } from "./ffmpeg";
 import { MAX_VIDEO_BYTES } from "./limits";
 import { uploadDirectory } from "./s3";
+import { isAllowedSourceUrl } from "./source";
 
 /**
  * O-06: höchstens eine Transkodierung gleichzeitig. Die Hooks laufen fire-and-forget,
@@ -202,9 +203,8 @@ export async function transcodeVideo(payload: Payload, doc: Video): Promise<void
     // geschrieben werden, die Quelle auf den eigenen Object Storage einschränken
     // (kein beliebiger Host → kein SSRF/Fremdinhalt) und die Größe deckeln
     // (kein Platten-/Speicher-Erschöpfen durch überdimensionierte Downloads).
-    const allowedBase = process.env.NEXT_PUBLIC_S3_PUBLIC_URL;
     const sourceUrl = doc.url as string;
-    if (!allowedBase || !sourceUrl.startsWith(allowedBase)) {
+    if (!isAllowedSourceUrl(sourceUrl, process.env.NEXT_PUBLIC_S3_PUBLIC_URL)) {
       throw new Error(`[transcode] Unerlaubte Video-Quelle für ${videoId}: ${sourceUrl}`);
     }
     const response = await fetch(sourceUrl);

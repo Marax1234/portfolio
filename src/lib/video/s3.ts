@@ -36,7 +36,7 @@ const PUBLIC_BASE = () =>
   process.env.NEXT_PUBLIC_S3_PUBLIC_URL ?? "http://localhost:9102";
 
 /** ContentType-Lookup für HLS-Ausgaben. */
-function contentType(filename: string): string {
+export function contentType(filename: string): string {
   if (filename.endsWith(".m3u8")) return "application/vnd.apple.mpegurl";
   if (filename.endsWith(".ts")) return "video/mp2t";
   if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) return "image/jpeg";

@@ -1,0 +1,7 @@
+# Trivy-Ausnahmen für den Image-Gate im Build-Job (B25 C-03).
+#
+# Der Gate blockiert HIGH/CRITICAL mit verfügbarem Fix (--ignore-unfixed). Eine Ausnahme nur
+# mit Begründung und Ablaufdatum, Format je Zeile:
+#   <CVE-ID> exp:<JJJJ-MM-TT>   # Paket, Pfad, warum nicht ausnutzbar, wann erneut prüfen
+#
+# Derzeit keine Ausnahmen.

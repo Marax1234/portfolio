@@ -68,7 +68,24 @@ Am Ende jedes Sprints, vor der Übergabe, einmal ausführen:
 pnpm check
 ```
 
-Das läuft `tsc --noEmit` (Typsicherheit) und `eslint src/` (Code-Qualität) nacheinander durch. Erwartet: beide ohne Fehler. Sprint gilt erst als abgenommen, wenn `check` grün ist.
+Das läuft `tsc --noEmit` (Typsicherheit), `eslint src/` (Code-Qualität) und `vitest run` (Unit-Tests `src/**/*.test.ts`, ohne DB) nacheinander durch. Erwartet: alle ohne Fehler. Neue reine Logik in `src/lib/` bekommt einen Test daneben. Sprint gilt erst als abgenommen, wenn `check` grün ist.
+
+## Datenbank-Migrationen: Expand/Contract (B25 A4)
+
+Deploy = neues Image starten, Payload migriert beim Start (`prodMigrations`). Scheitert der
+Smoke-Test, startet `scripts/deploy.sh` automatisch das **vorige** Image – auf der schon
+migrierten DB. Deshalb muss jede Migration mit der vorigen App-Version verträglich sein:
+
+- **Expand** (sofort erlaubt): neue Tabellen, neue Spalten `NULL`-bar oder mit Default,
+  neue Indizes, neue Enum-Werte. Die alte Version ignoriert sie.
+- **Contract** (erst im **Folge-Release**, wenn keine alte Version mehr läuft): Spalten/Tabellen
+  löschen oder umbenennen, `NOT NULL` nachziehen, Typen ändern, Enum-Werte entfernen.
+  Umbenennen = neue Spalte anlegen + Daten kopieren (Release 1), alte Spalte löschen (Release 2).
+- Payload erzeugt beim Umbenennen eines Felds ein Drop + Add: die generierte Migration immer
+  lesen und ggf. in zwei Releases aufteilen.
+- PRs mit Contract-Schritt im Titel markieren (`[contract]`). Ein Rollback braucht dann den
+  Dump aus dem Deploy (`manual-deploy.md` → Manueller Rollback).
+- Vor jedem Deploy legt `deploy.sh` einen Dump an, zusätzlich sichert `backup` nachts.
 
 ## Git-Flow (enforced)
 
