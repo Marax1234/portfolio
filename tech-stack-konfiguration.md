@@ -1,5 +1,9 @@
 # Tech-Stack-Konfiguration — Portfolio Kilian Siebert
 
+> **Planungsstand Juni 2026.** Umgesetzt wurde abweichend: hillerhome (Heimserver) + Oracle-VPS statt
+> Hetzner, Garage statt MinIO, kein externes CDN, Umami, SMTP. Ist-Zustand:
+> [`docs/architecture-deploy.md`](docs/architecture-deploy.md). Rollen und Komponenten-Begründungen gelten weiter.
+
 **Architektur-Spezifikation.** Dieses Dokument beschreibt den festgelegten Stack, die Konfiguration jeder Komponente und welche Anforderung damit gelöst wird. Es ist als Briefing für die Umsetzung gedacht — bewusst ohne Code.
 
 Festgelegter Kern: **Next.js 16 + Payload 3 in einem Codebase**, selbst gehostet auf einem Hetzner-VPS, Medien über Object Storage + CDN. Rollenverteilung: dein Freund baut, du befüllst später ausschließlich über das Payload-Admin (No-Code).

@@ -2,7 +2,8 @@
 
 **Einziger Deploy-Weg ist `scripts/deploy.sh`** – aus der CI (`deploy.yml`: Merge → Image in GHCR →
 Freigabe im Environment `production` → Tailscale → Deploy-User → Skript) oder von Hand auf hillerhome.
-Hintergrund in `deploy.md`, hier nur die Befehle und die Stolperfallen aus der Praxis.
+Architektur und Entscheidungen in `docs/architecture-deploy.md`, hier nur die Befehle und die
+Stolperfallen aus der Praxis.
 
 Voraussetzung: auf hillerhome als `hillerhome`, Postgres/Garage/Umami laufen dauerhaft
 (`restart: unless-stopped`), nur die App wird ersetzt.
