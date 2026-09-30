@@ -127,7 +127,7 @@ jobs:
       # §5.3.3 — upload: always lädt das SARIF in Security → Code Scanning hoch
       # (für öffentliche Repos kostenlos). Trends sind dort zentral sichtbar.
       - name: Analyze
-        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           category: "/language:javascript-typescript"
           output: sarif-results
