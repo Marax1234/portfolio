@@ -71,6 +71,8 @@ services:
       - internal
 
   postgres:
+    # Bewusst nur auf die Major gepinnt (B8, H-15): Minor-Updates kommen beim Pull,
+    # ein Major-Wechsel braucht Dump/Restore. Dependabot ignoriert Postgres-Majors.
     image: postgres:16-alpine
     restart: unless-stopped
     mem_limit: 1g

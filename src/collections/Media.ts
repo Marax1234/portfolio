@@ -66,6 +66,10 @@ export const Media: CollectionConfig = {
   upload: {
     staticDir: "media",
     mimeTypes: ["image/*", "video/*"],
+    // O-03 (B25 Session 20): Das Frontend nutzt diese Varianten bewusst nicht, next/image
+    // optimiert vom Original (AVIF/WebP, Cache-Volume). card/hero sind auf 4:3 bzw. 16:9
+    // zugeschnitten und passen nicht zu Masonry und Hochformat. Sie zu entfernen löscht
+    // Spalten (sizes_card_*, sizes_hero_*) = Contract-Schritt, eigener PR (Ops-BACKLOG B26).
     imageSizes: [
       { name: "thumbnail", width: 400, height: 300, position: "centre" },
       { name: "card", width: 800, height: 600, position: "centre" },

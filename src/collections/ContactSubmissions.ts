@@ -30,7 +30,7 @@ export const ContactSubmissions: CollectionConfig = {
   },
   access: {
     // Anfragen kommen nur über die Server Action herein (Local API mit
-    // overrideAccess, inkl. Honeypot + Timing). REST/GraphQL-Create ist zu,
+    // overrideAccess, inkl. Honeypot + Timing). REST-Create ist zu,
     // sonst ließe sich der Spam-Schutz umgehen.
     // Eingesehen werden sie nur im Admin (Default: authentifiziert).
     create: () => false,

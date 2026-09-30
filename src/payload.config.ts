@@ -95,6 +95,9 @@ export default buildConfig({
   collections: [Users, Media, Videos, Projects, JournalPosts, ContactSubmissions, Documents],
   globals: [SiteConfig, AboutPage, CooperationsPage],
   editor: lexicalEditor(),
+  // B25 H-12: Admin und Frontend nutzen nur REST bzw. die Local API. GraphQL war eine
+  // zweite öffentliche Angriffsfläche (u. a. forgotPassword, Uploads); Routen entfernt.
+  graphQL: { disable: true },
   email: buildEmailAdapter(),
   db: postgresAdapter({
     pool: {
