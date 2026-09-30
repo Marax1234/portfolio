@@ -27,6 +27,11 @@ Besucher ──443──▶ Oracle VPS (feste IPv4, Caddy: TLS, HSTS, Proxy)
   WireGuard durch. Alle Ports auf hillerhome sind an `10.10.0.2` bzw. `127.0.0.1` gebunden.
 - **Header:** Caddy setzt nur HSTS (1 Jahr, `includeSubDomains`, kein `preload`). Alle
   inhaltsbezogenen Header (XFO, nosniff, Referrer, Permissions-Policy, CSP) kommen aus `next.config.ts`.
+- **CSP (B4):** seit B25 Session 21 als `Content-Security-Policy-Report-Only` auf den Frontend-Routen
+  (Policy: `src/lib/csp.ts`). Browser melden Verstöße an `/api/csp-report`, die App schreibt je Verstoß eine
+  Zeile ins Log: `docker logs portfolio-app-1 2>&1 | grep csp-report`. Das Log beginnt mit jedem Deploy neu.
+  Nach 7 Tagen ohne Verstöße wird derselbe Wert erzwungen (Session 22), dann entfällt `X-Frame-Options`.
+- **Wartungsseite:** Ist die App oder hillerhome weg, liefert Caddy nach 30 s eine statische Seite mit 503.
 - DNS für `kilia-siebert.de` liegt bei IONOS (CAA nur Let's Encrypt), Umzug zu deSEC ist geplant (B25 C1).
 
 ## 2. Dienste (`docker-compose.prod.yml`)
@@ -85,7 +90,7 @@ Einrichtung (Tailscale-ACL, Federated Identity, `DEPLOY_SSH_KEY`): `security/git
 | A3 | ~10 s Neustart pro Deploy, Caddy `lb_try_duration 30s` | Blue/Green lohnt bei einem Host nicht |
 | A4 | Expand/Contract für Migrationen + Dump vor jedem Deploy | Rollback ohne DB-Restore |
 | A6 | DAST-Fehler → GitHub-Issue, kein ntfy aus GitHub | ntfy-Topic bleibt außerhalb von GitHub |
-| B1 | `/admin` bleibt öffentlich (Kilian pflegt ohne VPN), Lockout + `unlock` nur für Eingeloggte | |
+| B1 | `/admin` bleibt öffentlich (Kilian pflegt ohne VPN), Lockout + `unlock` nur für Eingeloggte, GraphQL aus | Kleinste öffentliche Fläche |
 | B3 | App setzt die Inhalts-Header, Caddy nur HSTS | Die App kennt ihre Routen (Live-Preview = same-origin iframe) |
 | B4 | CSP erst `Report-Only` (Frontend), nach 1 Woche ohne Verstöße scharf | |
 | C2 | Kein HSTS-Preload | Familien-Domain mit IONOS-Mail, Tragweite zu groß |
