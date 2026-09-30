@@ -78,7 +78,8 @@ async function seed() {
 
     placeholderMedia = await payload.create({
       collection: "media",
-      data: { alt: "Seed-Platzhalter" },
+      // 1600 px < MIN_UPLOAD_WIDTH (Media.ts): Platzhalter bewusst niedrig aufgelöst.
+      data: { alt: "Seed-Platzhalter", allowLowResolution: true },
       file: {
         data: placeholderBuffer,
         mimetype: "image/png",
@@ -104,7 +105,7 @@ async function seed() {
     placeholderMedia = await payload.update({
       collection: "media",
       id: placeholderMedia.id,
-      data: {},
+      data: { allowLowResolution: true },
       file: {
         data: placeholderBuffer,
         mimetype: "image/png",
