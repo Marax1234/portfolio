@@ -39,7 +39,7 @@ updates:
     cooldown:
       default-days: 7
     ignore:
-      # @types/node folgt der Node-Runtime im Dockerfile (node:20), Major nur zusammen mit ihr.
+      # @types/node folgt der Node-Runtime im Dockerfile (node:24), Major nur zusammen mit ihr.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
     groups:
@@ -65,4 +65,21 @@ updates:
     ignore:
       # Postgres-Major-Upgrade braucht Dump/Restore, bewusst manuell.
       - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+
+  # Basis-Image im Dockerfile (node, Tag + Digest, B22). Node-Majors nur bewusst zusammen
+  # mit .nvmrc und @types/node (nächste LTS-Linie), daher ignoriert.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "docker"
+    cooldown:
+      default-days: 7
+    ignore:
+      - dependency-name: "node"
         update-types: ["version-update:semver-major"]

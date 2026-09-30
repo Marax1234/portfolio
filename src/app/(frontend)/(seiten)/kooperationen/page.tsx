@@ -22,6 +22,10 @@ import SplitCTA from "@/components/ui/SplitCTA";
 import { payloadMediaRef } from "@/lib/media";
 import { getCooperationsPage } from "@/lib/payload";
 
+// B25 D-02: Der Build läuft ohne DB, daher wird diese Seite pro Request gerendert. Die
+// Payload-Daten bleiben per `unstable_cache` (Tags, src/lib/payload.ts) gecacht.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Kooperationen — Kilian Siebert",
   description:

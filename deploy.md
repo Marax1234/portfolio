@@ -11,6 +11,11 @@
 > (Compose-Auszug, `mc`-Befehle, `MINIO_*`-Variablen, Caddy-Rewrite auf `/portfolio-media`)
 > sind historisch. Gültig sind `docker-compose.prod.yml`, `garage.toml`,
 > `scripts/storage-init.sh` und `manual-deploy.md` → „Object Storage (Garage)“.
+>
+> **Stand 2026-09 (B25 Session 10): Der Build braucht keine DB und keine Secrets mehr.**
+> Alles zu `.env.production.local`, `gen-build-env.sh`, `network: host` und `payload migrate`
+> im Dockerfile ist historisch. Migrationen laufen beim App-Start (`prodMigrations`). Gültiger
+> Ablauf: `manual-deploy.md`. Diese Datei wird in B25 Session 17 konsolidiert.
 
 ---
 

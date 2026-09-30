@@ -2,6 +2,7 @@ import type { CollectionBeforeValidateHook, CollectionConfig } from "payload";
 import { ValidationError } from "payload";
 
 import { revalidateMedia, revalidateMediaDelete } from "../hooks/revalidate";
+import { uploadTempFileHooks } from "../hooks/uploadTempFile";
 
 /**
  * Mindestbreite für Bild-Uploads (px). Verhindert, dass komprimierte
@@ -57,6 +58,7 @@ export const Media: CollectionConfig = {
     group: "Medien",
   },
   hooks: {
+    ...uploadTempFileHooks,
     beforeValidate: [ensureMinResolution],
     afterChange: [revalidateMedia],
     afterDelete: [revalidateMediaDelete],

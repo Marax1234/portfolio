@@ -2,8 +2,13 @@
  * Lade-Skelett (Sprint 10 — saubere Ladezustände, Konzept §6).
  *
  * Erscheint während der Server-Seiten-Hydratisierung (Suspense-Boundary
- * für jede Route in der (frontend)-Gruppe). Ruhig, token-basiert — der
+ * für jede Route in der (seiten)-Gruppe). Ruhig, token-basiert — der
  * Ladeindikator stört nicht, er hält den Raum.
+ *
+ * B25: /arbeiten/[slug] und /journal/[slug] liegen bewusst außerhalb dieser
+ * Gruppe. Unter einer Suspense-Boundary beginnt das Streaming vor `notFound()`,
+ * unbekannte Slugs antworteten dann mit 200 statt 404 (Soft-404). Die
+ * Detailseiten sind ISR-gecacht und werden per <Link> vorab geladen.
  *
  * Kein Hardcode (§0.2): bg-surface-container ist eine Tailwind-Utility
  * aus @theme inline → var(--color-surface-container).

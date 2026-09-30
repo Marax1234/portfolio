@@ -8,12 +8,10 @@ out
 *.tsbuildinfo
 /media
 
-# Secrets, die der Build nicht braucht (.env.production.local wird für
-# `payload migrate` in der builder-Stage benötigt und bleibt drin).
-.env
-.env.local
-.env.prod
-.env.production
+# Keine Env-Dateien im Build-Kontext (B25 D-03): Der Build braucht weder DB noch Secrets,
+# nur die NEXT_PUBLIC_*-Build-Args. Früher lag .env.production.local mit allen Prod-Secrets
+# in einer Builder-Schicht und im BuildKit-Cache.
+.env*
 
 # Tooling/Doku ohne Build-Relevanz
 .claude

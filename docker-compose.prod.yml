@@ -5,10 +5,10 @@
 services:
 
   app:
+    # Build ohne DB und ohne Secrets (B25 D-02/D-03), nur die öffentlichen NEXT_PUBLIC_*-Werte.
     build:
       context: .
       dockerfile: Dockerfile
-      network: host
       args:
         NEXT_PUBLIC_SERVER_URL: https://${DOMAIN}
         NEXT_PUBLIC_S3_PUBLIC_URL: https://cdn.${DOMAIN}
@@ -19,6 +19,9 @@ services:
     # Kernel nur diesen Container, `restart` startet ihn neu.
     mem_limit: 2g
     memswap_limit: 2g
+    # O-06: ffmpeg (nice 19) darf höchstens 3 der 4 Kerne belegen, einer bleibt für
+    # Postgres, Garage, Umami und Vaultwarden.
+    cpus: 3
     environment:
       NODE_ENV: production
       DATABASE_URI: postgres://portfolio:${POSTGRES_PASSWORD}@postgres:5432/portfolio
@@ -44,8 +47,21 @@ services:
       UMAMI_ADMIN_USERNAME: ${UMAMI_ADMIN_USERNAME}
       UMAMI_ADMIN_PASSWORD: ${UMAMI_ADMIN_PASSWORD}
       UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID}
+    volumes:
+      # E2/B23: nur der next/image-Cache überlebt ein Deploy; HTML/ISR startet mit
+      # jedem neuen Container frisch (sonst alte Seiten nach dem Deploy).
+      - next-image-cache:/app/.next/cache/images
     ports:
       - "10.10.0.2:3000:3000"   # nur über WireGuard-Tunnel
+    # D-05: healthy erst, wenn Payload (inkl. prodMigrations) und Postgres bereit sind.
+    # Damit wartet `up -d --wait` beim Deploy wirklich auf die App. wget = BusyBox (Alpine).
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "-T", "5", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 90s
+      start_interval: 3s
     depends_on:
       postgres:
         condition: service_healthy
@@ -124,6 +140,7 @@ services:
       - internal
 
 volumes:
+  next-image-cache:
   pgdata:
   garage-meta:
   garage-data:

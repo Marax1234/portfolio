@@ -1,3 +1,4 @@
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import path from "path";
 import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
@@ -5,6 +6,7 @@ import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
 import type { Config } from "payload";
+import nodemailer from "nodemailer";
 import { buildConfig } from "payload";
 import sharp from "sharp";
 
@@ -18,6 +20,7 @@ import { Videos } from "./collections/Videos";
 import { AboutPage } from "./globals/AboutPage";
 import { CooperationsPage } from "./globals/CooperationsPage";
 import { SiteConfig } from "./globals/SiteConfig";
+import { MAX_VIDEO_BYTES } from "./lib/video/limits";
 import { migrations } from "./migrations";
 
 const filename = fileURLToPath(import.meta.url);
@@ -49,16 +52,17 @@ function buildEmailAdapter() {
     return nodemailerAdapter({
       defaultFromAddress: from,
       defaultFromName: fromName,
-      // `transportOptions` wird intern an nodemailer.createTransport übergeben.
-      // Kein direkter nodemailer-Import nötig (Adapter bundelt nodemailer).
-      transportOptions: {
+      // Transport selbst erzeugen statt `transportOptions`: Der Adapter typisiert die
+      // Optionen als SMTPConnection.Options, die in nodemailer 10 (eigene Typen) kein
+      // `auth` mehr enthalten. Zur Laufzeit identisch (Adapter ruft createTransport auf).
+      transport: nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT ?? "587", 10),
         auth: {
           user: process.env.SMTP_USER ?? "",
           pass: process.env.SMTP_PASS ?? "",
         },
-      },
+      }),
     });
   }
 
@@ -93,9 +97,9 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI,
     },
     // Push ist laut Payload-Doku ohnehin nur in development aktiv — in
-    // production zählen ausschließlich Migrations (siehe deploy.md / Dockerfile,
-    // `payload migrate` läuft vor `next build`, da /arbeiten/[slug] per
-    // generateStaticParams schon beim Build gegen die DB läuft).
+    // production zählen ausschließlich Migrations. Sie laufen beim Start der App
+    // (`prodMigrations`, ausgelöst spätestens vom Healthcheck /api/health); der
+    // Build braucht keine DB (B25 Session 10).
     push: false,
     prodMigrations: migrations,
   }),
@@ -153,6 +157,17 @@ export default buildConfig({
   // `SharpDependency`-Typ (siehe Payload-GitHub-Issues zu `sharp`-Typings) —
   // Laufzeitverhalten ist unverändert, daher expliziter, dokumentierter Cast.
   sharp: sharp as Config["sharp"],
+  // O-06 (B25 Session 8): Uploads als Temp-Datei statt komplett im Heap (mem_limit 2g,
+  // Videos > 1 GB sind möglich). storage-s3 streamt die Datei dann per Multipart in den
+  // Bucket. /tmp statt des Defaults `./tmp`, weil /app im Image nicht beschreibbar ist.
+  // Payload 3.90 begrenzt ohne Angabe auf 20 MB pro Datei und 50 MB pro Request, damit
+  // scheiterten größere Videos schon beim Upload. Reserve für die übrigen Formularfelder.
+  upload: {
+    useTempFiles: true,
+    tempFileDir: path.join(os.tmpdir(), "payload-uploads"),
+    limits: { fileSize: MAX_VIDEO_BYTES },
+    requestSizeLimit: MAX_VIDEO_BYTES + 16 * 1024 * 1024,
+  },
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },

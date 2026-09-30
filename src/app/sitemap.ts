@@ -12,6 +12,10 @@
 import type { MetadataRoute } from "next";
 import { getAllJournalSlugs, getAllProjectSlugs } from "@/lib/payload";
 
+// B25 D-02: Der Build läuft ohne DB, daher wird diese Seite pro Request gerendert. Die
+// Payload-Daten bleiben per `unstable_cache` (Tags, src/lib/payload.ts) gecacht.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:3000";
 

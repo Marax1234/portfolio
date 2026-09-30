@@ -3,8 +3,8 @@
  *
  * Aufbau: Hero → knapper Kontext (Titel/Ort/für wen/2–3 Sätze) →
  * Bild-/Video-Strecke (Platzhalter-Medien, Video-Slots folgen Sprint 8) →
- * Prev/Next („keine Sackgasse"). `generateStaticParams` + ISR-Hook
- * (`revalidateProjects`) statisch schnell + automatisch aktuell.
+ * Prev/Next („keine Sackgasse"). On-demand ISR + Hook (`revalidateProjects`):
+ * statisch schnell + automatisch aktuell.
  *
  * Kein Hardcode (§0.2).
  */
@@ -14,11 +14,13 @@ import { notFound } from "next/navigation";
 import Media from "@/components/Media";
 import RichText from "@/components/RichText";
 import { payloadMediaRef } from "@/lib/media";
-import { formatMeta, getAllProjectSlugs, getProjectBySlug, getProjectNeighbors } from "@/lib/payload";
+import { formatMeta, getProjectBySlug, getProjectNeighbors } from "@/lib/payload";
 
+// B25 D-02: Der Build braucht keine DB. Leere Liste = kein Prerender beim Build, jede Seite
+// wird beim ersten Aufruf gerendert und danach als ISR gecacht (bis der Hook revalidiert).
+export const dynamicParams = true;
 export async function generateStaticParams() {
-  const slugs = await getAllProjectSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return [];
 }
 
 interface ProjectPageProps {

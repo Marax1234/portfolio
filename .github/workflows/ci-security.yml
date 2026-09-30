@@ -35,6 +35,7 @@ jobs:
   secret-scan:
     name: Secret Scan (Gitleaks)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: read # gitleaks-action listet PR-Commits zum Diff-Scan (§5.1.1)
@@ -42,6 +43,7 @@ jobs:
       - name: Checkout (vollständige History für Diff-Scan, §5.1.1)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       # §5.1.2/§5.1.3 — Gitleaks deckt API-Keys, Tokens, Passwörter, Connection
@@ -59,16 +61,17 @@ jobs:
   sca:
     name: SCA (pnpm audit)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-        with:
-          version: 10
 
       # Kein `cache: pnpm` hier: Dieser Job führt nie `pnpm install` aus
       # (nur `pnpm audit`, das ohne node_modules/Store arbeitet), daher würde
@@ -77,7 +80,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
 
       # §5.2.2 — Critical/High-CVEs in Produktions-Dependencies blockieren den Merge.
       # --prod schließt devDependencies aus (die werden separat bewertet, §5.2.4).
@@ -101,6 +104,7 @@ jobs:
   sast:
     name: SAST (CodeQL)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       actions: read
@@ -108,6 +112,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # §5.3.2 — JavaScript/TypeScript inkl. Next.js-/React-/Node.js-Patterns.
       # security-extended erweitert den Standard-Regelsatz um zusätzliche
@@ -164,21 +170,22 @@ jobs:
   typecheck:
     name: TypeScript Strict Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-        with:
-          version: 10
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -188,6 +195,84 @@ jobs:
       # dies effektiv `tsc --noEmit --strict`. Type-Fehler blockieren den Merge.
       - name: TypeScript check
         run: pnpm typecheck
+
+  # ── Lint Gate (B25 C-01) ─────────────────────────────────────────────────
+  # eslint src/ (Next core-web-vitals + TypeScript). Fehler blockieren den Merge,
+  # Warnungen nicht. Als Required Check "Lint" eintragen (github-settings.md).
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm lint
+
+  # ── Build Gate (B25 C-01/C-02, D-02/D-03) ────────────────────────────────
+  # Baut das Produktions-Image genau wie auf hillerhome, aber ohne DB, ohne
+  # Secrets und ohne Push. Findet Build-Fehler (RSC/Client-Boundaries, Dockerfile,
+  # sharp-Gate), die tsc/Lint nicht sehen. NEXT_PUBLIC_* sind öffentliche Werte.
+  # Als Required Check "Build" eintragen (github-settings.md).
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Docker-Image bauen (ohne DB/Secrets)
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_SERVER_URL=https://kilia-siebert.de \
+            --build-arg NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de \
+            --build-arg NEXT_PUBLIC_UMAMI_SRC=https://umami.kilia-siebert.de/script.js \
+            -t portfolio-app:ci .
+
+  # ── Workflow-Linter (B25 C-08, vorerst nur Hinweise) ─────────────────────
+  # zizmor prüft die Workflows auf typische Actions-Schwachstellen (Credential-
+  # Persistenz, Injection, zu breite Rechte). Findings erscheinen als Annotationen
+  # und blockieren nicht; kein Required Check. Version fest gepinnt (PyPI, ≥ 7 Tage).
+  zizmor:
+    name: Workflow-Lint (zizmor, advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: zizmor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pipx run --spec zizmor==1.30.1 zizmor --format=github .github/workflows \
+            || echo "::warning::zizmor meldet Findings (advisory, siehe Annotationen)."
 
   # ── §6/§7 DAST Gate gegen EPHEMERE Umgebung (Staging-Workaround) ──────────
   # Es gibt keine dauerhafte Staging-Umgebung. Workaround: Wir booten den vollen
@@ -218,16 +303,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-        with:
-          version: 10
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Infrastruktur hochfahren (Postgres + Garage)
