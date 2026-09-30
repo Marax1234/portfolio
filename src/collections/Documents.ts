@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { uploadTempFileHooks } from "../hooks/uploadTempFile";
 
 /**
  * Documents — Upload-Collection fuer Dateien (Sprint 9: Media-Kit).
@@ -20,6 +21,7 @@ export const Documents: CollectionConfig = {
     useAsTitle: "filename",
     description: "PDF-Dokumente, z.B. Media-Kit. Getrennt von Bildern/Videos.",
   },
+  hooks: uploadTempFileHooks,
   upload: {
     staticDir: "documents",
     mimeTypes: ["application/pdf"],

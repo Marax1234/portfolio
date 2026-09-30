@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { revalidateVideos, revalidateVideosDelete } from "../hooks/revalidate";
+import { uploadTempFileHooks } from "../hooks/uploadTempFile";
 import { triggerTranscode } from "../lib/video/transcode";
 
 /**
@@ -29,6 +30,7 @@ export const Videos: CollectionConfig = {
       "Videos werden nach dem Upload automatisch für HLS transkodiert (benötigt Docker). Status wechselt von 'Verarbeitung' → 'Bereit' nach Abschluss.",
   },
   hooks: {
+    ...uploadTempFileHooks,
     afterChange: [revalidateVideos, triggerTranscode],
     afterDelete: [revalidateVideosDelete],
   },
