@@ -12,10 +12,12 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { readServerEnv } from "../env";
 
 export function getS3Client(): S3Client {
+  const env = readServerEnv();
   return new S3Client({
-    endpoint: process.env.S3_ENDPOINT,
+    endpoint: env.S3_ENDPOINT,
     region: process.env.S3_REGION ?? "us-east-1",
     forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
     // Garage liefert nach Multipart-Uploads eine Composite-Checksumme ohne
@@ -25,13 +27,13 @@ export function getS3Client(): S3Client {
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
     credentials: {
-      accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+      accessKeyId: env.S3_ACCESS_KEY_ID,
+      secretAccessKey: env.S3_SECRET_ACCESS_KEY,
     },
   });
 }
 
-const BUCKET = () => process.env.S3_BUCKET ?? "portfolio-media";
+const BUCKET = () => readServerEnv().S3_BUCKET;
 const PUBLIC_BASE = () =>
   process.env.NEXT_PUBLIC_S3_PUBLIC_URL ?? "http://localhost:9102";
 

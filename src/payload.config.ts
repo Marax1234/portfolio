@@ -20,11 +20,15 @@ import { Videos } from "./collections/Videos";
 import { AboutPage } from "./globals/AboutPage";
 import { CooperationsPage } from "./globals/CooperationsPage";
 import { SiteConfig } from "./globals/SiteConfig";
+import { readServerEnv } from "./lib/env";
 import { MAX_VIDEO_BYTES } from "./lib/video/limits";
 import { migrations } from "./migrations";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
+
+// S-04: bricht mit allen fehlenden Namen ab (außer während `next build`).
+const env = readServerEnv();
 
 /**
  * Payload-3-Kernkonfiguration.
@@ -35,7 +39,7 @@ const dirname = path.dirname(filename);
  * Sprint 10 — admin.components.beforeDashboard (Statistik-Karten via Umami).
  *
  * Läuft im selben Codebase/Prozess wie Next.js (kein zweiter Server,
- * siehe tech-stack-konfiguration.md §2.2). Versionsstand: Payload 3.85.1.
+ * siehe tech-stack-konfiguration.md §2.2). Version: siehe package.json.
  *
  * E-Mail (Sprint 9):
  *   - Ohne SMTP_HOST → nodemailerAdapter ohne transport → Ethereal-Testaccount
@@ -75,7 +79,7 @@ function buildEmailAdapter() {
 
 export default buildConfig({
   serverURL: process.env.NEXT_PUBLIC_SERVER_URL,
-  secret: process.env.PAYLOAD_SECRET ?? "",
+  secret: env.PAYLOAD_SECRET,
   admin: {
     user: Users.slug,
     importMap: {
@@ -94,7 +98,7 @@ export default buildConfig({
   email: buildEmailAdapter(),
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI,
+      connectionString: env.DATABASE_URI,
     },
     // Push ist laut Payload-Doku ohnehin nur in development aktiv — in
     // production zählen ausschließlich Migrations. Sie laufen beim Start der App
@@ -135,9 +139,9 @@ export default buildConfig({
             `${process.env.NEXT_PUBLIC_S3_PUBLIC_URL}/${prefix ? `${prefix}/` : ""}${filename}`,
         },
       },
-      bucket: process.env.S3_BUCKET ?? "",
+      bucket: env.S3_BUCKET,
       config: {
-        endpoint: process.env.S3_ENDPOINT,
+        endpoint: env.S3_ENDPOINT,
         region: process.env.S3_REGION,
         forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
         // Garage liefert nach Multipart-Uploads eine Composite-Checksumme ohne
@@ -147,8 +151,8 @@ export default buildConfig({
         requestChecksumCalculation: "WHEN_REQUIRED",
         responseChecksumValidation: "WHEN_REQUIRED",
         credentials: {
-          accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+          accessKeyId: env.S3_ACCESS_KEY_ID,
+          secretAccessKey: env.S3_SECRET_ACCESS_KEY,
         },
       },
     }),
