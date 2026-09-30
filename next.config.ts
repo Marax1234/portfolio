@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withPayload } from "@payloadcms/next/withPayload";
+import { buildCsp } from "./src/lib/csp";
 
 /**
  * Sprint 5: Payload liefert Bild-URLs vom eigenen Server (lokaler
@@ -18,10 +19,21 @@ const s3PublicUrl =
   process.env.NEXT_PUBLIC_S3_PUBLIC_URL ?? "http://localhost:9102";
 const s3PublicUrlObj = new URL(s3PublicUrl);
 
+// B4 (B25 Session 21): CSP zunächst nur als Report-Only auf den Frontend-Routen.
+// Werte aus der Build-Umgebung (NEXT_PUBLIC_* sind im Image eingebacken).
+const csp = buildCsp({
+  mediaUrl: s3PublicUrl,
+  analyticsUrl: process.env.NEXT_PUBLIC_UMAMI_SRC,
+  dev: process.env.NODE_ENV === "development",
+});
+
 const nextConfig: NextConfig = {
-  // Deployment (hillerhome, siehe deploy.md §7): Docker-Image kopiert nur
-  // den standalone-Output, nicht node_modules.
+  // Deployment (hillerhome, siehe docs/architecture-deploy.md §3): Docker-Image
+  // kopiert nur den standalone-Output, nicht node_modules.
   output: "standalone",
+  // Komprimieren übernimmt Caddy (`encode zstd gzip`), sonst liefert Next gzip
+  // und Caddy reicht es nur durch (B25 Session 20, Befund aus Session 4).
+  compress: false,
   // Security-Header-Härtung (Security.md §7.2 — DAST prüft fehlende Header).
   // Entfernt den verräterischen X-Powered-By-Header (ZAP 10037).
   poweredByHeader: false,
@@ -31,7 +43,7 @@ const nextConfig: NextConfig = {
   // sharp lädt sein Plattform-Binary (libvips) über einen dynamisch berechneten
   // Pfad — Next.js' Datei-Tracing für `standalone` erkennt das nicht zuverlässig
   // und lässt die .so-Datei im pnpm-Store (.pnpm/@img+sharp-libvips-*) weg, was
-  // erst zur Laufzeit mit ERR_DLOPEN_FAILED auffällt (siehe deploy.md §14).
+  // erst zur Laufzeit mit ERR_DLOPEN_FAILED auffällt (docs/archive/deploy-guide-2026-06.md §7.5).
   // Setzt das flache (hoisted) node_modules aus dem Dockerfile voraus; keine
   // Globs in node_modules/.pnpm — die treffen Symlinks auf Verzeichnisse, an denen
   // Turbopack >= 16.3 mit "Is a directory" abbricht (vercel/next.js#97507).
@@ -52,6 +64,13 @@ const nextConfig: NextConfig = {
     // `NEXT_PUBLIC_S3_PUBLIC_URL` auf eine echte (CDN-)Domain, nicht auf
     // eine lokale IP (siehe Sprintplan §4 „Ausblick").
     dangerouslyAllowLocalIP: true,
+    // O-02: AVIF zuerst (typisch 20–30 % kleiner als WebP), WebP als Rückfall. Jede
+    // Variante entsteht dank Cache-Volume nur einmal (E2). Upload-Namen sind eindeutig
+    // (Payload hängt bei Kollision ein Suffix an), daher 31 Tage Cache.
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 2678400,
+    // Ohne Angabe darf der Cache 50 % der freien Platte belegen (Volume auf der Host-SSD).
+    maximumDiskCacheSize: 2_000_000_000,
     remotePatterns: [
       {
         protocol: serverUrlObj.protocol.replace(":", "") as "http" | "https",
@@ -67,12 +86,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Sicherheits-Response-Header für alle Routen (Security.md §7.2). Bewusst
-  // ohne CSP/COEP: ein zu strenger CSP würde Payload-Admin/Live-Preview, Umami
-  // und die HLS-/CDN-Cross-Origin-Medien brechen — diese beiden sind in
-  // .zap/rules.tsv begründet als IGNORE dokumentiert (Follow-up).
+  // Sicherheits-Response-Header für alle Routen (Security.md §7.2). Ohne COEP
+  // (bricht Cross-Origin-Medien, .zap/rules.tsv). CSP siehe unten und src/lib/csp.ts.
   async headers() {
     return [
+      {
+        // B4: nur Frontend-Routen, nicht /admin (Live-Preview), /api und /_next.
+        source: "/((?!admin|api|_next/).*)",
+        headers: [
+          { key: "Content-Security-Policy-Report-Only", value: csp },
+          { key: "Reporting-Endpoints", value: 'csp="/api/csp-report"' },
+        ],
+      },
       {
         source: "/:path*",
         headers: [

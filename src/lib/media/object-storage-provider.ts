@@ -1,14 +1,13 @@
 /**
  * ObjectStorageProvider — Medien-Abstraktion v2 (Sprint 7)
  *
- * Löst den lokalen Manifest-Fallback aus Sprint 1 (`local-provider.ts`) ab.
- * Gleiche Slot-IDs, gleiche Maße/Alt-Texte — nur `src` zeigt jetzt auf den
- * Object Storage (MinIO lokal, siehe docker-compose.dev.yml) statt auf
- * `/public/media/`. Das `MediaProvider`-Interface (`./types`) ist identisch
+ * Hat den lokalen Manifest-Fallback aus Sprint 1 abgelöst (entfernt in B25
+ * S-12). Gleiche Slot-IDs, gleiche Maße/Alt-Texte — `src` zeigt auf den
+ * Object Storage (Garage lokal, siehe docker-compose.dev.yml). Das `MediaProvider`-Interface (`./types`) ist identisch
  * geblieben, daher ändert sich an Aufrufern (`<Media id="..." />`) nichts.
  *
  * Der statische Platzhalter (`static/placeholder.svg`) wird beim
- * `pnpm db:up`-Bootstrap (`createbuckets`-Service) einmalig in den Bucket
+ * `pnpm db:up`-Bootstrap (`scripts/storage-init.sh`) einmalig in den Bucket
  * hochgeladen.
  */
 
@@ -25,14 +24,14 @@ interface ManifestEntry {
 }
 
 const publicBaseUrl =
-  process.env.NEXT_PUBLIC_S3_PUBLIC_URL ?? "http://localhost:9000/portfolio-media";
+  process.env.NEXT_PUBLIC_S3_PUBLIC_URL ?? "http://localhost:9102";
 
 /** Alle Slots verweisen auf dasselbe statische Platzhalter-SVG im Bucket. */
 const PLACEHOLDER_SRC = `${publicBaseUrl}/static/placeholder.svg`;
 
 /**
- * Statisches Manifest — inhaltlich identisch zu `local-provider.ts`
- * (Sprint 1–6), nur die `src`-Werte zeigen jetzt auf den Object Storage.
+ * Statisches Manifest — gleiche Slots wie der frühere lokale Fallback
+ * (Sprint 1–6), die `src`-Werte zeigen auf den Object Storage.
  */
 const MANIFEST: Record<string, ManifestEntry> = {
   placeholder: {

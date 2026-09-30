@@ -27,12 +27,13 @@ alle 90 Tage**.
 | Secret | Environment | Zweck | Verantwortlich | Letzte Rotation | Nächste fällig |
 |---|---|---|---|---|---|
 | `PAYLOAD_SECRET` | production | Payload-Verschlüsselung/Sessions | @Marax1234 | _einsetzen_ | _+90 Tage_ |
-| `S3_SECRET_ACCESS_KEY` | production | MinIO/Object-Storage | @Marax1234 | _einsetzen_ | _+90 Tage_ |
+| `S3_SECRET_ACCESS_KEY` | production | Garage-App-Key (Object Storage) | @Marax1234 | 2026-09-29 (neu mit B4) | 2026-12-28 |
+| `DEPLOY_SSH_KEY` | GitHub Environment `production` | CI-Deploy, darf nur den Wrapper starten | @Marax1234 | 2026-09-30 (neu, B25 S14) | 2026-12-29 |
 | `POSTGRES_PASSWORD` | production | DB-Zugang | @Marax1234 | _einsetzen_ | _+90 Tage_ |
 | DB-/SMTP-Credentials | production | siehe `.env.prod` | @Marax1234 | _einsetzen_ | _+90 Tage_ |
 
-> Die tatsächlichen Werte liegen ausschließlich als GitHub Environment Secrets
-> bzw. in `.env.prod` auf hillerhome (nicht im Repo, §2.1).
+> Die App-Werte liegen ausschließlich in `.env.prod` auf hillerhome (Quelle: Max' Tresor), in GitHub
+> liegt nur `DEPLOY_SSH_KEY` als Environment-Secret (nicht im Repo, §2.1).
 
 ---
 

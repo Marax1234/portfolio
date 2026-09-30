@@ -1,5 +1,5 @@
 /**
- * Upload-Guard für Payloads REST- und GraphQL-Routen (B25 Session 8).
+ * Upload-Guard für Payloads REST-Route (B25 Session 8; GraphQL ist seit Session 23 aus).
  *
  * Payload liest den Multipart-Body (bis 4 GiB, payload.config.ts `upload`) vollständig
  * nach /tmp, bevor die Zugriffsprüfung der Operation greift. Anonyme Requests wurden also

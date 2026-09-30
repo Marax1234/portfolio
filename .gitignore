@@ -37,3 +37,6 @@ yarn-error.log*
 
 .claude/
 .agents
+
+# Lokales Test-Video für den Seed (B25 D1: nicht im Repo, bleibt in der Historie)
+/info/

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import type { AnyMediaRef } from "@/lib/media";
 
@@ -31,25 +31,38 @@ function resolveRef(ref: AnyMediaRef): ResolvedPoster | null {
 export default function HeroCarousel({ posters, intervalMs = 5000 }: HeroCarouselProps) {
   const [current, setCurrent] = useState(0);
   const count = posters.length;
+  // O-05: Alle Poster liegen übereinander im Viewport, natives Lazy-Loading greift
+  // nicht. Deshalb nur schon gezeigte Poster und das jeweils nächste mounten; das
+  // nächste lädt im Hintergrund, damit die Überblendung ohne Nachladen läuft.
+  const [mounted, setMounted] = useState<ReadonlySet<number>>(() => new Set(count > 1 ? [0, 1] : [0]));
 
-  const next = () => setCurrent((p) => (p + 1) % count);
-  const prev = () => setCurrent((p) => (p - 1 + count) % count);
+  const go = useCallback(
+    (target: number) => {
+      if (count === 0) return;
+      const i = ((target % count) + count) % count;
+      const upcoming = (i + 1) % count;
+      setCurrent(i);
+      setMounted((prev) => (prev.has(i) && prev.has(upcoming) ? prev : new Set([...prev, i, upcoming])));
+    },
+    [count],
+  );
+
+  const next = () => go(current + 1);
+  const prev = () => go(current - 1);
 
   // Timer auf `current` hören lassen: jeder Wechsel (auto wie manuell) setzt
   // ihn zurück, damit der Fortschritts-Strich synchron zum Auto-Wechsel läuft.
   useEffect(() => {
     if (count <= 1) return;
-    const timer = setTimeout(() => {
-      setCurrent((p) => (p + 1) % count);
-    }, intervalMs);
+    const timer = setTimeout(() => go(current + 1), intervalMs);
     return () => clearTimeout(timer);
-  }, [current, count, intervalMs]);
+  }, [current, count, intervalMs, go]);
 
   return (
     <div className="absolute inset-0 w-full h-full">
       {posters.map((ref, i) => {
         const resolved = resolveRef(ref);
-        if (!resolved) return null;
+        if (!resolved || !mounted.has(i)) return null;
         return (
           <div
             key={i}
@@ -98,7 +111,7 @@ export default function HeroCarousel({ posters, intervalMs = 5000 }: HeroCarouse
             <button
               key={i}
               type="button"
-              onClick={() => setCurrent(i)}
+              onClick={() => go(i)}
               aria-label={`Bild ${i + 1} von ${count}`}
               aria-current={i === current ? "true" : undefined}
               className="group py-2"

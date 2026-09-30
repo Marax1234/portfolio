@@ -84,7 +84,7 @@ export async function submitContact(
         category: category as Category,
         message,
       },
-      // Collection-Access `create` ist zu (nur REST/GraphQL); die Action darf.
+      // Collection-Access `create` ist zu (REST); die Action darf.
       overrideAccess: true,
       // Kein disableRevalidate → notifyContactSubmission-Hook feuert
     });
