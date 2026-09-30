@@ -18,6 +18,10 @@ import WorksGrid, { type WorksGridItem } from "@/components/arbeiten/WorksGrid";
 import { payloadMediaRef } from "@/lib/media";
 import { formatMeta, getProjects, PROJECT_CATEGORIES } from "@/lib/payload";
 
+// B25 D-02: Der Build läuft ohne DB, daher wird diese Seite pro Request gerendert. Die
+// Payload-Daten bleiben per `unstable_cache` (Tags, src/lib/payload.ts) gecacht.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Arbeiten — Kilian Siebert",
   description: "Hochzeiten, Reisen, Sport, Commercial — eine Auswahl.",

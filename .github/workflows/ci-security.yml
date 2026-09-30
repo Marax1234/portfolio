@@ -226,6 +226,31 @@ jobs:
       - name: ESLint
         run: pnpm lint
 
+  # ── Build Gate (B25 C-01/C-02, D-02/D-03) ────────────────────────────────
+  # Baut das Produktions-Image genau wie auf hillerhome, aber ohne DB, ohne
+  # Secrets und ohne Push. Findet Build-Fehler (RSC/Client-Boundaries, Dockerfile,
+  # sharp-Gate), die tsc/Lint nicht sehen. NEXT_PUBLIC_* sind öffentliche Werte.
+  # Als Required Check "Build" eintragen (github-settings.md).
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Docker-Image bauen (ohne DB/Secrets)
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_SERVER_URL=https://kilia-siebert.de \
+            --build-arg NEXT_PUBLIC_S3_PUBLIC_URL=https://cdn.kilia-siebert.de \
+            --build-arg NEXT_PUBLIC_UMAMI_SRC=https://umami.kilia-siebert.de/script.js \
+            -t portfolio-app:ci .
+
   # ── Workflow-Linter (B25 C-08, vorerst nur Hinweise) ─────────────────────
   # zizmor prüft die Workflows auf typische Actions-Schwachstellen (Credential-
   # Persistenz, Injection, zu breite Rechte). Findings erscheinen als Annotationen

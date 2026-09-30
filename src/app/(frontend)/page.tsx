@@ -24,6 +24,10 @@ import SplitCTA from "@/components/ui/SplitCTA";
 import { payloadMediaRef, payloadVideoRef } from "@/lib/media";
 import { formatMeta, getFeaturedProject, getJournalTeasers, getSiteConfig } from "@/lib/payload";
 
+// B25 D-02: Der Build läuft ohne DB, daher wird diese Seite pro Request gerendert. Die
+// Payload-Daten bleiben per `unstable_cache` (Tags, src/lib/payload.ts) gecacht.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const [siteConfig, featuredProject, journalTeasers] = await Promise.all([
     getSiteConfig(),

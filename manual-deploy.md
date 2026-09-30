@@ -13,24 +13,28 @@ bereits dauerhaft (`restart: unless-stopped`) — nur die App wird neu gebaut/ge
 ```bash
 cd /opt/portfolio
 git pull origin main
+C="docker compose --env-file .env.prod -f docker-compose.prod.yml"
+TS=$(date +%F-%H%M)
 
-# Postgres/Garage müssen für Migrations + SSG erreichbar sein (sind es i.d.R. schon)
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres garage
+# Rückweg sichern: Image taggen, DB-Dump (Migrationen laufen gleich beim Start)
+docker tag portfolio-app:latest "portfolio-app:rollback-$TS"
+$C exec -T postgres pg_dump -U portfolio -Fc portfolio | sudo tee "/var/backups/predeploy/portfolio-$TS.dump" >/dev/null
 
-# Container-IPs ändern sich bei jedem Neustart — vor JEDEM Build neu generieren
-./scripts/gen-build-env.sh
+# Build: braucht keine DB und keine Secrets (B25 Session 10), die laufende App bleibt online
+$C build app
 
-# Build (führt im Builder-Stage automatisch `payload migrate` + `next build` aus)
-docker compose --env-file .env.prod -f docker-compose.prod.yml build app
-
-# Neustart nur der App, Rest bleibt unberührt
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --no-deps app
+# Neustart nur der App; --wait wartet auf den Healthcheck (/api/health = Payload inkl.
+# prodMigrations + Postgres bereit). Caddy überbrückt die ~10 s (lb_try_duration).
+$C up -d --no-deps --wait --wait-timeout 180 app
 
 # Verifizieren
-curl -I http://10.10.0.2:3000
-curl -I https://kilia-siebert.de
-docker compose -f docker-compose.prod.yml logs --tail=40 app
+for p in / /arbeiten /journal /api/health; do curl -fsS -o /dev/null -w "%{http_code} $p\n" "https://kilia-siebert.de$p"; done
+$C logs --tail=40 app
 ```
+
+**Rollback:** `docker tag portfolio-app:rollback-$TS portfolio-app:latest && $C up -d --no-deps --wait app`.
+Nur wenn die neue Version eine Migration mit Contract-Schritt (Drop/Umbenennung) hatte, zusätzlich den
+Dump zurückspielen (`pg_restore --clean`, vorher App stoppen). Ab Session 11 macht das `scripts/deploy.sh`.
 
 ## Object Storage (Garage)
 
@@ -59,43 +63,36 @@ COMPOSE_ENV_FILES=.env.prod COMPOSE_FILE=docker-compose.prod.yml S3_ENDPOINT=htt
 - **`--env-file` muss vor `-f` stehen.** Andere Reihenfolge interpoliert `${VAR}` in der
   Compose-Datei stillschweigend leer — keine Fehlermeldung, nur falsche/leere Env-Werte.
 
-- **`gen-build-env.sh` ist nicht optional.** Postgres/Garage bekommen bei jedem
-  `docker compose up`/`down` potenziell neue Bridge-IPs. Das Skript schreibt sie nach
-  `.env.production.local`, das der Build (Network-Mode `host`) braucht. Ohne frischen Lauf
-  zeigt der Build auf eine tote IP → `payload migrate` schlägt mit Connection-Fehler fehl.
+- **Keine `.env.production.local` mehr.** Der Build fragt keine DB ab (B25 Session 10):
+  `/arbeiten/[slug]` und `/journal/[slug]` entstehen beim ersten Aufruf (on-demand ISR), die
+  übrigen Payload-Seiten pro Request mit gecachten Daten. `gen-build-env.sh` und
+  `network: host` sind entfallen.
 
-- **pnpm-Version im Dockerfile muss zur Lockfile-Konvention passen.** Das Repo nutzt
-  `pnpm-workspace.yaml` für `overrides`/`allowBuilds` (pnpm-10-Feature). Pinnt das
-  Dockerfile eine ältere pnpm-Version, ignoriert `pnpm install --frozen-lockfile` diese
-  Workspace-Overrides stillschweigend und bricht mit
-  `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH` ab. Im Zweifel: dieselbe Major-Version wie in
-  `.github/workflows/*.yml` (`pnpm/action-setup`, `version:`) verwenden.
+- **pnpm-Version kommt aus `packageManager` in `package.json`** (inkl. sha512). Corepack im
+  Dockerfile und `pnpm/action-setup` in der CI lesen sie dort; nicht zusätzlich in Workflows
+  oder im Dockerfile pinnen. `minimumReleaseAge` (7 Tage) steht in `pnpm-workspace.yaml`.
 
 - **Jede Payload-Schema-Änderung braucht eine committete Migration.** `push: false` in
-  `payload.config.ts` heißt: ohne passende Migration unter `src/migrations/` bricht der
-  Build bei der statischen Seitengenerierung mit `relation "..." does not exist` ab,
-  sobald eine Seite die betroffenen Felder zur Build-Zeit abfragt (z. B. `/` via
-  `SiteConfig`, `/arbeiten/[slug]` via `generateStaticParams`). Migration lokal/gegen die
-  laufende Prod-DB erzeugen:
+  `payload.config.ts` heißt: Ohne Migration unter `src/migrations/` scheitern die Seiten zur
+  Laufzeit mit `relation "..." does not exist` (der Build merkt es nicht mehr). Migrationen
+  lokal gegen die Dev-DB erzeugen, keine Prod-Secrets nötig:
   ```bash
-  docker run --rm -v /opt/portfolio:/app -w /app --network host \
-    --env-file .env.production.local node:20-alpine sh -c "
-      corepack enable && corepack prepare pnpm@10 --activate &&
-      pnpm install --frozen-lockfile --prod=false &&
-      pnpm payload migrate:create <name>
-    "
-  sudo chown -R $USER:$USER src/migrations
+  pnpm db:up && pnpm payload migrate:create <name>
   ```
-  Anschließend committen — sonst fehlt sie beim nächsten Build auf jedem anderen Host
-  (und in der CI/Runner-Pipeline) wieder.
+  Anschließend committen. Expand/Contract beachten (Session 11 / `CLAUDE.md`), damit die
+  vorige App-Version beim Rollback weiterläuft.
 
 - **`sharp`/libvips-Fetch ist flaky.** Der Retry-Loop im Dockerfile (`deps`-Stage) fängt
   das normalerweise ab; falls der Build trotz 3 Versuchen an `require('sharp')` scheitert,
   einfach den Build erneut anstoßen (Registry-Problem, kein Code-Fehler).
 
 - **DB-Seed/Migration-Erzeugung niemals per `docker compose exec app`.** Der `runner`-Stage
-  enthält nur `.next/standalone` — kein `pnpm`, kein `src/`. Dafür immer den
-  Temp-Container-Pfad mit vollem Quellbaum nutzen (siehe oben).
+  enthält nur `.next/standalone` — kein `pnpm`, kein `src/`. Migrationen entstehen lokal
+  (siehe oben), der Seed ist nur für lokale Daten gedacht.
+
+- **`next/image`-Cache liegt im Volume `portfolio_next-image-cache`** (nur
+  `/app/.next/cache/images`, B23/E2) und überlebt Deploys. HTML/ISR startet mit jedem neuen
+  Container frisch. Bei kaputten Bildvarianten: App stoppen, Volume löschen, neu starten.
 
 - **Alle Code-Fixes, die dabei nötig werden (Dockerfile, Migrations, Scripts), gehören auf
   einen Fix-Branch + PR** — auch wenn der manuelle Deploy selbst lokal auf hillerhome ohne

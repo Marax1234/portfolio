@@ -5,10 +5,10 @@
 services:
 
   app:
+    # Build ohne DB und ohne Secrets (B25 D-02/D-03), nur die öffentlichen NEXT_PUBLIC_*-Werte.
     build:
       context: .
       dockerfile: Dockerfile
-      network: host
       args:
         NEXT_PUBLIC_SERVER_URL: https://${DOMAIN}
         NEXT_PUBLIC_S3_PUBLIC_URL: https://cdn.${DOMAIN}

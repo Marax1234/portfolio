@@ -15,7 +15,7 @@ bewussten Abstriche bestehen.
 | **§1.2.1** | „Require a pull request before merging" auf `main` | ✅ aktiv |
 | **§1.2.3** | „Dismiss stale reviews" | ✅ aktiv |
 | **§1.2.4** | Required Status Checks: `Secret Scan (Gitleaks)`, `SCA (pnpm audit)`, `SAST (CodeQL)`, `TypeScript Strict Check` + „strict" (up-to-date) | ✅ aktiv |
-| B25 C-01 | Zusätzliche Required Checks `Lint` (Job `lint`), trägt Max nach dem Merge ein (Befehl unten) | ⏳ offen |
+| B25 C-01 | Zusätzliche Required Checks `Lint` (Job `lint`) und `Build` (Job `build`, Image ohne DB/Secrets), trägt Max nach dem Merge ein (Befehl unten) | ⏳ offen |
 | **§1.2.5** | „Allow force pushes" deaktiviert | ✅ aktiv |
 | **§1.2.6** | „Require linear history" | ✅ aktiv |
 | §1.2.x | „Include administrators" (enforce_admins) | ✅ aktiv |
@@ -114,7 +114,7 @@ JSON
 
 # B25: weitere Required Checks ergänzen (nur Max, nachdem die Jobs auf main gelaufen sind)
 gh api -X POST repos/Marax1234/portfolio/branches/main/protection/required_status_checks/contexts \
-  -f 'contexts[]=Lint'
+  -f 'contexts[]=Lint' -f 'contexts[]=Build'
 
 # Dependabot Security Updates
 gh api -X PUT repos/Marax1234/portfolio/automated-security-fixes

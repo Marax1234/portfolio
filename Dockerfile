@@ -38,17 +38,16 @@ ENV NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL}
 ENV NEXT_PUBLIC_S3_PUBLIC_URL=${NEXT_PUBLIC_S3_PUBLIC_URL}
 ENV NEXT_PUBLIC_UMAMI_SRC=${NEXT_PUBLIC_UMAMI_SRC}
 ENV NEXT_PUBLIC_UMAMI_WEBSITE_ID=${NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-# Begrenzt den Node-Heap von migrate/build, damit der Build auf hillerhome
+# Begrenzt den Node-Heap des Builds, damit er auf hillerhome
 # (11 GB RAM, laufender Stack daneben) nicht den Host auslastet.
 ENV NODE_OPTIONS=--max-old-space-size=3072
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN corepack enable && corepack install
-# Migrations müssen vor dem Build laufen: /arbeiten/[slug] fragt Payload
-# (→ Postgres) schon zur Build-Zeit per generateStaticParams ab.
-# .env.production.local (siehe deploy.md/.env.prod) liegt im Build-Kontext.
-RUN set -a && . ./.env.production.local && set +a && pnpm payload migrate
+# B25 D-02/D-03: Der Build braucht weder DB noch Secrets (keine Seite wird beim Build aus
+# Payload vorgerendert). Migrationen laufen beim Start der App (`prodMigrations` in
+# payload.config.ts), vor jedem Deploy gibt es einen Dump. Damit baut das Image auch in der CI.
 RUN pnpm build
 
 FROM node:24.21.0-alpine3.24@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS runner

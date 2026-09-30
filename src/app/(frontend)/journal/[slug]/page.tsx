@@ -5,8 +5,8 @@
  * komponiertes Block-Layout (Text = schmale Lesespalte, Bild/Galerie/Video
  * = volle Breite) → verwandte Beiträge + dezenter Social-Hinweis →
  * Prev/Next („keine Sackgasse"). Live Preview via `RefreshRouteOnSave`
- * (save-triggered, §0.6 RSC-Standard). `generateStaticParams` + ISR-Hook
- * (`revalidateJournal`) statisch schnell + automatisch aktuell.
+ * (save-triggered, §0.6 RSC-Standard). On-demand ISR + Hook
+ * (`revalidateJournal`): statisch schnell + automatisch aktuell.
  *
  * Kein Hardcode (§0.2).
  */
@@ -20,16 +20,17 @@ import ProjectCard from "@/components/ui/ProjectCard";
 import { payloadMediaRef } from "@/lib/media";
 import {
   formatMeta,
-  getAllJournalSlugs,
   getJournalBySlug,
   getJournalNeighbors,
   getRelatedJournal,
 } from "@/lib/payload";
 import { SOCIAL_LINKS } from "@/lib/navigation";
 
+// B25 D-02: Der Build braucht keine DB. Leere Liste = kein Prerender beim Build, jede Seite
+// wird beim ersten Aufruf gerendert und danach als ISR gecacht (bis der Hook revalidiert).
+export const dynamicParams = true;
 export async function generateStaticParams() {
-  const slugs = await getAllJournalSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return [];
 }
 
 interface JournalPageProps {
