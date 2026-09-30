@@ -95,9 +95,9 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI,
     },
     // Push ist laut Payload-Doku ohnehin nur in development aktiv — in
-    // production zählen ausschließlich Migrations (siehe deploy.md / Dockerfile,
-    // `payload migrate` läuft vor `next build`, da /arbeiten/[slug] per
-    // generateStaticParams schon beim Build gegen die DB läuft).
+    // production zählen ausschließlich Migrations. Sie laufen beim Start der App
+    // (`prodMigrations`, ausgelöst spätestens vom Healthcheck /api/health); der
+    // Build braucht keine DB (B25 Session 10).
     push: false,
     prodMigrations: migrations,
   }),
@@ -158,10 +158,13 @@ export default buildConfig({
   // O-06 (B25 Session 8): Uploads als Temp-Datei statt komplett im Heap (mem_limit 2g,
   // Videos > 1 GB sind möglich). storage-s3 streamt die Datei dann per Multipart in den
   // Bucket. /tmp statt des Defaults `./tmp`, weil /app im Image nicht beschreibbar ist.
+  // Payload 3.90 begrenzt ohne Angabe auf 20 MB pro Datei und 50 MB pro Request, damit
+  // scheiterten größere Videos schon beim Upload. Reserve für die übrigen Formularfelder.
   upload: {
     useTempFiles: true,
     tempFileDir: path.join(os.tmpdir(), "payload-uploads"),
     limits: { fileSize: MAX_VIDEO_BYTES },
+    requestSizeLimit: MAX_VIDEO_BYTES + 16 * 1024 * 1024,
   },
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),
