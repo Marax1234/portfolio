@@ -1,6 +1,6 @@
 # Node 24 LTS (B22), Tag + Digest gepinnt (alle drei Stages gleich; Dependabot „docker“
 # hebt beide an, Majors nur zusammen mit .nvmrc und @types/node).
-FROM node:24.21.0-alpine3.24@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS deps
+FROM node:24.22.0-alpine3.24@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS deps
 WORKDIR /app
 # pnpm-Version kommt aus `packageManager` in package.json (inkl. sha512, Corepack prüft ihn).
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
@@ -26,7 +26,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     done; \
     node -e "require('sharp')"
 
-FROM node:24.21.0-alpine3.24@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS builder
+FROM node:24.22.0-alpine3.24@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS builder
 WORKDIR /app
 # NEXT_PUBLIC_*-Werte werden beim Build in den Client-Bundle eingebacken
 # (Compose-`environment:` wirkt nur zur Laufzeit) — daher hier als Build-Args.
@@ -50,7 +50,7 @@ RUN corepack enable && corepack install
 # payload.config.ts), vor jedem Deploy gibt es einen Dump. Damit baut das Image auch in der CI.
 RUN pnpm build
 
-FROM node:24.21.0-alpine3.24@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS runner
+FROM node:24.22.0-alpine3.24@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # ffmpeg/ffprobe für die HLS-Transkodierungs-Pipeline (src/lib/video) —
