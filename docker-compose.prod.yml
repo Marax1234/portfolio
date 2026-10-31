@@ -97,7 +97,7 @@ services:
   # Object Storage (ersetzt MinIO, B4). Key + Bucket legt Garage beim Start an,
   # Website-Zugriff/Alias/CORS einmalig per scripts/storage-init.sh (manual-deploy.md).
   garage:
-    image: dxflrs/garage:v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020
+    image: dxflrs/garage:v2.5.0@sha256:677e5b758e4425a325b811c425c026bf35a4bf42f7ddbaa773de3f4fd779a5a5
     restart: unless-stopped
     command: ["/garage", "server", "--single-node", "--default-bucket"]
     mem_limit: 256m
