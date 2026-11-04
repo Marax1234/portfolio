@@ -1,10 +1,11 @@
 /**
  * Content-Security-Policy für die Frontend-Routen (B25 B4/H-08).
  *
- * Phase 1 (Session 21): nur `Content-Security-Policy-Report-Only`, Verstöße gehen an
- * `/api/csp-report` (Container-Log). Nach einer Woche ohne Verstöße wird derselbe Wert
- * als `Content-Security-Policy` gesetzt (Session 22), dann ersetzt `frame-ancestors`
- * den Header `X-Frame-Options`.
+ * Phase 1 (Session 21): nur `Content-Security-Policy-Report-Only`, Verstöße gingen an
+ * `/api/csp-report` (Container-Log): 35 Tage ohne Verstoß. Phase 2 (Session 22): derselbe
+ * Wert als `Content-Security-Policy` (erzwungen), Verstöße werden weiter gemeldet.
+ * `X-Frame-Options` bleibt, weil `/admin` und `/api` keine CSP (und damit kein
+ * `frame-ancestors`) haben.
  *
  * `/admin` und `/api` bleiben ohne CSP (Payload-Admin, Live-Preview).
  * `'unsafe-inline'` bei script-src ist nötig, weil Next die RSC-Daten als Inline-Skripte

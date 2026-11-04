@@ -10,7 +10,7 @@
 # Die echten, sicher behebbaren Header (10020/10021/10037/10063) wurden in
 # next.config.ts gesetzt. Folgende Findings sind informativ, False Positive
 # oder ohne App-Bruch nicht behebbar — daher begründet ignoriert.
-10038	IGNORE	CSP Not Set: strenger CSP bricht Payload-Admin/Live-Preview, Umami & HLS/Object-Storage (Garage/CDN). Follow-up: getunten CSP mit Tests einführen.
+10038	IGNORE	CSP Not Set: Frontend-Routen haben seit Session 22 eine erzwungene CSP; /admin und /api bleiben bewusst ohne (Payload-Admin/Live-Preview).
 90004	IGNORE	Cross-Origin-Embedder-Policy: require-corp bricht Cross-Origin-Medien (Garage/CDN, Umami).
 10031	IGNORE	User Controllable HTML Element Attribute: FP — React escaped Werte, Query-Params werden nicht als roher HTML/Attribut gerendert.
 10049	IGNORE	Non-Storable Content: rein informativ (Cache-Control), keine Schwachstelle.

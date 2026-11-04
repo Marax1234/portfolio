@@ -27,10 +27,12 @@ Besucher ──443──▶ Oracle VPS (feste IPv4, Caddy: TLS, HSTS, Proxy)
   WireGuard durch. Alle Ports auf hillerhome sind an `10.10.0.2` bzw. `127.0.0.1` gebunden.
 - **Header:** Caddy setzt nur HSTS (1 Jahr, `includeSubDomains`, kein `preload`). Alle
   inhaltsbezogenen Header (XFO, nosniff, Referrer, Permissions-Policy, CSP) kommen aus `next.config.ts`.
-- **CSP (B4):** seit B25 Session 21 als `Content-Security-Policy-Report-Only` auf den Frontend-Routen
-  (Policy: `src/lib/csp.ts`). Browser melden Verstöße an `/api/csp-report`, die App schreibt je Verstoß eine
-  Zeile ins Log: `docker logs portfolio-app-1 2>&1 | grep csp-report`. Das Log beginnt mit jedem Deploy neu.
-  Nach 7 Tagen ohne Verstöße wird derselbe Wert erzwungen (Session 22), dann entfällt `X-Frame-Options`.
+- **CSP (B4):** seit B25 Session 22 als `Content-Security-Policy` (erzwungen) auf den Frontend-Routen
+  (Policy: `src/lib/csp.ts`; Session 21: 35 Tage `Report-Only` ohne Verstoß). Browser melden weiterhin
+  Verstöße an `/api/csp-report`, die App schreibt je Verstoß eine Zeile ins Log:
+  `docker logs portfolio-app-1 2>&1 | grep csp-report`. Das Log beginnt mit jedem Deploy neu und hält max.
+  3 × 10 MB. `X-Frame-Options` bleibt (`/admin`, `/api` haben keine CSP). Nach dem Deploy auf Meldungen achten:
+  Legitimes, das blockiert wird, taucht dort auf; Notausgang = `-Report-Only` zurück (ein Zeilentausch in `next.config.ts`).
 - **Wartungsseite:** Ist die App oder hillerhome weg, liefert Caddy nach 30 s eine statische Seite mit 503.
 - DNS für `kilia-siebert.de` liegt bei IONOS (CAA nur Let's Encrypt), Umzug zu deSEC ist geplant (B25 C1).
 
@@ -92,7 +94,7 @@ Einrichtung (Tailscale-ACL, Federated Identity, `DEPLOY_SSH_KEY`): `security/git
 | A6 | DAST-Fehler → GitHub-Issue, kein ntfy aus GitHub | ntfy-Topic bleibt außerhalb von GitHub |
 | B1 | `/admin` bleibt öffentlich (Kilian pflegt ohne VPN), Lockout + `unlock` nur für Eingeloggte, GraphQL aus | Kleinste öffentliche Fläche |
 | B3 | App setzt die Inhalts-Header, Caddy nur HSTS | Die App kennt ihre Routen (Live-Preview = same-origin iframe) |
-| B4 | CSP erst `Report-Only` (Frontend), nach 1 Woche ohne Verstöße scharf | |
+| B4 | CSP erst `Report-Only` (Frontend), nach 1 Woche ohne Verstöße scharf (erledigt in Session 22) | |
 | C2 | Kein HSTS-Preload | Familien-Domain mit IONOS-Mail, Tragweite zu groß |
 | D2 | Seed nur lokal, keine `SEED_ADMIN_*` auf dem Host | |
 | E2 | Nur der Bild-Cache überlebt den Deploy | Sonst alte ISR-Seiten nach dem Deploy |

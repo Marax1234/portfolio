@@ -19,7 +19,7 @@ const s3PublicUrl =
   process.env.NEXT_PUBLIC_S3_PUBLIC_URL ?? "http://localhost:9102";
 const s3PublicUrlObj = new URL(s3PublicUrl);
 
-// B4 (B25 Session 21): CSP zunächst nur als Report-Only auf den Frontend-Routen.
+// B4 (B25 Session 22): CSP wird auf den Frontend-Routen erzwungen (Session 21: 35 Tage Report-Only ohne Verstoß).
 // Werte aus der Build-Umgebung (NEXT_PUBLIC_* sind im Image eingebacken).
 const csp = buildCsp({
   mediaUrl: s3PublicUrl,
@@ -94,7 +94,7 @@ const nextConfig: NextConfig = {
         // B4: nur Frontend-Routen, nicht /admin (Live-Preview), /api und /_next.
         source: "/((?!admin|api|_next/).*)",
         headers: [
-          { key: "Content-Security-Policy-Report-Only", value: csp },
+          { key: "Content-Security-Policy", value: csp },
           { key: "Reporting-Endpoints", value: 'csp="/api/csp-report"' },
         ],
       },
@@ -105,6 +105,7 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           // ZAP 10020 — Clickjacking-Schutz. SAMEORIGIN (nicht DENY), damit die
           // Payload-Admin-Live-Preview ihre eigenen Same-Origin-iframes behält.
+          // Bleibt auch nach Session 22: /admin und /api haben keine CSP (frame-ancestors).
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           // ZAP 10063 — Permissions-Policy: nicht genutzte Browser-Features sperren.
           {
