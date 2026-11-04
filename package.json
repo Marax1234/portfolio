@@ -31,7 +31,7 @@
     "@payloadcms/ui": "3.92.1",
     "graphql": "17.0.2",
     "hls.js": "1.7.3",
-    "motion": "12.43.0",
+    "motion": "14.7.1",
     "next": "16.4.3",
     "nodemailer": "10.0.10",
     "payload": "3.92.1",
