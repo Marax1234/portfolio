@@ -56,7 +56,8 @@ ENV NODE_ENV=production
 # ffmpeg/ffprobe für die HLS-Transkodierungs-Pipeline (src/lib/video) —
 # direkt im Image statt per `docker run` (App-Container hat in Produktion
 # keinen Zugriff auf den Docker-Daemon).
-RUN apk add --no-cache ffmpeg
+# libexpat explizit anheben: Basis-Image liefert 2.9.0 (Trivy HIGH), Fix 2.10.0 liegt im Alpine-Repo.
+RUN apk add --no-cache ffmpeg && apk upgrade --no-cache libexpat
 # B25 C-03: Paketmanager des Basis-Images raus. Der Runner startet nur `node server.js`;
 # npm, corepack und yarn brachten eigene, nie genutzte Abhängigkeiten mit (Trivy: HIGH in
 # npm/node_modules/{brace-expansion,tar,undici,ip-address}) und vergrößern die Angriffsfläche.
