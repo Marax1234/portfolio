@@ -11,6 +11,7 @@
 # next.config.ts gesetzt. Folgende Findings sind informativ, False Positive
 # oder ohne App-Bruch nicht behebbar — daher begründet ignoriert.
 10038	IGNORE	CSP Not Set: Frontend-Routen haben seit Session 22 eine erzwungene CSP; /admin und /api bleiben bewusst ohne (Payload-Admin/Live-Preview).
+10055	IGNORE	CSP: script-src unsafe-inline: bekannt und gewollt, Next liefert die RSC-Daten als Inline-Skripte aus; Nonces gingen nur mit dynamischem Rendering (kein ISR mehr), siehe src/lib/csp.ts. Die übrigen Quellen sind auf 'self', Umami und das CDN begrenzt.
 90004	IGNORE	Cross-Origin-Embedder-Policy: require-corp bricht Cross-Origin-Medien (Garage/CDN, Umami).
 10031	IGNORE	User Controllable HTML Element Attribute: FP — React escaped Werte, Query-Params werden nicht als roher HTML/Attribut gerendert.
 10049	IGNORE	Non-Storable Content: rein informativ (Cache-Control), keine Schwachstelle.
