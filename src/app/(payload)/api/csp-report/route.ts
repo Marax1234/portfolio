@@ -1,5 +1,5 @@
 /**
- * Empfänger für CSP-Verstoßmeldungen (B25 Session 21, Report-Only-Phase).
+ * Empfänger für CSP-Verstoßmeldungen (B25 Session 21/22, Report-Only- und Enforce-Phase).
  * Schreibt je Verstoß eine Zeile `[csp-report] {...}` ins Container-Log, auswertbar per
  * `docker logs portfolio-app-1 2>&1 | grep csp-report`. Keine IP, keine Query-Strings.
  * Antwortet immer 204 (außer bei zu großen Bodys), damit Browser nicht wiederholen.
