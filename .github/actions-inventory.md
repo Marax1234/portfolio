@@ -12,8 +12,8 @@ Dependabot hält diese Liste über PRs aktuell (§3.4).
 | `actions/checkout` | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` | https://github.com/actions/checkout | 2026-09-29 |
 | `actions/setup-node` | v7.0.0 | `820762786026740c76f36085b0efc47a31fe5020` | https://github.com/actions/setup-node | 2026-09-29 |
 | `pnpm/action-setup` | v6.0.9 | `0ebf47130e4866e96fce0953f49152a61190b271` | https://github.com/pnpm/action-setup | 2026-09-29 |
-| `github/codeql-action/init` | v4.36.2 | `8aad20d150bbac5944a9f9d289da16a4b0d87c1e` | https://github.com/github/codeql-action | 2026-06-20 |
-| `github/codeql-action/analyze` | v4.36.2 | `8aad20d150bbac5944a9f9d289da16a4b0d87c1e` | https://github.com/github/codeql-action | 2026-06-20 |
+| `github/codeql-action/init` | v4.39.1 | `9b3254085494b55a0f7c4c2b3d2d52cc712ce370` | https://github.com/github/codeql-action | 2026-06-20 |
+| `github/codeql-action/analyze` | v4.39.1 | `9b3254085494b55a0f7c4c2b3d2d52cc712ce370` | https://github.com/github/codeql-action | 2026-06-20 |
 | `gitleaks/gitleaks-action` | v3.0.0 | `e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e` | https://github.com/gitleaks/gitleaks-action | 2026-06-20 |
 | `actions/upload-artifact` | v7.0.1 | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` | https://github.com/actions/upload-artifact | 2026-09-29 |
 | `actions/github-script` | v9.0.0 | `3a2844b7e9c422d3c10d287c895573f7108da1b3` | https://github.com/actions/github-script | 2026-09-29 |
